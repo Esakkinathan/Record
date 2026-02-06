@@ -7,13 +7,25 @@
 
 import UIKit
 
-class FormSelectField: FormField {
+class FormSelectField: FormFieldCell {
+    
     
     static let identifier = "FormSelectField"
-    let valueLabel = UILabel()
-    let imgView = UIImageView()
-    
-    var onSelectTap: (() -> Void)?
+    let valueLabel: UILabel = {
+        let label = UILabel()
+        label.font = AppFont.body
+        label.textColor = .label
+        label.textAlignment = .right
+        return label
+    }()
+    let arrowImageView: UIImageView = {
+       let imgView = UIImageView()
+        imgView.image = UIImage(systemName: IconName.greaterThan)
+        imgView.contentMode = .scaleAspectFit
+        imgView.tintColor = AppColor.primaryColor
+        return imgView
+    }()
+    var onSelectClicked: (() -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -25,7 +37,16 @@ class FormSelectField: FormField {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(title: String, text: String? = nil,isRequired: Bool = false) {
+    func configure(field: DocumentFormField,isRequired: Bool = false) {
+        super.configure(title: field.label, isRequired: isRequired)
+        if let text = field.value as? String {
+            valueLabel.text = text
+        } else {
+            valueLabel.text = DefaultDocument.defaultValue.rawValue
+        }
+    }
+    
+    func configure(title: String, text: String?, isRequired: Bool = false) {
         super.configure(title: title, isRequired: isRequired)
         valueLabel.text = text ?? AppConstantData.none
     }
@@ -34,32 +55,34 @@ class FormSelectField: FormField {
         
         super.setUpContentView()
         
-        rightView.basicSetUp(for: valueLabel)
-        rightView.basicSetUp(for: imgView)
-        
-        valueLabel.font = AppFont.body
-        valueLabel.text = AppConstantData.none
-        valueLabel.textColor = AppColor.fileUploadColor
-        
-        imgView.image = UIImage(systemName: "chevron.down")
-        imgView.tintColor = AppColor.fileUploadColor
-
+        let stack = UIStackView(arrangedSubviews: [valueLabel,arrowImageView])
+        stack.axis = .horizontal
+        stack.spacing = PaddingSize.content
+        rightView.add(stack)
+                        
         rightView.isUserInteractionEnabled = true
         let tap = UITapGestureRecognizer(target: self, action: #selector(didTapValue))
         rightView.addGestureRecognizer(tap)
         
         NSLayoutConstraint.activate([
-            imgView.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -PaddingSize.widthPadding),
-            imgView.centerYAnchor.constraint(equalTo: rightView.centerYAnchor),
-            imgView.widthAnchor.constraint(equalToConstant: 12),
-
-            valueLabel.trailingAnchor.constraint(equalTo: imgView.leadingAnchor, constant: -PaddingSize.widthPadding),
-            valueLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.widthPadding),
-            valueLabel.centerYAnchor.constraint(equalTo: rightView.centerYAnchor)
+            stack.bottomAnchor.constraint(equalTo: errorLabel.topAnchor ),
+            stack.centerYAnchor.constraint(equalTo: rightView.centerYAnchor, ),
+            stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width ),
         ])
     }
     @objc func didTapValue() {
-        onSelectTap?()
+        onSelectClicked?()
     }
+    
+    //    func register(tableView: UITableView) {
+    //        tableView.register(FormSelectField.self, forCellReuseIdentifier: identifier)
+    //    }
+    //
+    //    func dequeue(tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
+    //        let cell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
+    //        return cell
+    //    }
+
+
     
 }

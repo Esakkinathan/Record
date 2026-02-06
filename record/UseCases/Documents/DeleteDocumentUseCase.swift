@@ -5,14 +5,14 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 
-final class DeleteDocumentUseCase {
-    private let repository: DocumentRepository
+class DeleteDocumentUseCase {
+    private let repository: DocumentRepositoryProtocol
     
-    init(repository: DocumentRepository) {
+    init(repository: DocumentRepositoryProtocol) {
         self.repository = repository
     }
     
-    func execute(documentId: Int) {
-        repository.delete(documentId: documentId)
+    func execute(id: Int) {
+        repository.delete(id: id)
     }
 }

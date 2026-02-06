@@ -10,20 +10,26 @@ import UIKit
 class TabBarController: UITabBarController {
 
     override func viewDidLoad() {
+        
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
+        setUpContents()
+    }
+    
+    func setUpContents() {
+        let document = UITab(title: "Documents", image: UIImage(systemName: "doc"), identifier: "document"){ tab in
+            return UINavigationController(rootViewController: ListDocumentAssembler.makeListDocumentScreen())
+        }
+        
+        let password = UITab(title: "PassWord", image: UIImage(systemName: "ellipsis.bubble"), identifier: "post"){ tab in
+            return UINavigationController(rootViewController: MasterPasswordAssembler.make())
+        }
+        
+        setTabs([document, password], animated: true)
+        selectedTab = document
+        mode = .tabSidebar
+        tabBar.tintColor = AppColor.primaryColor
     }
     
 
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }

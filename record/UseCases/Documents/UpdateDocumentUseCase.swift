@@ -5,10 +5,10 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 
-final class UpdateDocumentUseCase {
+class UpdateDocumentUseCase {
     private let repository: DocumentRepositoryProtocol
     
-    init(repository: DocumentRepository) {
+    init(repository: DocumentRepositoryProtocol) {
         self.repository = repository
     }
     
@@ -17,10 +17,10 @@ final class UpdateDocumentUseCase {
     }
 }
 
-final class UpdateDocumentNotesUseCase {
+class UpdateDocumentNotesUseCase {
     private let repository: DocumentRepositoryProtocol
     
-    init(repository: DocumentRepository) {
+    init(repository: DocumentRepositoryProtocol) {
         self.repository = repository
     }
     

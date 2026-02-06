@@ -6,10 +6,21 @@
 //
 import UIKit
 
-class FormLabel: FormField {
+class FormLabel: FormFieldCell {
+    
+//    func register(tableView: UITableView) {
+//        tableView.register(FormLabel.self, forCellReuseIdentifier: identifier)
+//    }
+//    
+//    func dequeue(tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
+//        return cell
+//    }
+
     
     static let identifier = "FormLabel"
     let contentLabel = UILabel()
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
@@ -28,12 +39,12 @@ class FormLabel: FormField {
         
         super.setUpContentView()
         
-        rightView.basicSetUp(for: contentLabel)
+        rightView.add(contentLabel)
         contentLabel.font = AppFont.body
-        contentLabel.applyWrapping()
+        contentLabel.labelSetUp()
         NSLayoutConstraint.activate([
-            contentLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.widthPadding),
-            contentLabel.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -PaddingSize.widthPadding),
+            contentLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
+            contentLabel.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width),
             contentLabel.centerYAnchor.constraint(equalTo: rightView.centerYAnchor),
         ])
         

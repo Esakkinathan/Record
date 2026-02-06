@@ -7,16 +7,17 @@
 
 import UIKit
 
-class SelectTableViewController: UITableViewController {
-    static let identifier = "SelectCell"
-    let items: [String]
-    var selectedItem: String?
-    var onSelect: ((String) -> Void)?
-
-    init(options: [String], selected: String?) {
-        self.items = options
-        self.selectedItem = selected
-        super.init(style: .insetGrouped)
+class SelectionViewController: UIViewController {
+    
+    private let tableView = UITableView(frame: .zero, style: .grouped)
+    private let options: [String]
+    var selectedOption: String
+    var onValueSelected: ((String) -> Void)?
+    
+    init(options: [String], selectedOption: String) {
+        self.options = options
+        self.selectedOption = selectedOption
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -25,37 +26,46 @@ class SelectTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Select Option"
+        view.backgroundColor = .white
         
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: SelectTableViewController.identifier)
-        tableView.backgroundColor = .systemBackground
-        tableView.layer.cornerRadius = 16
-        tableView.clipsToBounds = true
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "optionCell")
+        view.add(tableView)
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
     }
-
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return items.count
-    }
-
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: SelectTableViewController.identifier, for: indexPath)
-        
-        let item = items[indexPath.row]
-        cell.accessoryType = (item == selectedItem) ? .checkmark : .none
-        cell.selectionStyle = .none
+}
+
+
+extension SelectionViewController: UITableViewDataSource, UITableViewDelegate {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return options.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "optionCell", for: indexPath)
+        let option = options[indexPath.row]
+        cell.textLabel?.text = option
+        cell.accessoryType = (option == selectedOption) ? .checkmark : .none
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let item = items[indexPath.row]
-        selectedItem = item
-        onSelect?(item)
-        dismiss(animated: true)
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let selected = options[indexPath.row]
+        if selected != selectedOption {
+            selectedOption = selected
+            tableView.reloadData()
+            onValueSelected?(selected)
+        }
+        navigationController?.popViewController(animated: true)
     }
 
 }

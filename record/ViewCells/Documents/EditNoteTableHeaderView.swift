@@ -14,25 +14,20 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.labelSetUp()
-        label.font = AppFont.body
+        label.font = AppFont.heading3
+        label.textColor = .secondaryLabel
         return label
     }()
 
     let editButton: UIButton = {
         let button = UIButton(type: .system)
+        button.titleLabel?.numberOfLines = 1
         button.setTitle(AppConstantData.edit, for: .normal)
         button.setTitle(AppConstantData.save, for: .selected)
         button.configuration = AppConstantData.buttonConfiguration
         return button
     }()
 
-    lazy var stackView: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [titleLabel, editButton])
-        stack.axis = .horizontal
-        stack.alignment = .center
-        stack.distribution = .equalSpacing
-        return stack
-    }()
 
 
     var onEditButtonClicked: ((Bool) -> Void)?
@@ -49,18 +44,22 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
     }
 
 
-    private func setupContentView() {
-        contentView.backgroundColor = .secondarySystemBackground
+    func setupContentView() {
+        //contentView.backgroundColor = .secondarySystemBackground
         contentView.layer.cornerRadius = 12
         contentView.layer.masksToBounds = true
 
-        contentView.add(stackView)
-
+        contentView.add(titleLabel)
+        contentView.add(editButton)
+        
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
-            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width)
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: PaddingSize.height),
+            editButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -PaddingSize.height ),
+            editButton.topAnchor.constraint(equalTo: contentView.topAnchor),
+            editButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            editButton.widthAnchor.constraint(equalToConstant: 100)
         ])
 
         editButton.addTarget(self, action: #selector(editButtonClicked), for: .touchUpInside)
@@ -75,6 +74,9 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
 
     @objc private func editButtonClicked() {
         editButton.isSelected.toggle()
+        UIView.animate(withDuration: 0.25) {
+                self.layoutIfNeeded()
+            }
         onEditButtonClicked?(editButton.isSelected)
     }
 

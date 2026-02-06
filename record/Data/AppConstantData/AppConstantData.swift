@@ -8,24 +8,41 @@ import UIKit
 
 enum PaddingSize {
     
-    static let contentSpacing: CGFloat = 8
+    static let content: CGFloat = 8
     
-    static let copyButtonSize: CGFloat = 20
+    static let copyButtonSize: CGFloat = 30
 
-    static let heightPadding: CGFloat = 12
+    static let height: CGFloat = 12
     
-    static let widthPadding: CGFloat = 10
+    static let width: CGFloat = 10
     
+}
+
+enum FormSpacing {
+    
+    static let height: CGFloat = 16
+    
+    static let width: CGFloat = 12
 }
 
 enum AppConstantData {
     
+    static let passwordSession: Int = 10
+    
+    static let apply = "Apply"
+    
     static let buttonStyle: UIBarButtonItem.Style = .plain
+    
+    static let buttonConfiguration: UIButton.Configuration = .tinted()
     
     static let cancel = "Cancel"
     
+    static let clear = "Clear"
+    
     static let edit = "Edit"
 
+    static let exit = "Exit"
+    
     static let delete = "Delete"
     
     static let save = "Save"
@@ -36,6 +53,10 @@ enum AppConstantData {
 
 enum IconName {
     
+    static let star = "heart"
+    
+    static let starFill = "heart.fill"
+    
     static let share = "square.and.arrow.up"
     
     static let copy = "square.on.square"
@@ -43,6 +64,8 @@ enum IconName {
     static let emptyDocument = "doc"
     
     static let eye = "eye"
+    
+    static let eyeSlash = "eye.slash"
     
     static let add = "plus"
     
@@ -54,4 +77,11 @@ enum IconName {
     
     static let replace = "pencil.circle"
     
+    static let greaterThan = "greaterthan"
+    
+    static let x = "xmark.circle.fill"
+    
+    static let threeDot = "ellipsis.circle" 
 }
+
+

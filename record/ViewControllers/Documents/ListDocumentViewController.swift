@@ -6,94 +6,167 @@
 //
 import UIKit
 
-fileprivate func makeListViewDocumentPresenter(vc: ListDocumentViewDelegate) -> ListDocumentPresenter {
-    return ListDocumentPresenter(view: vc)
-}
-
-
-class ListDocumentViewController: UIViewController, ListDocumentViewDelegate {
-    func reloadData() {
-        tableView.reloadData()
-    }
+class ListDocumentViewController: UIViewController {
     
-    let tableView = UITableView()
-    let segmentedControl = UISegmentedControl(items: DocumentCategory.getList())
-    var selectedCategory: DocumentCategory = .Default
-    var filteredDocuments: [Document] = []
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.contentInsetAdjustmentBehavior = .automatic
+        view.rowHeight = UITableView.automaticDimension
+        view.estimatedRowHeight = 100
+        return view
+    }()
+    
+    let sortButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
+        button.showsMenuAsPrimaryAction = true
+        return button
+    }()
     
     let searchController = UISearchController(searchResultsController: nil)
-    
-    var isSearching: Bool {
-        return searchController.isActive && !(searchController.searchBar.text?.isEmpty ?? true)
-    }
-    
     var presenter: ListDocumentProtocol!
-    
-    var documentsList: [[Document]] = [
-        [Document(id: 1, name: "Adhar Card", number: "228861826825",expiryDate: nil ,file: nil, type: .Default)],
-        [Document(id: 1, name: "Marriage Certificate", number: "TnMrgerg-2345sdfg",expiryDate: Date() ,file: nil, type: .Custom)]
-    ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        presenter = makeListViewDocumentPresenter(vc: self)
+        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
+        //showToast(message: "Hello screen is opened", type: .warning,duration: 5)
     }
     
     func setUpNavigationBar() {
-        title = "Documents"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.add), style: AppConstantData.buttonStyle, target: self, action: #selector(openAddDocumentView))
+        title = DocumentConstantData.document
+        navigationController?.navigationBar.isTranslucent = false
+        let searchButton = UIBarButtonItem(
+            barButtonSystemItem: .search,
+            target: self,
+            action: #selector(openSearch)
+        )
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(openAddDocumentView))
+        
+        let spacer = UIBarButtonItem(
+            barButtonSystemItem: .fixedSpace,
+            target: nil,
+            action: nil
+        )
+        spacer.width = 12
+
+        navigationItem.rightBarButtonItems = [addButton, spacer, searchButton, spacer, UIBarButtonItem(customView: sortButton)]
+
         
         searchController.searchResultsUpdater = self
-        searchController.searchBar.placeholder = "Search documents"
+        //searchController.delegate = self
         searchController.obscuresBackgroundDuringPresentation = false
-
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = true
+        searchController.searchBar.placeholder = DocumentConstantData.searchDocument
+        searchController.searchBar.searchBarStyle = .minimal
+        searchController.searchBar.backgroundImage = UIImage()
+        searchController.searchBar.delegate = self
         
         definesPresentationContext = true
     }
     
+    @objc func openSearch() {
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+
+        DispatchQueue.main.async {
+            self.searchController.searchBar.becomeFirstResponder()
+        }
+    }
+
     func setUpContents() {
-        view.backgroundColor = .systemBackground
-        view.basicSetUp(for: segmentedControl)
-        segmentedControl.selectedSegmentIndex = 0
-        segmentedControl.addTarget(self, action: #selector(segmentValueChanged), for: .valueChanged)
         
-        view.basicSetUp(for: tableView)
-        tableView.contentInsetAdjustmentBehavior = .automatic
+        view.backgroundColor = AppColor.background
+        view.add(tableView)
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 60
+
         tableView.register(ListDocumentTableViewCell.self, forCellReuseIdentifier: ListDocumentTableViewCell.identifier)
         
         NSLayoutConstraint.activate([
-            segmentedControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.heightPadding),
-            segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            segmentedControl.widthAnchor.constraint(equalToConstant: view.frame.width * 0.75),
-            
-            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor,constant: PaddingSize.heightPadding),
+            tableView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     
-    @objc func segmentValueChanged() {
-        presenter.segmentChange(index: segmentedControl.selectedSegmentIndex)
+    @objc func openAddDocumentView() {
+        presenter.gotoAddDocumentScreen()
     }
     
-    func currentDocuments() -> [Document] {
-        let docs = documentsList[segmentedControl.selectedSegmentIndex]
-        return isSearching ? filteredDocuments : docs
+    func buildSortMenu() {
+        let current = presenter.currentSort
+
+        func subtitle(
+            field: DocumentSortField,
+            asc: String,
+            desc: String
+        ) -> String {
+            guard current.field == field else { return asc }
+            return current.direction == .ascending ? asc : desc
+        }
+
+        let name = UIAction(
+            title: "Name",
+            subtitle: subtitle(
+                field: .name,
+                asc: "Ascending",
+                desc: "Descending"
+            ),
+            state: current.field == .name ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.name)
+        }
+
+        let created = UIAction(
+            title: "Created At",
+            subtitle: subtitle(
+                field: .createdAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .createdAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.createdAt)
+        }
+
+        let updated = UIAction(
+            title: "Updated At",
+            subtitle: subtitle(
+                field: .updatedAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .updatedAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.updatedAt)
+        }
+
+        let expiry = UIAction(
+            title: "Expiry Date",
+            subtitle: subtitle(
+                field: .expiryDate,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .expiryDate ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.expiryDate)
+        }
+
+        sortButton.menu = UIMenu(
+            title: "Sort By",
+            children: [name, created, updated, expiry]
+        )
     }
+
     
 }
 
 extension ListDocumentViewController: UITableViewDataSource {
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -106,35 +179,84 @@ extension ListDocumentViewController: UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: ListDocumentTableViewCell.identifier, for: indexPath) as! ListDocumentTableViewCell
         cell.configure(document: document)
         cell.onShareButtonClicked = { [weak self] in
-            self?.presenter.shareDocument(at: indexPath.row)
+            self?.shareButtonClicked(indexPath)
+            //self?.presenter.shareDocument(at: indexPath.row)
         }
+
         return cell
     }
+    
+    @objc func shareButtonClicked(_ indexPath: IndexPath) {
+        
+        let alert = UIAlertController(
+            title: "Share Document",
+            message: "How would you like to share?",
+            preferredStyle: .actionSheet
+        )
+
+        alert.addAction(UIAlertAction(title: "Without Lock", style: .default) { [weak self]_ in
+            self?.presenter.shareDocument(at: indexPath.row)
+        })
+
+        alert.addAction(UIAlertAction(title: "With Lock", style: .default) { [weak self] _ in
+            self?.askForPasswordAndShare(at: indexPath.row)
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        present(alert, animated: true)
+
+    }
+    
+    func askForPasswordAndShare(at index: Int) {
+        let alert = UIAlertController(
+            title: "Set Password",
+            message: "Enter a password to protect the document",
+            preferredStyle: .alert
+        )
+
+        alert.addTextField {
+            $0.placeholder = "Password"
+            $0.isSecureTextEntry = true
+        }
+
+        alert.addTextField {
+            $0.placeholder = "Confirm Password"
+            $0.isSecureTextEntry = true
+        }
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        alert.addAction(UIAlertAction(title: "Share", style: .default) { [weak self]_ in
+            let password = alert.textFields?[0].text ?? ""
+            let confirm = alert.textFields?[1].text ?? ""
+
+            guard !password.isEmpty, password == confirm else {
+                return
+            }
+
+            self?.presenter.shareDocumentWithLock(at: index, password: password)
+        })
+
+        present(alert, animated: true)
+
+    }
+    
 }
 
 extension ListDocumentViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let document = presenter.document(at: indexPath.row)
-        let vc = DetailDocumentViewController()
-        
-        vc.configure(document: document)
-        vc.onEdit = { [weak self] document in
-            guard let self = self else {return}
-            presenter.updateDocument(at: indexPath.row, document: document)
-        }
-        navigationController?.pushViewController(vc, animated: true)
-        
+        presenter.didSelectedRow(at: indexPath.row)
     }
     
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
+    
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        
         let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
-            guard let self = self else { return }
-            presenter.deleteDocument(at: indexPath.row)
+            self?.presenter.deleteDocument(at: indexPath.row)
             completion(true)
         }
         
@@ -145,35 +267,33 @@ extension ListDocumentViewController: UITableViewDelegate {
     }
 
 }
-extension ListDocumentViewController: UISearchResultsUpdating {
+extension ListDocumentViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    
     func updateSearchResults(for searchController: UISearchController) {
-        guard let text = searchController.searchBar.text?.lowercased() else { return }
-        
-        let docs = documentsList[segmentedControl.selectedSegmentIndex]
-        filteredDocuments = docs.filter {
-            $0.name.lowercased().replacingOccurrences(of: " ", with: "").contains(text) ||
-            $0.number.lowercased().replacingOccurrences(of: " ", with: "").contains(text)
-        }
-        tableView.reloadData()
+        presenter.search(text: searchController.searchBar.text)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        navigationItem.searchController = nil
     }
 }
 
-extension ListDocumentViewController {
-    func shareDocument(url: URL) {
-        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        present(activityVC, animated: true)
-
+extension ListDocumentViewController: DocumentNavigationDelegate {
+    
+    func presentVC(_ vc: UIViewController) {
+        present(vc, animated: true)
     }
     
-    @objc func openAddDocumentView() {
-        let vc = AddDocumentViewController()
-        vc.configure(selectedCategory,action: .add)
-        vc.onAdd = { [weak self] document in
-            self?.presenter.addDocument(document)
-        }
-        let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
-
-        present(navVc, animated: true)
+    func push(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+}
+extension ListDocumentViewController: ListDocumentViewDelegate {
+    func reloadData() {
+        tableView.reloadData()
+    }
+    func refreshSortMenu() {
+        buildSortMenu()
     }
 }

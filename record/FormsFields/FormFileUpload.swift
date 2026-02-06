@@ -7,26 +7,64 @@
 
 import UIKit
 
-class FormFileUpload: FormField, UIContextMenuInteractionDelegate {
-    func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
-        return nil
-    }
-    
-    
+class FormFileUpload: FormFieldCell {
+
     static let identifier = "FormFileUpload"
     
-    let documentImage = UIImageView(image: UIImage(systemName: IconName.emptyDocument))
-    let addLabel = UILabel()
-    let uploadView: UIStackView
+    let documentImage = UIImageView(image: DocumentConstantData.docImage)
+    
+    let addLabel: UILabel = {
+        let label = UILabel()
+        label.text = DocumentConstantData.addDocument
+        label.textColor = AppColor.fileUploadColor
+        label.font = AppFont.small
+        return label
+    }()
+    
+    let uploadView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.distribution = .fillEqually
+        stack.spacing = 2
+        stack.layer.borderWidth = 2
+        stack.layer.borderColor = AppColor.primaryColor.cgColor
+        stack.layer.cornerRadius = 12
+        stack.clipsToBounds = true
+        stack.backgroundColor = .systemGray6.withAlphaComponent(0.6)
+        stack.isUserInteractionEnabled = false
+        return stack
+    }()
 
-    let fileImagePreview = UIImageView()
+    let fileImagePreview: UIImageView = {
+        let iv = UIImageView()
+        iv.setAsEmptyDocument()
+        iv.layer.cornerRadius = 10
+        iv.isUserInteractionEnabled = false
+        return iv
+    }()
+    
+    lazy var uploadButton: UIButton = {
+            let btn = UIButton(type: .system)
+            btn.setTitle("", for: .normal)
+            btn.showsMenuAsPrimaryAction = true
+            btn.isHidden = false
+            return btn
+        }()
+        
+        private lazy var previewButton: UIButton = {
+            let btn = UIButton(type: .system)
+            btn.setTitle("", for: .normal)
+            btn.showsMenuAsPrimaryAction = true
+            btn.isHidden = true
+            return btn
+        }()
     
     var onUploadDocument: (() -> Void)?
     var onRemoveDocument: (() -> Void)?
     var onViewDocument: (() -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        uploadView = UIStackView(arrangedSubviews: [documentImage,addLabel])
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
         setTitleLabelTop()
@@ -40,105 +78,102 @@ class FormFileUpload: FormField, UIContextMenuInteractionDelegate {
         
         super.setUpContentView()
         
-        rightView.basicSetUp(for: uploadView)
-        rightView.basicSetUp(for: fileImagePreview)
+        rightView.add(uploadView)
+        rightView.add(uploadButton)
         
-        uploadView.axis = .vertical
-        uploadView.alignment = .center
-        uploadView.layer.borderColor = AppColor.fileUploadColor.cgColor
-        uploadView.isUserInteractionEnabled = true
-        let uploadViewTapGesture = UITapGestureRecognizer(target: self, action: #selector(uploadViewTapPreview))
-        uploadView.addGestureRecognizer(uploadViewTapGesture)
+        rightView.add(fileImagePreview)
+        rightView.add(previewButton)
         
-        addLabel.text = "Add document"
-        addLabel.font = AppFont.small
+        uploadView.insertArrangedSubview(documentImage, at: 0)
+        uploadView.insertArrangedSubview(addLabel, at: 1)
+                
+        addLabel.text = DocumentConstantData.addDocument
+        
         addLabel.textColor = AppColor.fileUploadColor
         
         documentImage.tintColor = AppColor.fileUploadColor
-        
-        fileImagePreview.contentMode = .scaleAspectFit
-        fileImagePreview.clipsToBounds = true
-        fileImagePreview.isUserInteractionEnabled = true
-        let filePreviewTapGesture = UITapGestureRecognizer(target: self, action: #selector(fileImageTapPreview))
-        fileImagePreview.addGestureRecognizer(filePreviewTapGesture)
-        
-        let viewSize: CGFloat = 100
+        documentImage.contentMode = .scaleAspectFit
+                
+        let previewSize: CGFloat = 110
         NSLayoutConstraint.activate([
-            uploadView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.widthPadding),
-            uploadView.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -PaddingSize.widthPadding),
-            uploadView.topAnchor.constraint(equalTo: rightView.topAnchor,constant: PaddingSize.heightPadding),
+            uploadView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.height),
+            uploadView.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.width),
+            uploadView.bottomAnchor.constraint(equalTo: rightView.bottomAnchor, constant: -FormSpacing.width),
+            uploadView.widthAnchor.constraint(equalToConstant: previewSize),
+            uploadView.heightAnchor.constraint(equalToConstant: previewSize),
+            uploadButton.leadingAnchor.constraint(equalTo: uploadView.leadingAnchor),
+            uploadButton.trailingAnchor.constraint(equalTo: uploadView.trailingAnchor),
+            uploadButton.topAnchor.constraint(equalTo: uploadView.topAnchor),
+            uploadButton.bottomAnchor.constraint(equalTo: uploadView.bottomAnchor),
+
+            fileImagePreview.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
+            fileImagePreview.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
+            fileImagePreview.widthAnchor.constraint(equalToConstant: previewSize),
+            fileImagePreview.heightAnchor.constraint(equalToConstant: previewSize),
+            fileImagePreview.bottomAnchor.constraint(lessThanOrEqualTo: rightView.bottomAnchor, constant: -FormSpacing.height),
             
-            fileImagePreview.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.widthPadding),
-            fileImagePreview.topAnchor.constraint(equalTo: rightView.topAnchor, constant: PaddingSize.heightPadding),
-            fileImagePreview.widthAnchor.constraint(equalToConstant: viewSize),
-            fileImagePreview.heightAnchor.constraint(equalToConstant: viewSize),
+            previewButton.leadingAnchor.constraint(equalTo: fileImagePreview.leadingAnchor),
+            previewButton.trailingAnchor.constraint(equalTo: fileImagePreview.trailingAnchor),
+            previewButton.topAnchor.constraint(equalTo: fileImagePreview.topAnchor),
+            previewButton.bottomAnchor.constraint(equalTo: fileImagePreview.bottomAnchor),
+
         ])
+        updateMenus()
         
     }
-    func uploadDocument() {
-        onUploadDocument?()
-    }
     
-    func removeDocument() {
-        onRemoveDocument?()
-    }
     
-    func viewDocument() {
-        onViewDocument?()
-    }
-
-    @objc func uploadViewTapPreview() {
-        let uploadAction = UIAction(title: "Choose from Files", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
-            self?.uploadDocument()
+    private func updateMenus() {
+        
+        let pickAction = UIAction(title: "Choose from Files", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+            self?.onUploadDocument?()
         }
-        let menu = UIMenu(title: "", children: [uploadAction])
+        
+        uploadButton.menu = UIMenu(title: "", children: [pickAction])
 
-
-        uploadView.becomeFirstResponder()
-        let interaction = UIContextMenuInteraction(delegate: self)
-        uploadView.addInteraction(interaction)
-    }
-    
-    @objc func fileImageTapPreview() {
         let viewAction = UIAction(title: "View", image: UIImage(systemName: IconName.eye)) { [weak self] _ in
-            self?.viewDocument()
+            self?.onViewDocument?()
         }
-
+        
         let replaceAction = UIAction(title: "Replace", image: UIImage(systemName: IconName.replace)) { [weak self] _ in
-            self?.uploadDocument()
+            self?.onUploadDocument?()
         }
-
+        
         let removeAction = UIAction(title: "Remove", image: UIImage(systemName: IconName.trash), attributes: .destructive) { [weak self] _ in
-            self?.removeDocument()
+            self?.onRemoveDocument?()
         }
-
-        let menu = UIMenu(title: "", children: [viewAction,replaceAction,removeAction])
-
-        fileImagePreview.becomeFirstResponder()
-        let interaction = UIContextMenuInteraction(delegate: self)
-        fileImagePreview.addInteraction(interaction)
+        
+        previewButton.menu = UIMenu(title: "", children: [viewAction, replaceAction, removeAction])
     }
     
-    func configure(title: String, filePath: String? = nil, isRequired: Bool = false) {
-        super.configure(title: title, isRequired: isRequired)
-        if let path = filePath {
-            fileImagePreview.isHidden = false
-            uploadView.isHidden = true
+    func setDocuments(hasDocument: Bool, fileUrl: String? = nil) {
+        uploadView.isHidden = hasDocument
+        fileImagePreview.isHidden = !hasDocument
+        uploadButton.isHidden = hasDocument
+        previewButton.isHidden = !hasDocument
+        if let path = fileUrl {
             DocumentThumbnailProvider.generate(for: path) { [weak self] image in
-                self?.fileImagePreview.image = image ?? UIImage(systemName: IconName.emptyDocument)
+                self?.fileImagePreview.image = image ?? self?.documentImage.image
             }
+        }
+    }
+    
+    func configure(field: DocumentFormField,isRequired: Bool = false) {
+        super.configure(title: field.label, isRequired: isRequired)
+        if let path = field.value as? String {
+            setDocuments(hasDocument: true, fileUrl: path)
         } else {
-            fileImagePreview.isHidden = true
-            uploadView.isHidden = false
+            setDocuments(hasDocument: false)
         }
     }
     
     func configureDocument(filePath: String) {
-        uploadView.isHidden = true
-        fileImagePreview.isHidden = false
-        DocumentThumbnailProvider.generate(for: filePath) { [weak self] image in
-            self?.fileImagePreview.image = image ?? UIImage(systemName: IconName.emptyDocument)
-        }
+        setDocuments(hasDocument: true,fileUrl: filePath)
     }
+    
+    func refreshMenus() {
+        updateMenus()
+    }
+
 }
 

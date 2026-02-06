@@ -7,24 +7,24 @@
 
 import UIKit
 
-class FileImagePreviewCollectionViewCell: UICollectionViewCell {
+class ImagePreviewTableViewCell: UITableViewCell {
     
-    static let identifier = "FileImagePreviewCollectionViewCell"
+    static let identifier = "ImagePreviewTableViewCell"
     
-    var imageView: UIImageView = {
+    var imagePreview: UIImageView = {
         let imgView = UIImageView()
-        imgView.translatesAutoresizingMaskIntoConstraints = false
+        imgView.image = DocumentConstantData.docImage
         imgView.contentMode = .scaleAspectFit
         imgView.tintColor = AppColor.emptyDocumentColor
         imgView.isUserInteractionEnabled = false
         imgView.clipsToBounds = true
-        imgView.image = DocumentConstantData.docImage
         return imgView
     }()
+    
     var onShow: (() -> Void)?
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
     }
 
@@ -36,26 +36,28 @@ class FileImagePreviewCollectionViewCell: UICollectionViewCell {
     func configure(with imagePath: String?) {
         if let path = imagePath {
             DocumentThumbnailProvider.generate(for: path) { [weak self] image in
-                self?.imageView.image = image ?? DocumentConstantData.docImage
+                self?.imagePreview.image = image ?? DocumentConstantData.docImage
             }
-            imageView.isUserInteractionEnabled = true
+            imagePreview.isUserInteractionEnabled = true
         } else {
-            imageView.isUserInteractionEnabled = false
+            imagePreview.isUserInteractionEnabled = false
         }
         
     }
 
     func setUpContentView() {
-        contentView.add(imageView)
+        contentView.add(imagePreview)
+        
+        selectionStyle = .none
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageClicked))
-        imageView.addGestureRecognizer(tapGesture)
+        imagePreview.addGestureRecognizer(tapGesture)
         
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
-            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width)
+            imagePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
+            imagePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -5),
+            imagePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 5),
+            imagePreview.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -5)
         ])
     }
     

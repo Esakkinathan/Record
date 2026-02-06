@@ -8,126 +8,105 @@
 import UIKit
 
 class ListDocumentTableViewCell: UITableViewCell {
+    
     static let identifier = "listDocumentTableViewCell"
-    let nameLabel = UILabel()
-    let numberLabel = UILabel()
-    var issueDateLabel = UILabel()
-    var expiryDateLabel = UILabel()
-    let copyButton = UIImageView()
-    let shareButton = AppButton()
-    let filePreview = UIImageView()
-    let subView = UIView()
+    
+    let nameLabel: UILabel = {
+        let label = UILabel()
+        label.adjustsFontSizeToFitWidth = true
+        label.font = AppFont.heading3
+        return label
+    }()
+    
+    let copyLabel = CopyTextLabel()
+    let createdAtLabel: UILabel = {
+        let label = UILabel()
+        label.font = AppFont.caption
+        label.labelSetUp()
+        return label
+    }()
+    
+    let shareButton: AppButton = {
+       let but = AppButton()
+        but.setImage(UIImage(systemName: IconName.share), for: .normal)
+        but.configuration = .clearGlass()
+        return but
+    }()
+    
+    let filePreview: UIImageView = {
+        let imgView = UIImageView()
+        imgView.image = DocumentConstantData.docImage
+        imgView.setAsEmptyDocument()
+        return imgView
+    }()
+    
+    
     var onShareButtonClicked: (() -> Void)?
-    let docImage = UIImage(systemName: IconName.emptyDocument)
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
     }
     
     func setUpContentView() {
-        //filePreview
-        contentView.basicSetUp(for: filePreview)
-        filePreview.image = docImage
-        filePreview.tintColor = AppColor.emptyDocumentColor
-        filePreview.contentMode = .scaleAspectFit
-        filePreview.setContentHuggingPriority(.required, for: .horizontal)
-        filePreview.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        //subview
-        contentView.basicSetUp(for: subView)
-        
-        // nameLabel
-        subView.basicSetUp(for: nameLabel)
-        nameLabel.adjustsFontSizeToFitWidth = true
-        nameLabel.font = AppFont.heading3
-        nameLabel.numberOfLines = 0
-        nameLabel.textColor = .label
-        nameLabel.lineBreakMode = .byWordWrapping
-        
-        // numberLabel
-        subView.basicSetUp(for: numberLabel)
-        numberLabel.font = AppFont.small
-        numberLabel.backgroundColor = .secondarySystemBackground
-        numberLabel.numberOfLines = 0
-        numberLabel.textColor = .label
-        numberLabel.lineBreakMode = .byWordWrapping
-        
-        // copyButton
-        subView.basicSetUp(for: copyButton)
-        copyButton.image = UIImage(systemName: IconName.copy)
-        copyButton.contentMode = .scaleAspectFit
-        copyButton.isUserInteractionEnabled = true
-        let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(copyToClipBoard))
-        copyButton.addGestureRecognizer(tapRecognizer)
-        
-        
-        // shareButton
-        subView.basicSetUp(for: shareButton)
-        shareButton.setImage(UIImage(systemName: IconName.share), for: .normal)
-        shareButton.configuration = .clearGlass()
-        shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
-        
-        // expiryDate
-        subView.basicSetUp(for: expiryDateLabel)
-        expiryDateLabel.font = AppFont.caption
+        let labelsStack = UIStackView(arrangedSubviews: [
+            nameLabel,
+            copyLabel,
+            createdAtLabel
+        ])
+        labelsStack.axis = .vertical
+        labelsStack.spacing = PaddingSize.content
 
+        let actionStack = UIStackView(arrangedSubviews: [
+            shareButton,
+        ])
+        actionStack.axis = .vertical
+        actionStack.spacing = PaddingSize.content
+        actionStack.alignment = .center
+
+        contentView.add(filePreview)
+        contentView.add(labelsStack)
+        contentView.add(actionStack)
         
-        let filePreviewWidth = contentView.frame.width * 0.25
-        //let subViewWidth = contentView.frame.width * 0.75
+        
+        shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
+
+        selectionStyle = .none
         
         NSLayoutConstraint.activate([
-            filePreview.topAnchor.constraint(equalTo: contentView.topAnchor,constant: PaddingSize.heightPadding),
-            filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,constant: -PaddingSize.heightPadding),
-            filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: PaddingSize.widthPadding),
-            filePreview.widthAnchor.constraint(equalToConstant: filePreviewWidth),
-            
-            subView.topAnchor.constraint(equalTo: contentView.topAnchor,constant: PaddingSize.heightPadding),
-            subView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,constant: -PaddingSize.heightPadding),
-            subView.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor,constant: PaddingSize.widthPadding),
-            subView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.widthPadding),
-            
-            nameLabel.topAnchor.constraint(equalTo: subView.topAnchor),
-            nameLabel.leadingAnchor.constraint(equalTo: subView.leadingAnchor),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: shareButton.leadingAnchor, constant: -PaddingSize.widthPadding),
-            
-            numberLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: PaddingSize.contentSpacing),
-            numberLabel.leadingAnchor.constraint(equalTo: subView.leadingAnchor),
-            numberLabel.trailingAnchor.constraint(lessThanOrEqualTo: copyButton.leadingAnchor, constant: -PaddingSize.widthPadding),
-            
-            expiryDateLabel.topAnchor.constraint(equalTo: numberLabel.bottomAnchor, constant: PaddingSize.contentSpacing),
-            expiryDateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,constant: -PaddingSize.heightPadding),
-            expiryDateLabel.leadingAnchor.constraint(equalTo: subView.leadingAnchor),
 
-            shareButton.centerYAnchor.constraint(equalTo: subView.centerYAnchor),
-            shareButton.trailingAnchor.constraint(equalTo: subView.trailingAnchor,constant: -PaddingSize.widthPadding),
-            
-            copyButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor,constant: PaddingSize.contentSpacing),
-            copyButton.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, constant: PaddingSize.widthPadding),
-            copyButton.widthAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize),
-            copyButton.heightAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize)
+            filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
+            filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            filePreview.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.25),
+
+            labelsStack.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+            labelsStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            labelsStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            labelsStack.trailingAnchor.constraint(lessThanOrEqualTo: actionStack.leadingAnchor, constant: -PaddingSize.width),
+
+            actionStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+            actionStack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: PaddingSize.height),
+            actionStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            actionStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
         ])
     }
     
     func configure(document: Document) {
         nameLabel.text = document.name
-        numberLabel.text = document.number
+        copyLabel.setText(document.number)  
+        createdAtLabel.text = "Created at: \(document.createdAt.toString())"
         
-        if let expiryDate = document.expiryDate {
-            expiryDateLabel.isHidden = false
-            expiryDateLabel.text = expiryDate.toString()
-        } else {
-            expiryDateLabel.isHidden = true
-        }
         if let file = document.file {
-            // Set a placeholder immediately while generating the thumbnail
-            filePreview.image = docImage
             shareButton.isHidden = false
             DocumentThumbnailProvider.generate(for: file) { [weak self] image in
-                guard let self = self else { return }
-                self.filePreview.image = image ?? self.docImage
+                if let img = image {
+                    self?.filePreview.image = img
+                }
             }
         } else {
-            filePreview.image = docImage
+            filePreview.image = DocumentConstantData.docImage
             shareButton.isHidden = true
         }
     }
@@ -136,28 +115,108 @@ class ListDocumentTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    @objc func copyToClipBoard() {
-        animateScaleDown(copyButton)
-        animateScaleUp(copyButton)
-        let textToCopy = numberLabel.text ?? ""
-        UIPasteboard.general.string = textToCopy
-    }
-    
-    func animateScaleDown(_ view: UIView) {
-        UIView.animate(withDuration: 0.3) {
-            view.transform = CGAffineTransform(scaleX: 2, y: 2)
-        }
-    }
     
     @objc func shareButtonClicked() {
         onShareButtonClicked?()
     }
-    
-    func animateScaleUp(_ view: UIView) {
-        UIView.animate(withDuration: 0.3) {
-            view.transform = .identity
-        }
-    }
 
 }
 
+/*
+ 
+ let labelsStack = UIStackView(arrangedSubviews: [
+     nameLabel,
+     numberLabel,
+     createdAtLabel
+ ])
+ labelsStack.axis = .vertical
+ labelsStack.spacing = PaddingSize.height
+ labelsStack.translatesAutoresizingMaskIntoConstraints = false
+
+ let actionStack = UIStackView(arrangedSubviews: [
+     copyButton,
+     shareButton
+ ])
+ actionStack.axis = .vertical
+ actionStack.spacing = PaddingSize.height
+ actionStack.alignment = .center
+ actionStack.translatesAutoresizingMaskIntoConstraints = false
+
+ contentView.addSubview(filePreview)
+ contentView.addSubview(labelsStack)
+ contentView.addSubview(actionStack)
+
+ filePreview.translatesAutoresizingMaskIntoConstraints = false
+
+ NSLayoutConstraint.activate([
+
+     filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
+     filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+     filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+     filePreview.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.25),
+
+     labelsStack.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+     labelsStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+     labelsStack.trailingAnchor.constraint(lessThanOrEqualTo: actionStack.leadingAnchor, constant: -PaddingSize.width),
+
+     actionStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+     actionStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
+     copyButton.widthAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize),
+     copyButton.heightAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize)
+ ])
+
+ 
+ func setUpContentView() {
+     
+     contentView.add(filePreview)
+     contentView.add(nameLabel)
+     contentView.add(numberLabel)
+     contentView.add(copyButton)
+     contentView.add(shareButton)
+     contentView.add(createdAtLabel)
+     
+     let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(copyToClipBoard))
+     copyButton.addGestureRecognizer(tapRecognizer)
+     
+     shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
+
+     NSLayoutConstraint.activate([
+         
+         filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+         filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor,constant: -PaddingSize.height),
+         filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: PaddingSize.width),
+         filePreview.trailingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+         filePreview.widthAnchor.constraint(equalTo: contentView.widthAnchor,multiplier: 0.25),
+                     
+         nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor,constant: PaddingSize.height),
+         nameLabel.bottomAnchor.constraint(equalTo: numberLabel.topAnchor),
+         nameLabel.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+         nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+         
+         
+         numberLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: PaddingSize.height),
+         numberLabel.bottomAnchor.constraint(equalTo: createdAtLabel.topAnchor),
+         numberLabel.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+         numberLabel.trailingAnchor.constraint(lessThanOrEqualTo: copyButton.leadingAnchor, constant: -PaddingSize.width),
+         
+         
+         createdAtLabel.topAnchor.constraint(equalTo: numberLabel.bottomAnchor, constant: PaddingSize.height),
+         createdAtLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+         createdAtLabel.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+         createdAtLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+         
+         shareButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+         shareButton.leadingAnchor.constraint(equalTo: copyButton.trailingAnchor, constant: PaddingSize.width),
+         shareButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -PaddingSize.width),
+         
+         copyButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor),
+         copyButton.leadingAnchor.constraint(equalTo: numberLabel.trailingAnchor, ),
+         copyButton.bottomAnchor.constraint(equalTo: createdAtLabel.topAnchor),
+         copyButton.widthAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize),
+         copyButton.heightAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize)
+     ]
+ }
+ 
+
+ */

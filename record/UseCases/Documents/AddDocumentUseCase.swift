@@ -6,9 +6,9 @@
 //
 
 class AddDocumentUseCase {
-    private let repository: DocumentRepository
+    private let repository: DocumentRepositoryProtocol
     
-    init(repository: DocumentRepository) {
+    init(repository: DocumentRepositoryProtocol) {
         self.repository = repository
     }
     

@@ -9,50 +9,42 @@ import UIKit
 internal import UniformTypeIdentifiers
 import QuickLook
 
+
+enum DocumentFormFieldType {
+    case select
+    case number
+    case fileUpload
+    case expiryDate
+}
+
 class AddDocumentViewController: UIViewController {
     
-    let tableView = UITableView()
-    
-    var selectedCategory = DocumentCategory.Default
-    var document: Document!
-    
-    var documentAction = DocumentAction.add
-    var documentName = ""
-    var documentNumber = ""
-    var documentDate : Date?
-    var documentFile: URL?
-    var onAdd: ((Document) -> Void)?
-    var onEdit: ((Document) -> Void)?
-        
-    
-    let addDocument = "Add Document"
-    
-    let enterNumber = "Enter Number"
-    
-    let enterName = "Enter Name"
-    
-    let addExpiryDate = "Add Expiry Date"
-
-    let namePlaceholder = "Document Name"
-    
-    let numberPlaceholder = "Document Number"
-
-    let selectName = "Select Document"
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        setUpNavigationBar()
-        setUpContents()
-    }
-    func setUpContents() {
-        view.basicSetUp(for: tableView)
-        
-        tableView.dataSource = self
-        tableView.keyboardDismissMode = .onDrag
+    let tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.keyboardDismissMode = .interactive
         tableView.separatorStyle = .singleLine
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 150
+        return tableView
+    }()
+    
+    var presenter: AddDocumentPresenterProtocol!
+    var onAdd: ((Document) -> Void)?
+    var onEdit: ((Document) -> Void)?
+    var previewUrl: URL?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = AppColor.background
+        setUpNavigationBar()
+        setUpContents()
+        hideKeyboardWhenTappedAround()
+    }
+
+    func setUpContents() {
+        view.add(tableView)
+        
+        tableView.dataSource = self
 
         tableView.register(FormSelectField.self, forCellReuseIdentifier: FormSelectField.identifier)
         tableView.register(FormTextField.self, forCellReuseIdentifier: FormTextField.identifier)
@@ -60,59 +52,158 @@ class AddDocumentViewController: UIViewController {
         tableView.register(FormFileUpload.self, forCellReuseIdentifier: FormFileUpload.identifier)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.heightPadding),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor,constant: -PaddingSize.widthPadding),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor,constant: PaddingSize.widthPadding),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.widthPadding)
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     func setUpNavigationBar() {
-        title = addDocument
+        title = presenter.title
+        
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.cancel, style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
         navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.save, style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
     }
-    
-    func configure(_ category: DocumentCategory, action: DocumentAction,  document: Document? = nil ) {
-        selectedCategory = category
-        documentAction = action
-        if let doc = document {
-            self.document = doc
-            documentName = doc.name
-            documentDate = doc.expiryDate
-        }
-    }
-    
+        
     @objc func cancelClicked() {
-        dismiss(animated: true)
+        presenter.cancelClicked()
     }
     
     @objc func saveClicked() {
-        dismiss(animated: true)
-        let buildDocument = buildDocument()
-        switch documentAction {
-        case .add:
-            onAdd?(buildDocument)
-        case .edit:
-            onEdit?(buildDocument)
-        }
+        presenter.saveClicked()
     }
     
-    func buildDocument() -> Document {
-        return Document(
-            id: 1,
-            name: getDocumentName(),
-            number: getDocumentNumber(),
-            expiryDate: documentDate,
-            file: getDocumentFilePath(),
-            type: selectedCategory)
-    }
-
 }
 
 extension AddDocumentViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        4
+        presenter.numberOfFields()
     }
+    
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell: UITableViewCell
+        let field = presenter.field(at: indexPath.row)
+        switch field.type {
+            
+        case .select:
+            let newCell = tableView.dequeueReusableCell(withIdentifier: FormSelectField.identifier, for: indexPath) as! FormSelectField
+            newCell.configure(field: field, isRequired: true)
+            newCell.onSelectClicked = { [weak self] in
+                self?.presenter.selectClicked(at: indexPath.row)
+            }
+            cell = newCell
+                        
+        case .number:
+            
+            let newCell = tableView.dequeueReusableCell(withIdentifier: FormTextField.identifier, for: indexPath) as! FormTextField
+            newCell.configure(field: field,isRequired: true)
+            
+            newCell.onValueChange = { [weak self] text in
+                return self?.presenter.validateText(text: text, index: indexPath.row,rules: field.validators).errorMessage
+            }
+            
+            newCell.onReturn = { [weak self] text in
+                guard let self  = self else { return "" }
+                let result = presenter.validateText(text: text, index: indexPath.row,rules: field.validators)
+                if result.isValid {
+                    _ = newCell.textField.resignFirstResponder()
+                }
+                return result.errorMessage
+            }
+            
+            cell = newCell
+            
+        case .expiryDate:
+            let newCell = tableView.dequeueReusableCell(withIdentifier: FormDateField.identifier, for: indexPath) as! FormDateField
+            
+            newCell.configure(field: field)
+            
+            newCell.onValueChange = { [weak self] date in
+                self?.presenter.updateValue(date, at: indexPath.row)
+                return nil
+            }
+            cell = newCell
+            
+        case .fileUpload:
+            let newCell = tableView.dequeueReusableCell(withIdentifier: FormFileUpload.identifier, for: indexPath) as! FormFileUpload
+            
+            newCell.configure(field: field)
+            
+            newCell.onUploadDocument = { [weak self] in
+                self?.presenter.uploadDocument(at: indexPath.row)
+            }
+            newCell.onViewDocument = { [weak self] in
+                self?.presenter.viewDocument(at: indexPath.row)
+            }
+            newCell.onRemoveDocument = { [weak self] in
+                self?.presenter.removeDocument(at: indexPath.row)
+            }
+            
+            cell = newCell
+            
+        }
+        return cell
+    }
+    
+}
+
+extension AddDocumentViewController: DocumentNavigationDelegate {
+    
+    func push(_ vc: UIViewController) {
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    func presentVC(_ vc: UIViewController) {
+        present(vc, animated: true)
+    }
+}
+
+
+extension AddDocumentViewController: AddDocumentViewDelegate {
+    func reloadData() {
+        tableView.reloadData()
+    }
+    
+    func showError(index: Int, _ message: String) {
+        //code
+    }
+    
+    func dismiss() {
+        dismiss(animated: true)
+    }
+    
+    func reloadField(at index: Int) {
+        tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+    }
+}
+extension AddDocumentViewController: UIDocumentPickerDelegate {
+
+    func documentPicker(
+        _ controller: UIDocumentPickerViewController,
+        didPickDocumentsAt urls: [URL]
+    ) {
+        guard let url = urls.first else { return }
+        presenter.didPickDocument(url: url)
+    }
+}
+
+extension AddDocumentViewController: QLPreviewControllerDataSource {
+    
+    func configureToOpenDocument(previewUrl: URL) {
+        self.previewUrl  = previewUrl
+    }
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        1
+    }
+    
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> any QLPreviewItem {
+            return previewUrl! as QLPreviewItem
+    }
+
+}
+
+/*
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var cell: UITableViewCell
         switch indexPath.row {
@@ -201,7 +292,6 @@ extension AddDocumentViewController: UITableViewDataSource {
         }
         return cell
     }
-}
 
 extension AddDocumentViewController {
     
@@ -234,29 +324,6 @@ extension AddDocumentViewController {
     }
 
 }
-extension AddDocumentViewController {
-    func getDocumentName() -> String {
-        let name: String
-        switch selectedCategory {
-        case .Default:
-            name = documentName
-        case .Custom:
-            let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as! FormTextField
-            name = cell.enteredText
-        }
-        return name
-    }
-    
-    func getDocumentNumber() -> String {
-        let numberCell = tableView.cellForRow(at: IndexPath(row: 1, section: 0))
-        let number = (numberCell as! FormTextField).enteredText
-        return number
-    }
-    func getDocumentFilePath() -> String? {
-        guard let path = documentFile else { return nil }
-        return handlePickedFile(path)
-    }
-}
 extension AddDocumentViewController: UIDocumentPickerDelegate {
     
     func documentPicker(_ controller: UIDocumentPickerViewController,
@@ -268,41 +335,6 @@ extension AddDocumentViewController: UIDocumentPickerDelegate {
         fileCell.configureDocument(filePath: sourceURL.path)
     }
     
-    func handlePickedFile(_ sourceURL: URL) -> String{
-        let fileManager = FileManager.default
-
-        let documentsDir = fileManager.urls(
-            for: .documentDirectory,
-            in: .userDomainMask
-        ).first!
-        let documentName = documentName.replacingOccurrences(of: " ", with: "_")
-        let documentNumber = documentNumber
-        let fileName: String
-        if documentName.isEmpty && documentNumber.isEmpty{
-            fileName = sourceURL.lastPathComponent
-        } else if documentNumber.isEmpty{
-            fileName = documentName + sourceURL.lastPathComponent
-        } else {
-            fileName = documentName + "_" + documentNumber + "." + sourceURL.pathExtension
-        }
-        let destinationURL = documentsDir.appendingPathComponent(fileName)
-
-        do {
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
-            }
-
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-
-            return destinationURL.path
-
-        } catch {
-            print("File copy failed:", error)
-            return ""
-        }
-    }
 
 }
-
-extension AddDocumentViewController {
-}
+*/

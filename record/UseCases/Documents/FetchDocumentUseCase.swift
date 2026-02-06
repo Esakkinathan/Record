@@ -5,19 +5,14 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 
-final class FetchDocumentsUseCase {
-    private let repository: DocumentRepository
+class FetchDocumentsUseCase {
+    private let repository: DocumentRepositoryProtocol
     
-    init(repository: DocumentRepository) {
+    init(repository: DocumentRepositoryProtocol) {
         self.repository = repository
     }
     
-    func execute() -> [[Document]] {
-        let docs = repository.fetchAll()
-        var documents: [[Document]] = []
-        let grouped = Dictionary(grouping: docs, by: { $0.type })
-        documents.append(grouped[.Default] ?? [])
-        documents.append(grouped[.Custom] ?? [])
-        return documents
+    func execute() -> [Document] {
+        return repository.fetchAll()
     }
 }
