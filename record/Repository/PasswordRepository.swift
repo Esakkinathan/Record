@@ -54,7 +54,7 @@ class PasswordRepository: PasswordRepositoryProtocol {
     }
     
     func toggleFavourite(_ password: Password) {
-        db.toggle(table: Password.databaseTableName, id: password.id, value: !password.isFavorite)
+        db.toggle(table: Password.databaseTableName, id: password.id, value: !password.isFavorite, lastModified: Date())
     }
     func delete(id: Int) {
         db.delete(table: Password.databaseTableName, id: id)
@@ -94,4 +94,17 @@ class MasterPasswordRepository: MasterPasswordRepositoryProtocol {
     func fetchPassword() -> String? {
         return db.fetchPassword(table: MasterPasswordRepository.tableName)
     }
+    
+    func update(document: Document) {
+        db.updateInto(data: document)
+    }
+    
+    func updateNotes(text: String?, id: Int) {
+        db.updateNotes(table: Document.databaseTableName, id: id, text: text, date: Date())
+    }
+
+    func delete(id: Int) {
+        db.delete(table: Document.databaseTableName, id: id)
+    }
+    
 }

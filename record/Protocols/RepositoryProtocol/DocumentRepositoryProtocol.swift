@@ -31,3 +31,18 @@ protocol MasterPasswordRepositoryProtocol {
     func insertInto(password: String)
     func fetchPassword() -> String?
 }
+
+protocol MedicalRepositoryProtocol {
+    func add(medical: Medical)
+    func update(medical: Medical)
+    func delete(id: Int)
+    func fetchAll() -> [Medical]
+    func updateNotes(text: String?, id: Int)
+
+}
+protocol MedicalItemRepositoryProtocol {
+    func add(medicalItem: MedicalItem, medicalId: Int)
+    func update(medicalItem: MedicalItem)
+    func delete(id: Int)
+    func fetchByMedicalId(_ id: Int, kind: MedicalKind) -> [MedicalItem]
+}

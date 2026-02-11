@@ -11,10 +11,10 @@ class MasterPasswordViewController: UIViewController {
     var presenter: MasterPasswordPresenterProtocol!
 
     let dotsView = DotsView()
-    let errorLabel: UILabel = {
+    let infoLabel: UILabel = {
         let label = UILabel()
         label.textColor = .label
-        label.text = "Enter Pin"
+        //label.text = "Enter Pin"
         label.textAlignment = .center
         return label
     }()
@@ -23,6 +23,11 @@ class MasterPasswordViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
     }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        presenter.resetPin()
+    }
 
     private func setupUI() {
         view.backgroundColor = .systemBackground
@@ -30,7 +35,7 @@ class MasterPasswordViewController: UIViewController {
         let keypad = createKeypad()
 
         let stack = UIStackView(arrangedSubviews: [
-            errorLabel,
+            infoLabel,
             dotsView,
             keypad
         ])
@@ -92,7 +97,7 @@ class MasterPasswordViewController: UIViewController {
         presenter.didTapDelete()
     }
     @objc private func clearClicked() {
-        presenter.didClickClear()
+        presenter.resetPin()
     }
 }
 
@@ -102,9 +107,8 @@ extension MasterPasswordViewController: MasterPasswordViewDelegate {
         dotsView.update(count: count)
     }
 
-    func showError(_ message: String) {
-        errorLabel.text = message
-        //errorLabel.isHidden = false
+    func showInfo(_ message: String) {
+        infoLabel.text = message
     }
 
     func clearPin() {
@@ -113,6 +117,9 @@ extension MasterPasswordViewController: MasterPasswordViewDelegate {
 
     func dismiss() {
         dismiss(animated: true)
+    }
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
     }
 }
 extension MasterPasswordViewController: DocumentNavigationDelegate {

@@ -14,7 +14,7 @@ class FormFieldCell: UITableViewCell {
     
     let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = AppFont.caption
+        label.font = AppFont.body
         label.textAlignment = .right
         label.labelSetUp()
         return label

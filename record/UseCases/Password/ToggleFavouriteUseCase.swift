@@ -15,5 +15,4 @@ class ToggleFavouriteUseCase {
     func execute(_ password: Password) {
         repository.toggleFavourite(password)
     }
-
 }

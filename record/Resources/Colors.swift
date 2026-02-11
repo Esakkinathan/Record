@@ -6,8 +6,7 @@
 //
 import UIKit
 enum AppColor {
-    
-    static let primaryColor = UIColor.systemBlue
+    static let primaryColor = UIColor(red: 137/255, green: 116/255, blue: 186/255, alpha: 1)
     
     static let emptyDocumentColor = UIColor.systemGray
     
@@ -19,3 +18,4 @@ enum AppColor {
     
     static let textBackground = UIColor.systemGray5
 }
+

@@ -49,16 +49,29 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Presenters/Finance/.swift,
+				UseCases/Finance/Untitled.swift,
 			);
 			target = 77ED32872F20A7C700EF4F77 /* record */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		779F41772F3C5A9A004C126F /* Exceptions for "record" folder in "Compile Sources" phase from "record" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 77ED32842F20A7C700EF4F77 /* Sources */;
+			membershipExceptions = (
+				Presenters/Finance/.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		77ED328A2F20A7C700EF4F77 /* record */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				77ED32B02F20A7C800EF4F77 /* Exceptions for "record" folder in "record" target */,
+				779F41772F3C5A9A004C126F /* Exceptions for "record" folder in "Compile Sources" phase from "record" target */,
 			);
 			path = record;
 			sourceTree = "<group>";

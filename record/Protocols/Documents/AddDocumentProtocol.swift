@@ -29,7 +29,7 @@ protocol AddDocumentViewDelegate: AnyObject {
     var onAdd: ((Document) -> Void)? { get set }
     var onEdit: ((Document) -> Void)? { get set }
     func reloadData()
-    func showError(index: Int, _ message: String)
+    func showError(_ message: String?)
     func dismiss()
     func reloadField(at index: Int)
     func configureToOpenDocument(previewUrl: URL)

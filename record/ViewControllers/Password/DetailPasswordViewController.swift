@@ -39,7 +39,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
     
     func setUpNavigationBar() {
         title = presenter.title
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: AppConstantData.edit, style: AppConstantData.buttonStyle, target: self, action: #selector(editPassword))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editPassword))
         navigationItem.backButtonDisplayMode = .minimal
     }
     
@@ -105,6 +105,7 @@ extension DetailPasswordViewController: UITableViewDataSource, UITableViewDelega
                 isEditing: isEditable
             )
             header.onEditButtonClicked = { [weak self] isEditing in
+                self?.view.endEditing(isEditing)
                 self?.presenter.toggleNotesEditing(isEditing)
             }
             return header
@@ -140,7 +141,6 @@ extension DetailPasswordViewController: UITableViewDataSource, UITableViewDelega
         }
         return cell
     }
-    
     
 }
 

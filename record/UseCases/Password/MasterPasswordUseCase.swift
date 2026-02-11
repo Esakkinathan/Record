@@ -17,6 +17,4 @@ class MasterPasswordUseCase {
     func fetch() -> String? {
         repository.fetchPassword()
     }
-    
-    
 }

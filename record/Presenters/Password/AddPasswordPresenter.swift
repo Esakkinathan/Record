@@ -12,9 +12,6 @@ class AddPasswordPresenter: AddPasswordPresenterProtocol {
         return mode.navigationTitle
     }
     
-    func numberOfFields() -> Int {
-        return fields.count
-    }
     
     weak var view: AddPasswordViewDelegate?
     
@@ -29,6 +26,67 @@ class AddPasswordPresenter: AddPasswordPresenterProtocol {
         buildFields()
     }
     
+
+}
+
+extension AddPasswordPresenter {
+    func numberOfFields() -> Int {
+        return fields.count
+    }
+    
+    func field(at index: Int) -> PasswordFormField {
+        return fields[index]
+    }
+    
+    func updateValue(_ value: Any?, at index: Int) {
+        fields[index].value = value
+    }
+        
+    func updatePasswordField(_ suggested: String) {
+        let field = fields.firstIndex(where: { $0.type == .password }) ?? 2
+        let result = validateText(text: suggested, index: field, rules: fields[field].validators)
+        if result.isValid {
+            fields[field].value = suggested
+            view?.reloadData()
+        }
+    }
+
+}
+
+extension AddPasswordPresenter {
+    func suggesPasswordClicked() {
+        router.openSuggestPasswordScreen() { [weak self] suggested in
+            self?.updatePasswordField(suggested)
+        }
+    }
+    func cancelClicked() {
+        view?.dismiss()
+    }
+
+}
+
+extension AddPasswordPresenter {
+    func validateText(text: String, index: Int,rules: [ValidationRules] = []) -> ValidationResult {
+        let result = Validator.Validate(input: text, rules: rules)
+        if result.isValid {
+            updateValue(text, at: index)
+        }
+        return result
+    }
+
+    func validateFields() -> Bool{
+        for field in fields {
+            let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
+            if !result.isValid {
+                view?.showError(result.errorMessage)
+                return result.isValid
+            }
+        }
+        return true
+    }
+}
+
+extension AddPasswordPresenter {
     func buildFields() {
         let existing = existingPassword()
 
@@ -40,32 +98,17 @@ class AddPasswordPresenter: AddPasswordPresenterProtocol {
         ]
     }
     
-    func field(at index: Int) -> PasswordFormField {
-        return fields[index]
-    }
-    
-    func validateText(text: String, index: Int,rules: [ValidationRules] = []) -> ValidationResult {
-        let result = Validator.Validate(input: text, rules: rules)
-        if result.isValid {
-            updateValue(text, at: index)
+    func existingPassword() -> Password? {
+        if case let .edit(password) = mode {
+            return password
         }
-        return result
+        return nil
     }
 
-    func suggesPasswordClicked() {
-        router.openSuggestPasswordScreen() { [weak self] suggested in
-            self?.updatePasswordField(suggested)
-        }
-    }
-    
-    func updatePasswordField(_ suggested: String) {
-        let field = fields.firstIndex(where: { $0.type == .password }) ?? 2
-        let result = validateText(text: suggested, index: field, rules: fields[field].validators)
-        if result.isValid {
-            fields[field].value = suggested
-            view?.reloadData()
-        }
-    }
+
+
+}
+extension AddPasswordPresenter {
     
     func saveClicked() {
         if validateFields() {
@@ -81,21 +124,6 @@ class AddPasswordPresenter: AddPasswordPresenterProtocol {
         }
     }
 
-    func validateFields() -> Bool{
-        for field in fields {
-            let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
-            if !result.isValid {
-                return result.isValid
-            }
-        }
-        return true
-    }
-    
-    func cancelClicked() {
-        view?.dismiss()
-    }
-
-    
     func buildPassword() -> Password {
         let title = field(at: 0).value as? String ?? DefaultDocument.adhar.rawValue
         let username = field(at: 1).value as? String ?? DefaultDocument.adhar.rawValue
@@ -110,16 +138,4 @@ class AddPasswordPresenter: AddPasswordPresenterProtocol {
         }
     }
 
-    func existingPassword() -> Password? {
-        if case let .edit(password) = mode {
-            return password
-        }
-        return nil
-
-    }
-    
-    func updateValue(_ value: Any?, at index: Int) {
-        fields[index].value = value
-    }
-    
 }

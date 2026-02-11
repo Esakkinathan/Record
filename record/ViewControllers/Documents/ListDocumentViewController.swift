@@ -20,30 +20,30 @@ class ListDocumentViewController: UIViewController {
     let sortButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
+        button.tintColor = .label
         button.showsMenuAsPrimaryAction = true
         return button
     }()
     
     let searchController = UISearchController(searchResultsController: nil)
-    var presenter: ListDocumentProtocol!
+    var presenter: ListDocumentPresenterProtocol!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
-        //showToast(message: "Hello screen is opened", type: .warning,duration: 5)
     }
     
     func setUpNavigationBar() {
         title = DocumentConstantData.document
         navigationController?.navigationBar.isTranslucent = false
-        let searchButton = UIBarButtonItem(
-            barButtonSystemItem: .search,
-            target: self,
-            action: #selector(openSearch)
-        )
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(openAddDocumentView))
+//        let searchButton = UIBarButtonItem(
+//            barButtonSystemItem: .search,
+//            target: self,
+//            action: #selector(openSearch)
+//        )
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
         
         let spacer = UIBarButtonItem(
             barButtonSystemItem: .fixedSpace,
@@ -52,7 +52,7 @@ class ListDocumentViewController: UIViewController {
         )
         spacer.width = 12
 
-        navigationItem.rightBarButtonItems = [addButton, spacer, searchButton, spacer, UIBarButtonItem(customView: sortButton)]
+        navigationItem.rightBarButtonItems = [addButton, spacer, UIBarButtonItem(customView: sortButton)]
 
         
         searchController.searchResultsUpdater = self
@@ -60,20 +60,14 @@ class ListDocumentViewController: UIViewController {
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = DocumentConstantData.searchDocument
         searchController.searchBar.searchBarStyle = .minimal
-        searchController.searchBar.backgroundImage = UIImage()
-        searchController.searchBar.delegate = self
-        
-        definesPresentationContext = true
-    }
-    
-    @objc func openSearch() {
+        //searchController.searchBar.backgroundImage = UIImage()
+        //searchController.searchBar.delegate = self
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
 
-        DispatchQueue.main.async {
-            self.searchController.searchBar.becomeFirstResponder()
-        }
+        definesPresentationContext = true
     }
+    
 
     func setUpContents() {
         
@@ -91,8 +85,13 @@ class ListDocumentViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+        
+}
+
+
+extension ListDocumentViewController {
     
-    @objc func openAddDocumentView() {
+    @objc func addButtonClicked() {
         presenter.gotoAddDocumentScreen()
     }
     
@@ -162,7 +161,7 @@ class ListDocumentViewController: UIViewController {
         )
     }
 
-    
+
 }
 
 extension ListDocumentViewController: UITableViewDataSource {
@@ -267,15 +266,18 @@ extension ListDocumentViewController: UITableViewDelegate {
     }
 
 }
-extension ListDocumentViewController: UISearchResultsUpdating, UISearchBarDelegate {
+extension ListDocumentViewController: UISearchResultsUpdating {
     
     func updateSearchResults(for searchController: UISearchController) {
         presenter.search(text: searchController.searchBar.text)
     }
     
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        navigationItem.searchController = nil
-    }
+//    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+//        UIView.animate(withDuration: 1) { [weak self] in
+//            self?.navigationItem.searchController = nil
+//        }
+//
+//    }
 }
 
 extension ListDocumentViewController: DocumentNavigationDelegate {

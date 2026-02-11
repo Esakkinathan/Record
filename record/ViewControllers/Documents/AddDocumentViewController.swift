@@ -9,14 +9,6 @@ import UIKit
 internal import UniformTypeIdentifiers
 import QuickLook
 
-
-enum DocumentFormFieldType {
-    case select
-    case number
-    case fileUpload
-    case expiryDate
-}
-
 class AddDocumentViewController: UIViewController {
     
     let tableView: UITableView = {
@@ -61,8 +53,8 @@ class AddDocumentViewController: UIViewController {
     func setUpNavigationBar() {
         title = presenter.title
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.cancel, style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
-        navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.save, style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
+        navigationItem .rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.checkmark), style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
     }
         
     @objc func cancelClicked() {
@@ -164,8 +156,10 @@ extension AddDocumentViewController: AddDocumentViewDelegate {
         tableView.reloadData()
     }
     
-    func showError(index: Int, _ message: String) {
-        //code
+    func showError(_ message: String?) {
+        if let msg = message {
+            showToast(message: msg, type: .error)
+        }
     }
     
     func dismiss() {

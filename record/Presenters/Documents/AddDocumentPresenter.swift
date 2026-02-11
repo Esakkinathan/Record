@@ -68,6 +68,7 @@ class AddDocumentPresenter: AddDocumentPresenterProtocol {
             if  field.type ==  .number {
                 let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
                 if !result.isValid {
+                    view?.showError(result.errorMessage)
                     return result.isValid
                 }
             }

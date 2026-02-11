@@ -5,7 +5,7 @@
 //  Created by Esakkinathan B on 29/01/26.
 //
 import Foundation
-enum ValidationRules {
+enum ValidationRules: Equatable {
     case required
     case minLength(Int)
     case maxLength(Int)

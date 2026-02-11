@@ -7,7 +7,7 @@
 
 import UIKit
 
-protocol ListDocumentProtocol {
+protocol ListDocumentPresenterProtocol {
     
     var currentSort: DocumentSortOption { get }
     func numberOfRows() -> Int
@@ -15,7 +15,6 @@ protocol ListDocumentProtocol {
     func addDocument(_ document: Document)
     func updateDocument(document: Document)
     func deleteDocument(at index: Int)
-    func getSelectedSegement() -> Int
     func gotoAddDocumentScreen()
     func didSelectedRow(at index: Int)
     func shareDocument(at index: Int)

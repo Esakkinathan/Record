@@ -8,7 +8,6 @@
 import UIKit
 
 class ListPasswordViewController: UIViewController {
-    static let identifier = "ListPasswordCell"
     
     let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
@@ -24,10 +23,22 @@ class ListPasswordViewController: UIViewController {
         label.labelSetUp()
         return label
     }()
+    
+    let sortButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
+        button.tintColor = .label
+        button.showsMenuAsPrimaryAction = true
+        return button
+    }()
+    
+    let searchController = UISearchController(searchResultsController: nil)
+    
     var presenter: ListPasswordProtocol!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = AppColor.background
         presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
@@ -35,20 +46,39 @@ class ListPasswordViewController: UIViewController {
     
     func setUpNavigationBar() {
         title = "Password Manager"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.exit, style: AppConstantData.buttonStyle, target: self, action: #selector(exitClicked))
-       // navigationItem.titleView = timerLabel
+        navigationController?.navigationBar.isTranslucent = false
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        
+        let spacer = UIBarButtonItem(
+            barButtonSystemItem: .fixedSpace,
+            target: nil,
+            action: nil
+        )
+        spacer.width = 12
+
+        navigationItem.rightBarButtonItems = [addButton, spacer, UIBarButtonItem(customView: sortButton)]
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(exitClicked))
+        
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = DocumentConstantData.searchDocument
+        searchController.searchBar.searchBarStyle = .minimal
+        //searchController.searchBar.backgroundImage = UIImage()
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
+
     }
     
-    @objc func exitClicked() {
-        presenter.exitClicked()
-    }
-    
+        
     func setUpContents() {
         view.add(tableView)
         view.add(timerLabel)
+        
         tableView.dataSource = self
         tableView.delegate = self
+        
         tableView.register(ListPasswordCell.self, forCellReuseIdentifier: ListPasswordCell.identifier)
         
         NSLayoutConstraint.activate([
@@ -61,9 +91,88 @@ class ListPasswordViewController: UIViewController {
         ])
 
     }
+
+}
+
+extension ListPasswordViewController {
+    
+//    @objc func openSearch() {
+//
+//        DispatchQueue.main.async {
+//            self.searchController.searchBar.becomeFirstResponder()
+//        }
+//
+//    }
+
     @objc func addButtonClicked() {
         presenter.gotoAddPasswordScreen()
     }
+    
+    @objc func exitClicked() {
+        presenter.exitClicked()
+    }
+    
+    func buildSortMenu() {
+        let current = presenter.currentSort
+
+        func subtitle(
+            field: PasswordSortField,
+            asc: String,
+            desc: String
+        ) -> String {
+            guard current.field == field else { return asc }
+            return current.direction == .ascending ? asc : desc
+        }
+
+        let name = UIAction(
+            title: "Title",
+            subtitle: subtitle(
+                field: .title,
+                asc: "Ascending",
+                desc: "Descending"
+            ),
+            state: current.field == .title ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.title)
+        }
+
+        let created = UIAction(
+            title: "Created At",
+            subtitle: subtitle(
+                field: .createdAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .createdAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.createdAt)
+        }
+
+        let updated = UIAction(
+            title: "Updated At",
+            subtitle: subtitle(
+                field: .updatedAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .updatedAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.updatedAt)
+        }
+
+        let favorite = UIAction(
+            title: "Favourite",
+            state: presenter.isFavoriteSelected ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectedFavourite()
+        }
+
+        sortButton.menu = UIMenu(
+            title: "Sort By",
+            children: [name, created, updated, favorite]
+        )
+    }
+    
 
 }
 
@@ -86,6 +195,25 @@ extension ListPasswordViewController: UITableViewDataSource {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
+            self?.presenter.deletePassword(index: indexPath.row)
+            completion(true)
+        }
+        
+        deleteAction.image = UIImage(systemName: IconName.trash)
+        let swipeAction = UISwipeActionsConfiguration(actions: [deleteAction])
+        swipeAction.performsFirstActionWithFullSwipe = true
+        return swipeAction
+    }
+
+    
+    
+    
 }
 
 extension ListPasswordViewController: UITableViewDelegate {
@@ -95,6 +223,10 @@ extension ListPasswordViewController: UITableViewDelegate {
 }
 
 extension ListPasswordViewController: ListPasswordViewDelegate {
+    func refreshSortMenu() {
+        buildSortMenu()
+    }
+    
     func reloadData() {
         tableView.reloadData()
     }
@@ -141,3 +273,10 @@ extension ListPasswordViewController: DocumentNavigationDelegate {
     }
 }
 
+extension ListPasswordViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        presenter.search(text: searchController.searchBar.text)
+    }
+    
+}

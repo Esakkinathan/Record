@@ -93,9 +93,11 @@ enum DefaultDocument: String, CaseIterable {
         }
         return list
     }
+    
     static var defaultValue: DefaultDocument {
          .adhar
     }
+    
     static func valueOf(value: String) -> DefaultDocument {
         for doc in allCases {
             if doc.rawValue == value {
@@ -189,15 +191,16 @@ enum DocumentSortField: String, Codable {
 }
 
 
-enum DocumentSortDirection: String, Codable {
+enum SortDirection: String, Codable {
     case ascending
     case descending
 }
 
 struct DocumentSortOption: Codable, Equatable  {
     let field: DocumentSortField
-    let direction: DocumentSortDirection
+    let direction: SortDirection
 }
+
 
 enum DocumentSortStore {
     private static let key = "document_sort_option"

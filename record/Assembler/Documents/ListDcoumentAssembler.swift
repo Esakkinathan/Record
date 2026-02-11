@@ -11,7 +11,7 @@ import UIKit
 
 enum ListDocumentAssembler {
     
-    static func makeListDocumentScreen() -> UIViewController {
+    static func make() -> UIViewController {
         
         let vc = ListDocumentViewController()
         let repo = DocumentRepository()

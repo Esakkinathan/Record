@@ -6,6 +6,8 @@
 //
 
 protocol ListPasswordProtocol {
+    var isFavoriteSelected: Bool {get}
+    var currentSort: PasswordSortOption { get }
     func numberOfPasswords() -> Int
     func password(at index: Int) -> Password
     func didSelectedRow(at index: Int)
@@ -15,6 +17,10 @@ protocol ListPasswordProtocol {
     func viewDidLoad()
     func exitPassoword()
     func extendSession()
+    func didSelectSortField(_ field: PasswordSortField)
+    func didSelectedFavourite()
+    func search(text: String?)
+    func deletePassword(index: Int)
 }
 
 protocol ListPasswordViewDelegate: AnyObject {
@@ -23,6 +29,7 @@ protocol ListPasswordViewDelegate: AnyObject {
     func updateTimer(_ time: String)
     func showExitPrompt(expired: Bool)
     func dismiss()
+    func refreshSortMenu()
 }
 
 protocol ListPasswordRouterProtocol {

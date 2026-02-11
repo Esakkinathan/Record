@@ -38,7 +38,8 @@ class AppTextField: UITextField {
         textColor = .label
         setLeftPadding(12)
         setRightPadding(12)
-        //borderStyle = .
+        autocorrectionType = .no
+        spellCheckingType = .no
 
     }
     

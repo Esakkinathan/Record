@@ -5,22 +5,6 @@
 //  Created by Esakkinathan B on 03/02/26.
 //
 
-enum PasswordFormFieldType {
-    case title
-    case username
-    case password
-    case button
-}
-
-struct PasswordFormField {
-    let label: String
-    let placeholder: String?
-    let type: PasswordFormFieldType
-    let validators: [ValidationRules]
-    var value: Any?
-    var returnType: UIReturnKeyType
-    var keyboardMode: UIKeyboardType
-}
 
 import UIKit
 
@@ -49,8 +33,8 @@ class AddPasswordViewController: UIViewController {
     func setUpNavigationBar() {
         title = presenter.title
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.cancel, style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
-        navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.save, style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
+        navigationItem .rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.checkmark), style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
     }
 
     @objc func cancelClicked() {
@@ -113,8 +97,6 @@ extension AddPasswordViewController: UITableViewDataSource {
         return cell
     }
     
-    
-    
 }
 
 extension AddPasswordViewController {
@@ -132,7 +114,7 @@ extension AddPasswordViewController {
 
     }
     
-    func textFieldCell(_ indexPath: IndexPath, _ field: PasswordFormField) -> FormTextField{
+    func textFieldCell(_ indexPath: IndexPath, _ field: PasswordFormField) -> FormTextField {
         
         var cell = tableView.dequeueReusableCell(withIdentifier: FormTextField.identifier, for: indexPath) as! FormTextField
         cell = configureCell(cell: cell, field: field, indexPath: indexPath)
@@ -182,6 +164,12 @@ extension AddPasswordViewController: AddPasswordViewDelegate {
     func reloadData() {
         tableView.reloadData()
     }
+    func showError(_ message: String?) {
+        if let msg = message {
+            showToast(message: msg, type: .error)
+        }
+    }
+
 }
 
 
@@ -194,5 +182,4 @@ extension AddPasswordViewController: DocumentNavigationDelegate {
         vc.preferredContentSize = .init(width: 200, height: 500)
         present(vc, animated: true)
     }
-
 }

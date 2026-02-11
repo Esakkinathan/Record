@@ -17,7 +17,7 @@ final class PinButton: UIButton {
         backgroundColor = .secondarySystemBackground
         heightAnchor.constraint(equalToConstant: 80).isActive = true
         widthAnchor.constraint(equalToConstant: 80).isActive = true
-        configuration = .clearGlass()
+        configuration = .glass()
     }
 
     required init?(coder: NSCoder) { fatalError() }

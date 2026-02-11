@@ -12,16 +12,16 @@ protocol DatabaseProtocol {
     func insertInto(tableName: String, values: [TableColumnName: TableColumnValue])
     func updateInto(data: Persistable)
     func delete(table name: String, id: Int)
+    func updateNotes(table name: String, id: Int, text: String?, date : Date)
 }
 
 protocol DocumentDatabaseProtocol: DatabaseProtocol {
     func fetchDocuments() -> [Document]
-    func updateNotes(table name: String, id: Int, text: String?, date : Date)
+    
 }
 
 protocol PasswordDatabaseProtocol: DatabaseProtocol {
-    func updateNotes(table name: String, id: Int, text: String?, date : Date)
-    func toggle(table name: String, id: Int, value: Bool)
+    func toggle(table name: String, id: Int, value: Bool, lastModified: Date)
     func fetchPasswords() -> [Password]
     
 }
@@ -31,6 +31,17 @@ protocol MasterPasswordDatabaseProtocol: DatabaseProtocol {
     func fetchPassword(table name: String) -> String?
 }
 
+
+protocol MedicalDatabaseProtocol: DatabaseProtocol {
+    var database: VTDatabase {get}
+    func fetchMedical() -> [Medical]
+}
+
+
+protocol MedicalItemDatabaseProtocol: DatabaseProtocol {
+    func createTable()
+    func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem]
+}
 import VTDB
 import SQLCipher
 
@@ -179,11 +190,11 @@ class DatabaseAdapter: DatabaseProtocol {
             print(error)
         }
     }
-    func toggle(table name: String, id: Int, value: Bool) {
+    func toggle(table name: String, id: Int, value: Bool,lastModified: Date) {
         do {
             try database.writeInTransaction { db in
-                let sql = "UPDATE \(name) SET isFavorite = ? WHERE id = ?"
-                try db.execute(sql, [value,id])
+                let sql = "UPDATE \(name) SET isFavorite = ?, lastModified = ? WHERE id = ?"
+                try db.execute(sql, [value,lastModified,id])
                 return .commit
             }
         } catch {
@@ -248,7 +259,7 @@ extension DatabaseAdapter: MasterPasswordDatabaseProtocol {
     func deleteAll(table name: String) {
         do {
             try database.writeInTransaction { db in
-                let sql = "TRUNCATE TABLE \(name);"
+                let sql = "DELETE FROM \(name);"
                 try db.execute(sql)
                 return .commit
             }
@@ -260,7 +271,7 @@ extension DatabaseAdapter: MasterPasswordDatabaseProtocol {
         var password: String?
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Password.databaseTableName)")
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MasterPasswordRepository.tableName)")
                 for row in rows {
                     password = row[Password.passwordC]
                 }
@@ -270,4 +281,103 @@ extension DatabaseAdapter: MasterPasswordDatabaseProtocol {
         }
         return password
     }
+}
+
+extension DatabaseAdapter: MedicalDatabaseProtocol {
+    func fetchMedical() -> [Medical] {
+        var medicals: [Medical] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medical.databaseTableName)")
+                for row in rows {
+                    let id: Int = row[Medical.idC]
+                    let title: String = row[Medical.titleC]
+                    let type: MedicalType = MedicalType(rawValue: row[Medical.typeC]) ?? .checkup
+                    let hospital: String? = row[Medical.hospitalC]
+                    let doctor: String? = row[Medical.doctorC]
+                    let date: Date? = row[Medical.dateC]
+                    let createdAt: Date = row[Medical.createdAtC]
+                    let lastModified: Date = row[Medical.lastModifiedC]
+                    let notes: String? = row[Medical.notesC]
+                    medicals.append(Medical(id: id, title: title, type: type, hospital: hospital, doctor: doctor,date: date,createdAt: createdAt, lastModified: lastModified,notes: notes))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return medicals
+    }
+    
+}
+
+extension DatabaseAdapter: MedicalItemDatabaseProtocol {
+    
+    func createTable() {
+        
+//        do {
+//            try database.writeInTransaction { db in
+//                let sql = "DROP TABLE \(MedicalItem.databaseTableName);"
+//                try db.execute(sql)
+//                return .commit
+//            }
+//        } catch {
+//            print(error)
+//        }
+
+        let sql = """
+                CREATE TABLE IF NOT EXISTS \(MedicalItem.databaseTableName) (
+                \(MedicalItem.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(MedicalItem.medicalC) INTEGER NOT NULL,
+                \(MedicalItem.kindC) TEXT NOT NULL,
+                \(MedicalItem.nameC) TEXT NOT NULL,
+                \(MedicalItem.instructionC) TEXT NOT NULL,
+                \(MedicalItem.dosageC) TEXT NOT NULL,
+                \(MedicalItem.sheduleC) TEXT NOT NULL,
+                \(MedicalItem.durationC) INTEGER NOT NULL,
+                \(MedicalItem.durationTypeC) TEXT NOT NULL,
+
+                FOREIGN KEY (\(MedicalItem.medicalC))
+                REFERENCES \(Medical.databaseTableName)(\(Medical.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
+        do {
+            try database.writeInTransaction { db in
+                try db.execute(sql)
+                return .commit
+            }
+
+        } catch {
+            print(error)
+        }
+    }
+
+    func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem] {
+        var medicalItems: [MedicalItem] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalItem.databaseTableName) WHERE \(MedicalItem.medicalC) = ? AND \(MedicalItem.kindC) = ? ",parameters: [id, kind.rawValue])
+                for row in rows {
+                    let id: Int = row[MedicalItem.idC]
+                    let medical: Int = row[MedicalItem.medicalC]
+                    let kind: MedicalKind = MedicalKind(rawValue: row[MedicalItem.kindC]) ?? MedicalKind.tablet
+                    let name: String = row[MedicalItem.nameC]
+                    let instruction: String = row[MedicalItem.instructionC]
+                    let medicalInstruction = MedicalInstruction.valueOf(instruction)
+                    let dosage: String = row[MedicalItem.dosageC]
+                    let schedule: String = row[MedicalItem.sheduleC]
+                    let medicalScedule: [MedicalSchedule] = .from(dbValue: schedule)
+                    let duration: Int = row[MedicalItem.durationC]
+                    let durationType: String = row[MedicalItem.durationTypeC]
+                    let medicalDurationType = DurationType.valueOf(input: durationType)
+                    medicalItems.append(MedicalItem(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, shedule: medicalScedule, duration: duration, durationType: medicalDurationType))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return medicalItems
+    }
+
 }

@@ -92,9 +92,6 @@ struct PasswordGenerator {
          navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.cancel, style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
          navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.apply, style: AppConstantData.buttonStyle, target: self, action: #selector(applyButtonClicked))
      }
-
-     
-     
     func setUpContents() {
         lengthSlider.minimumValue = 6
         lengthSlider.maximumValue = 20
@@ -126,7 +123,6 @@ struct PasswordGenerator {
         
         copyButton.addTarget(self, action: #selector(copyButtonClicked), for: .touchUpInside)
         regenerateButton.addTarget(self, action: #selector(regenerateButtonClicked), for: .touchUpInside)
-        
         
         view.add(stackView)
         

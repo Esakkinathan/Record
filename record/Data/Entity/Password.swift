@@ -73,3 +73,34 @@ class Password: Persistable {
 
 
 }
+
+enum PasswordSortField: String, Codable {
+    case title
+    case createdAt
+    case updatedAt
+}
+
+struct PasswordSortOption: Codable, Equatable  {
+    let field: PasswordSortField
+    let direction: SortDirection
+}
+
+
+enum PasswordSortStore {
+    private static let key = "password_sort_option"
+
+    static func load() -> PasswordSortOption {
+        guard
+            let data = UserDefaults.standard.data(forKey: key),
+            let option = try? JSONDecoder().decode(PasswordSortOption.self, from: data)
+        else {
+            return PasswordSortOption(field: .title, direction: .ascending)
+        }
+        return option
+    }
+
+    static func save(_ option: PasswordSortOption) {
+        let data = try? JSONEncoder().encode(option)
+        UserDefaults.standard.set(data, forKey: key)
+    }
+}

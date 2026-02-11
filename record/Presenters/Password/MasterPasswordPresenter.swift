@@ -5,6 +5,13 @@
 //  Created by Esakkinathan B on 06/02/26.
 //
 
+enum PinFlow {
+    case verify(existingPin: String)
+    case createFirst
+    case createConfirm(firstPin: String)
+}
+
+
 class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
     
     weak var view: MasterPasswordViewDelegate?
@@ -12,21 +19,22 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
     private let maxPinLength = 6
     private var enteredPin: String = ""
 
-    private var storedPin: String? = "123456"
     let router: MasterPasswordRouterProtocol
     var useCase: MasterPasswordUseCase
-    
+    var flow: PinFlow
     init(view: MasterPasswordViewDelegate? = nil, router: MasterPasswordRouterProtocol, useCase: MasterPasswordUseCase) {
         self.view = view
         self.router = router
         self.useCase = useCase
-        setUpPassword()
+        if let savedPin = useCase.fetch(), !savedPin.isEmpty{
+            self.flow = .verify(existingPin: savedPin)
+            view?.showInfo("Enter PIN")
+        } else {
+            self.flow = .createFirst
+            view?.showInfo("Create new PIN")
+        }
     }
     
-    func setUpPassword() {
-        storedPin = useCase.fetch()
-        guard let pin = storedPin else { return }
-    }
     
     func didTapNumber(_ number: Int) {
         guard enteredPin.count < maxPinLength else { return }
@@ -34,7 +42,7 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
         view?.updateDots(count: enteredPin.count)
 
         if enteredPin.count == maxPinLength {
-            validatePin()
+            handlePin()
         }
 
     }
@@ -49,21 +57,61 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
     func didTapExit() {
         view?.dismiss()
     }
-    func validatePin() {
-        if enteredPin == storedPin {
-            PasswordSessionManager.shared.authenticate()
-            openListPasswordScreen()
-        } else {
-            view?.showError("Incorrect PIN")
-            enteredPin = ""
-            view?.clearPin()
-        }
-    }
+    
+    
     func openListPasswordScreen() {
         router.openListPasswordVC()
     }
+    
     func didClickClear() {
+        resetPin()
+    }
+}
+
+extension MasterPasswordPresenter {
+    func resetPin() {
         enteredPin = ""
         view?.clearPin()
+    }
+    
+    func validatePin(_ existingPin: String) {
+        if enteredPin == existingPin {
+            resetPin()
+            PasswordSessionManager.shared.authenticate()
+            openListPasswordScreen()
+        } else {
+            view?.showToastVC(message: "Incorrect PIN", type: .error)
+            resetPin()
+        }
+    }
+    
+    func handlePin() {
+        switch flow {
+        case .verify(let existingPin):
+            validatePin(existingPin)
+        case .createFirst:
+            flow = .createConfirm(firstPin: enteredPin)
+            resetPin()
+            view?.showInfo("Enter PIN Again")
+        case .createConfirm(let firstPin):
+            confirmPin(firstPin)
+        }
+    }
+    
+    func confirmPin(_ firstPin: String) {
+        if enteredPin == firstPin {
+            useCase.add(enteredPin)
+            resetPin()
+            view?.showInfo("Enter PIN")
+            flow = .verify(existingPin: enteredPin)
+            PasswordSessionManager.shared.authenticate()
+            
+            router.openListPasswordVC()
+        } else {
+            view?.showToastVC(message: "PINs do not match. Try again.", type: .error)
+            flow = .createFirst
+            resetPin()
+            view?.showInfo("Create new PIN")
+        }
     }
 }

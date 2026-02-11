@@ -44,7 +44,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
     
     func setUpNavigationBar() {
         title = presenter.title
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: AppConstantData.edit, style: AppConstantData.buttonStyle, target: self, action: #selector(editDocument))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editDocument))
         navigationItem.backButtonDisplayMode = .minimal
     }
     
@@ -110,6 +110,7 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
                 isEditing: isEditable
             )
             header.onEditButtonClicked = { [weak self] isEditing in
+                self?.view.endEditing(isEditing)
                 self?.presenter.toggleNotesEditing(isEditing)
             }
             return header

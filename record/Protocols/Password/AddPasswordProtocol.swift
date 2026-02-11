@@ -19,6 +19,7 @@ protocol AddPasswordPresenterProtocol {
 protocol AddPasswordViewDelegate: AnyObject {
     var onEdit: ((Password) -> Void)? { get set }
     var onAdd: ((Password) -> Void)? { get set}
+    func showError(_ message: String?) 
     func reloadData()
     func dismiss()
 }

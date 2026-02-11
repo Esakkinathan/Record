@@ -16,11 +16,13 @@ class FormSelectField: FormFieldCell {
         label.font = AppFont.body
         label.textColor = .label
         label.textAlignment = .right
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
     let arrowImageView: UIImageView = {
        let imgView = UIImageView()
-        imgView.image = UIImage(systemName: IconName.greaterThan)
+        imgView.image = UIImage(systemName: IconName.arrowRight)
         imgView.contentMode = .scaleAspectFit
         imgView.tintColor = AppColor.primaryColor
         return imgView
@@ -67,22 +69,11 @@ class FormSelectField: FormFieldCell {
         NSLayoutConstraint.activate([
             stack.bottomAnchor.constraint(equalTo: errorLabel.topAnchor ),
             stack.centerYAnchor.constraint(equalTo: rightView.centerYAnchor, ),
-            stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width ),
+            stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width * 2 ),
         ])
     }
     @objc func didTapValue() {
         onSelectClicked?()
     }
-    
-    //    func register(tableView: UITableView) {
-    //        tableView.register(FormSelectField.self, forCellReuseIdentifier: identifier)
-    //    }
-    //
-    //    func dequeue(tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
-    //        let cell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
-    //        return cell
-    //    }
-
-
     
 }

@@ -27,7 +27,7 @@ enum FormSpacing {
 
 enum AppConstantData {
     
-    static let passwordSession: Int = 10
+    static let passwordSession: Int = 300
     
     static let apply = "Apply"
     
@@ -59,7 +59,13 @@ enum IconName {
     
     static let share = "square.and.arrow.up"
     
+    static let cancel = "xmark"
+    
     static let copy = "square.on.square"
+    
+    static let checkmark = "checkmark"
+    
+    static let edit = "pencil"
     
     static let emptyDocument = "doc"
     
@@ -77,7 +83,7 @@ enum IconName {
     
     static let replace = "pencil.circle"
     
-    static let greaterThan = "greaterthan"
+    static let arrowRight = "chevron.right"
     
     static let x = "xmark.circle.fill"
     

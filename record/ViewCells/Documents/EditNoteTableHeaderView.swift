@@ -22,8 +22,8 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
     let editButton: UIButton = {
         let button = UIButton(type: .system)
         button.titleLabel?.numberOfLines = 1
-        button.setTitle(AppConstantData.edit, for: .normal)
-        button.setTitle(AppConstantData.save, for: .selected)
+        button.setImage(UIImage(systemName: IconName.edit), for: .normal)
+        button.setImage(UIImage(systemName: IconName.checkmark), for: .selected)
         button.configuration = AppConstantData.buttonConfiguration
         return button
     }()
@@ -59,7 +59,7 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
             editButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -PaddingSize.height ),
             editButton.topAnchor.constraint(equalTo: contentView.topAnchor),
             editButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            editButton.widthAnchor.constraint(equalToConstant: 100)
+            //editButton.widthAnchor.constraint(equalToConstant: 100)
         ])
 
         editButton.addTarget(self, action: #selector(editButtonClicked), for: .touchUpInside)
@@ -74,9 +74,6 @@ class EditNoteTableHeaderView: UITableViewHeaderFooterView {
 
     @objc private func editButtonClicked() {
         editButton.isSelected.toggle()
-        UIView.animate(withDuration: 0.25) {
-                self.layoutIfNeeded()
-            }
         onEditButtonClicked?(editButton.isSelected)
     }
 

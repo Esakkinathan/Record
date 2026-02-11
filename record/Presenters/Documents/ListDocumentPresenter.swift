@@ -9,7 +9,7 @@
 import Foundation
 import CoreGraphics
 
-class ListDocumentPresenter: ListDocumentProtocol {
+class ListDocumentPresenter: ListDocumentPresenterProtocol {
         
     weak var view: ListDocumentViewDelegate?
     let router: ListDocumentRouterProtocol
@@ -19,9 +19,9 @@ class ListDocumentPresenter: ListDocumentProtocol {
     let deleteUseCase: DeleteDocumentUseCase
     let fetchUseCase: FetchDocumentsUseCase
     let updateNotesUseCase: UpdateDocumentNotesUseCase
+    
     var documentList: [Document] = []
     var filteredDocuments: [Document] = []
-    var selectedSegmentIndex = 0
     var isSearching = false
     var currentSort: DocumentSortOption
     var visibleDocuments: [Document] = []
@@ -50,6 +50,112 @@ class ListDocumentPresenter: ListDocumentProtocol {
         loadDocuments()
     }
     
+    func numberOfRows() -> Int {
+        return currentDocuments().count
+    }
+
+    
+}
+
+extension ListDocumentPresenter {
+    func document(at index: Int) -> Document {
+        return currentDocuments()[index]
+    }
+    
+    func addDocument(_ document: Document) {
+        addUseCase.execute(document: document)
+        loadDocuments()
+    }
+
+    func updateDocument(document: Document) {
+        updateUseCase.execute(document: document)
+        loadDocuments()
+    }
+    
+    func deleteDocument(at index: Int) {
+        let document = currentDocuments()[index]
+        deleteUseCase.execute(id: document.id)
+        loadDocuments()
+    }
+    
+        
+    func loadDocuments() {
+        documentList = fetchUseCase.execute()
+        applySort()
+    }
+    
+    func updateNotes(text: String?, id: Int) {
+        updateNotesUseCase.execute(text: text,id: id)
+        loadDocuments()
+    }
+
+
+}
+
+
+extension ListDocumentPresenter {
+    private func currentDocuments() -> [Document] {
+        return isSearching ?  filteredDocuments : visibleDocuments
+    }
+
+    
+    func search(text: String?) {
+        guard let text, !text.isEmpty else {
+            isSearching = false
+            view?.reloadData()
+            return
+        }
+        
+        isSearching = true
+        let value = text.prepareSearchWord()
+        filteredDocuments = visibleDocuments.filter {
+            $0.name.filterForSearch(value) ||
+            $0.number.filterForSearch(value)
+        }
+        view?.reloadData()
+    }
+    
+}
+
+extension ListDocumentPresenter {
+    
+    func gotoAddDocumentScreen() {
+        router.openAddDocumentVC(mode: .add) { [weak self] document in
+            self?.addDocument(document)
+        }
+    }
+    
+    func shareDocument(at index: Int) {
+        let document = document(at: index)
+        guard let path = document.file else { return }
+        router.openShareDocumentVC(filePath: path)
+    }
+
+    
+    func didSelectedRow(at index: Int) {
+        let document = document(at: index)
+        router.openDetailDocumentVC(document: document,onUpdate: { [weak self] updatedDoc in
+            self?.updateDocument(document: updatedDoc)
+        }, onUpdateNotes: { [weak self] text, id in
+            self?.updateNotes(text: text, id: id)
+            }
+        )
+    }
+    
+    
+    func shareDocumentWithLock(at index: Int, password: String) {
+        let document = document(at: index)
+        guard let path = document.file else { return }
+        let lockedUrl = createPasswordProtectedPDF(password: password,sourceURL: URL(filePath: path))
+        if let lockedUrlPath = lockedUrl {
+            router.openShareDocumentVC(filePath: lockedUrlPath.path)
+        }
+        
+    }
+
+}
+
+extension ListDocumentPresenter {
     
     func didSelectSortField(_ field: DocumentSortField) {
         if currentSort.field == field {
@@ -111,97 +217,10 @@ class ListDocumentPresenter: ListDocumentProtocol {
         view?.reloadData()
 
     }
-    
-    func getSelectedSegement() -> Int {
-        return selectedSegmentIndex
-    }
-        
-    func numberOfRows() -> Int {
-        return currentDocuments().count
-    }
 
-    func document(at index: Int) -> Document {
-        return currentDocuments()[index]
-    }
-    
-    func addDocument(_ document: Document) {
-        addUseCase.execute(document: document)
-        loadDocuments()
-    }
+}
 
-    func updateDocument(document: Document) {
-        updateUseCase.execute(document: document)
-        loadDocuments()
-    }
-    
-    func deleteDocument(at index: Int) {
-        let document = currentDocuments()[index]
-        deleteUseCase.execute(id: document.id)
-        loadDocuments()
-    }
-    
-    private func currentDocuments() -> [Document] {
-        return isSearching ?  filteredDocuments : visibleDocuments
-    }
-        
-    func loadDocuments() {
-        documentList = fetchUseCase.execute()
-        applySort()
-    }
-    
-    func gotoAddDocumentScreen() {
-        router.openAddDocumentVC(mode: .add) { [weak self] document in
-            self?.addDocument(document)
-        }
-    }
-    
-    func shareDocument(at index: Int) {
-        let document = document(at: index)
-        guard let path = document.file else { return }
-        router.openShareDocumentVC(filePath: path)
-    }
-
-    func updateNotes(text: String?, id: Int) {
-        updateNotesUseCase.execute(text: text,id: id)
-        loadDocuments()
-    }
-    
-    func didSelectedRow(at index: Int) {
-        let document = document(at: index)
-        router.openDetailDocumentVC(document: document,onUpdate: { [weak self] updatedDoc in
-            self?.updateDocument(document: updatedDoc)
-        }, onUpdateNotes: { [weak self] text, id in
-            self?.updateNotes(text: text, id: id)
-            }
-        )
-    }
-    
-    func search(text: String?) {
-        guard let text, !text.isEmpty else {
-            isSearching = false
-            view?.reloadData()
-            return
-        }
-        
-        isSearching = true
-        let value = text.prepareSearchWord()
-        filteredDocuments = visibleDocuments.filter {
-            $0.name.filterForSearch(value) ||
-            $0.number.filterForSearch(value)
-        }
-        view?.reloadData()
-    }
-    
-    
-    func shareDocumentWithLock(at index: Int, password: String) {
-        let document = document(at: index)
-        guard let path = document.file else { return }
-        let lockedUrl = createPasswordProtectedPDF(password: password,sourceURL: URL(filePath: path))
-        if let lockedUrlPath = lockedUrl {
-            router.openShareDocumentVC(filePath: lockedUrlPath.path)
-        }
-        
-    }
+extension ListDocumentPresenter {
     func createPasswordProtectedPDF(password: String, sourceURL: URL) -> URL? {
         let lockedFileName = "Locked-\(sourceURL.lastPathComponent)"
         let lockedURL = FileManager.default.temporaryDirectory
@@ -257,4 +276,3 @@ class ListDocumentPresenter: ListDocumentProtocol {
     }
 
 }
-
