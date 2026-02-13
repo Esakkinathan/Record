@@ -39,8 +39,6 @@ class ListPasswordCell: UITableViewCell {
                 UIImage(systemName: IconName.starFill, withConfiguration: config),
                 for: .selected
             )
-            //button.tintColor = AppColor.primaryColor
-            //button.backgroundColor = .clear
             button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         }
         return button
@@ -76,7 +74,4 @@ class ListPasswordCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    
-
 }

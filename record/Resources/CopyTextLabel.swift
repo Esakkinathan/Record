@@ -7,22 +7,23 @@
 import UIKit
 
 
+
 class CopyTextLabel: UIView {
     let textLabel: UILabel = {
         let label = UILabel()
-        label.font = AppFont.small
-        label.layer.cornerRadius = 20
-        label.backgroundColor = .secondarySystemBackground
+        label.font = AppFont.verysmall
+        label.layer.cornerRadius = PaddingSize.cornerRadius
+        //label.backgroundColor = .secondarySystemBackground
         label.labelSetUp()
         return label
     }()
-    let copyButton: UIImageView = {
-        let imgView = UIImageView(image: UIImage(systemName: IconName.copy))
-        imgView.contentMode = .scaleAspectFit
-        imgView.isUserInteractionEnabled = true
-        return imgView
+    lazy var button: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle("", for: .normal)
+        btn.showsMenuAsPrimaryAction = true
+        return btn
     }()
-    
+
     var text: String? {
         get {
             return textLabel.text
@@ -41,31 +42,52 @@ class CopyTextLabel: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    func setUpContents() {        
-        let stackView: UIStackView = {
-            let stack = UIStackView(arrangedSubviews: [textLabel,copyButton])
-            stack.axis = .horizontal
-            stack.alignment = .center
-            stack.distribution = .fill
-            stack.spacing = PaddingSize.content
-            return stack
-        }()
-        add(stackView)
+    func setUpContents() {
+        let contentView = UIView()
+        contentView.add(textLabel)
+        contentView.backgroundColor = .secondarySystemBackground
+        contentView.layer.cornerRadius = PaddingSize.cornerRadius
         
-        let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(copyToClipBoard))
-        copyButton.addGestureRecognizer(tapRecognizer)
-    
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            textLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.content),
+            textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content),
+            textLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.content),
+            textLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.content)
         ])
+        
+        add(contentView)
+        add(button)
+        
+        NSLayoutConstraint.activate([
+            contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentView.topAnchor.constraint(equalTo: topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            contentView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            
+            button.leadingAnchor.constraint(equalTo: leadingAnchor),
+            button.topAnchor.constraint(equalTo: topAnchor),
+            button.bottomAnchor.constraint(equalTo: bottomAnchor),
+            button.trailingAnchor.constraint(equalTo: trailingAnchor),
+            
+            
+            //contentView.heightAnchor.constraint(equalTo: copyButton.heightAnchor),
+        ])
+        
+        updateMenu()
     }
         
+    func updateMenu() {
+        let copyAction = UIAction(title: "Copy", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+            self?.copyToClipBoard()
+        }
+        
+        button.menu = UIMenu(title: "", children: [copyAction])
+
+    }
+    
     @objc func copyToClipBoard() {
-        copyButton.animateScaleUp()
-        copyButton.animateScaleDown()
+        //copyButton.animateScaleUp()
+        //copyButton.animateScaleDown()
         if let textToCopy = textLabel.text {
             UIPasteboard.general.string = textToCopy
         }

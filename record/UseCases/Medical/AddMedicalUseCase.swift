@@ -5,7 +5,11 @@
 //  Created by Esakkinathan B on 08/02/26.
 //
 
-class AddMedicalUseCase {
+protocol AddMedicalUseCaseProtocol {
+    func execute(medical: Medical)
+}
+
+class AddMedicalUseCase: AddMedicalUseCaseProtocol {
     private let repository: MedicalRepositoryProtocol
     
     init(repository: MedicalRepositoryProtocol) {

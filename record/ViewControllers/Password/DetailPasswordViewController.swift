@@ -14,6 +14,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.separatorStyle = .singleLine
         tableView.keyboardDismissMode = .onDrag
+        //tableView.backgroundColor = AppColor.background
         return tableView
     }()
     
@@ -31,6 +32,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = AppColor.background
         setUpContent()
         setUpNavigationBar()
         hideKeyboardWhenTappedAround()

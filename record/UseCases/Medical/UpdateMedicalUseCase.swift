@@ -4,8 +4,10 @@
 //
 //  Created by Esakkinathan B on 08/02/26.
 //
-
-class UpdateMedicalUseCase {
+protocol UpdateMedicalUseCaseProtocol {
+    func execute(medical: Medical)
+}
+class UpdateMedicalUseCase: UpdateMedicalUseCaseProtocol {
     private let repository: MedicalRepositoryProtocol
     
     init(repository: MedicalRepositoryProtocol) {
@@ -18,7 +20,12 @@ class UpdateMedicalUseCase {
 
 }
 
-class UpdateMedicalNotesUseCase {
+protocol UpdateMedicalNotesUseCaseProtocol {
+    func execute(text: String?, id: Int)
+}
+
+
+class UpdateMedicalNotesUseCase: UpdateMedicalNotesUseCaseProtocol {
     private let repository: MedicalRepositoryProtocol
     
     init(repository: MedicalRepositoryProtocol) {

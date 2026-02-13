@@ -170,24 +170,12 @@ enum DocumentFormMode: FormMode {
     }
 }
 
-enum PasswordFormMode: FormMode {
-    case add
-    case edit(Password)
-    
-    var navigationTitle: String {
-        switch self {
-        case .add: return "Add Password"
-        case .edit: return "Edit Password"
-        }
-    }
-
-}
 
 enum DocumentSortField: String, Codable {
-    case name
-    case createdAt
-    case updatedAt
-    case expiryDate
+    case name = "Name"
+    case createdAt = "Created At"
+    case updatedAt = "Recent"
+    case expiryDate = "Expiry Date"
 }
 
 

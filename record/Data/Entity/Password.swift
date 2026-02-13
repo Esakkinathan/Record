@@ -104,3 +104,16 @@ enum PasswordSortStore {
         UserDefaults.standard.set(data, forKey: key)
     }
 }
+
+enum PasswordFormMode: FormMode {
+    case add
+    case edit(Password)
+    
+    var navigationTitle: String {
+        switch self {
+        case .add: return "Add Password"
+        case .edit: return "Edit Password"
+        }
+    }
+
+}

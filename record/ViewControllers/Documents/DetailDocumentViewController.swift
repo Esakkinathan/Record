@@ -56,6 +56,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         
         tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
+        tableView.register(FormCopyLabel.self, forCellReuseIdentifier: FormCopyLabel.identifier)
         tableView.register(TextViewTableViewCell.self, forCellReuseIdentifier: TextViewTableViewCell.identifier)
         tableView.register(EditNoteTableHeaderView.self, forHeaderFooterViewReuseIdentifier: EditNoteTableHeaderView.identifier)
         
@@ -139,10 +140,16 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
             
             cell = newCell
         case .info(let title, let value):
-            
-            let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
-            newCell.configure(title: title, text: value)
-            cell = newCell
+            if title == "Number" {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormCopyLabel.identifier, for: indexPath) as! FormCopyLabel
+                newCell.configure(title: title, text: value)
+                cell = newCell
+            } else {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
+                
+                newCell.configure(title: title, text: value)
+                cell = newCell
+            }
             
         case .notes(let text, let isEditable):
             let newCell = tableView.dequeueReusableCell(withIdentifier: TextViewTableViewCell.identifier, for: indexPath) as! TextViewTableViewCell

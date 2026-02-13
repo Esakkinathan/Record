@@ -7,19 +7,24 @@
 
 import UIKit
 
-class ListDocumentTableViewCell: UITableViewCell {
+
+class ListDocumentViewCell: UICollectionViewCell {
     
     static let identifier = "listDocumentTableViewCell"
     
     let nameLabel: UILabel = {
         let label = UILabel()
         label.adjustsFontSizeToFitWidth = true
-        label.font = AppFont.heading3
+        label.font = AppFont.small
+        label.numberOfLines = 0
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = false
         return label
+        
     }()
     
     let copyLabel = CopyTextLabel()
-    let createdAtLabel: UILabel = {
+    let dateLabel: UILabel = {
         let label = UILabel()
         label.font = AppFont.caption
         label.labelSetUp()
@@ -30,6 +35,9 @@ class ListDocumentTableViewCell: UITableViewCell {
        let but = AppButton()
         but.setImage(UIImage(systemName: IconName.share), for: .normal)
         but.configuration = .clearGlass()
+        but.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        but.heightAnchor.constraint(equalToConstant: 30).isActive = true
+
         return but
     }()
     
@@ -37,23 +45,114 @@ class ListDocumentTableViewCell: UITableViewCell {
         let imgView = UIImageView()
         imgView.image = DocumentConstantData.docImage
         imgView.setAsEmptyDocument()
+        imgView.widthAnchor.constraint(equalToConstant: PaddingSize.previewSize).isActive = true
+        imgView.heightAnchor.constraint(equalToConstant: PaddingSize.previewSize).isActive = true
+
         return imgView
     }()
     
     
     var onShareButtonClicked: (() -> Void)?
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setUpContentView()
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setUpContentViews()
     }
+    
+    var onDeleteClicked: (() -> Void)?
+//    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+//        super.init(style: style, reuseIdentifier: reuseIdentifier)
+//        setUpContentViews()
+//    }
+    
+    
+    func setUpContentViews() {
+        
+        contentView.layer.cornerRadius = PaddingSize.cornerRadius
+        contentView.backgroundColor = .secondarySystemBackground
+        
+        let view2: UIView = {
+            let view = UIView()
+            view.layer.cornerRadius = PaddingSize.cornerRadius
+            view.backgroundColor = AppColor.background
+            return view
+        }()
+
+        let view1: UIView = {
+            let view = UIView()
+            view.layer.cornerRadius = PaddingSize.cornerRadius
+            return view
+        }()
+        
+        
+        
+        view2.add(view1)
+        view2.add(copyLabel)
+        view1.add(nameLabel)
+        view1.add(dateLabel)
+
+        contentView.add(filePreview)
+        contentView.add(shareButton)
+        //contentView.add(view1)
+        contentView.add(view2)
+
+        view2.bringSubviewToFront(view1)
+        
+        NSLayoutConstraint.activate([
+            filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
+            
+            shareButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            shareButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+            
+            view2.topAnchor.constraint(equalTo: filePreview.bottomAnchor, constant: PaddingSize.content),
+            view2.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.content),
+            view2.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.content),
+            view2.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content)
+
+        ])
+        NSLayoutConstraint.activate([
+            nameLabel.topAnchor.constraint(equalTo: view1.topAnchor),
+            nameLabel.leadingAnchor.constraint(equalTo: view1.leadingAnchor),
+            nameLabel.bottomAnchor.constraint(equalTo: view1.bottomAnchor),
+            nameLabel.trailingAnchor.constraint(equalTo: dateLabel.leadingAnchor, constant: PaddingSize.width),
+            
+            dateLabel.trailingAnchor.constraint(equalTo: view1.trailingAnchor),
+            //dateLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            dateLabel.topAnchor.constraint(equalTo: view1.topAnchor),
+            dateLabel.bottomAnchor.constraint(equalTo: view1.bottomAnchor),
+
+        ])
+
+        NSLayoutConstraint.activate([
+            view1.topAnchor.constraint(equalTo: view2.topAnchor, constant: PaddingSize.content),
+            view1.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content),
+            view1.trailingAnchor.constraint(equalTo: view2.trailingAnchor, constant: -PaddingSize.content),
+            
+            copyLabel.topAnchor.constraint(equalTo: view1.bottomAnchor, constant: PaddingSize.content),
+            copyLabel.bottomAnchor.constraint(equalTo: view2.bottomAnchor, constant: -PaddingSize.content),
+            copyLabel.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content),
+            copyLabel.trailingAnchor.constraint(equalTo: view2.trailingAnchor, constant: -PaddingSize.content),
+        ])
+
+        shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
+                
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc func shareButtonClicked() {
+        onShareButtonClicked?()
+    }
+
     
     func setUpContentView() {
         
         let labelsStack = UIStackView(arrangedSubviews: [
             nameLabel,
             copyLabel,
-            createdAtLabel
+            dateLabel
         ])
         labelsStack.axis = .vertical
         labelsStack.spacing = PaddingSize.content
@@ -72,7 +171,7 @@ class ListDocumentTableViewCell: UITableViewCell {
         
         shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
 
-        selectionStyle = .none
+        //selectionStyle = .none
         
         NSLayoutConstraint.activate([
 
@@ -96,7 +195,7 @@ class ListDocumentTableViewCell: UITableViewCell {
     func configure(document: Document) {
         nameLabel.text = document.name
         copyLabel.setText(document.number)  
-        createdAtLabel.text = "Created at: \(document.createdAt.toString())"
+        dateLabel.text = document.createdAt.toString()
         
         if let file = document.file {
             shareButton.isHidden = false
@@ -111,15 +210,14 @@ class ListDocumentTableViewCell: UITableViewCell {
         }
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        filePreview.image = DocumentConstantData.docImage
+        nameLabel.text = ""
+        dateLabel.text = ""
+        copyLabel.setText("")
     }
     
-    
-    @objc func shareButtonClicked() {
-        onShareButtonClicked?()
-    }
-
 }
 
 /*

@@ -19,7 +19,13 @@ class AddUtilityPresenter: FormFieldPresenterProtocol {
     var title: String {
         mode.navigationTitle
     }
-    
+    func buildFields() {
+        let existing = existingUtility()
+        fields = [
+            FormField(label: "Utility", placeholder: "Enter Utility", type: .text, validators: [.required, .maxLength(20)], gotoNextField: false, value: existing?.name, returnType: .done, keyboardMode: .alphabet)
+        ]
+    }
+
     func field(at index: Int) -> FormField {
         return fields[index]
     }
@@ -87,12 +93,6 @@ class AddUtilityPresenter: FormFieldPresenterProtocol {
         buildFields()
     }
     
-    func buildFields() {
-        let existing = existingUtility()
-        fields = [
-            FormField(label: "Utility", placeholder: "Enter Utility", type: .text, validators: [.required, .maxLength(20)], gotoNextField: false, value: existing?.name, returnType: .done, keyboardMode: .alphabet)
-        ]
-    }
     
     func existingUtility() -> Utility? {
         if case let .edit(utility) = mode {
@@ -100,35 +100,6 @@ class AddUtilityPresenter: FormFieldPresenterProtocol {
         }
         return nil
     }
-    
-    func didSelectOption(at index: Int) {
-        //
-    }
-    
-    func selectClicked(at index: Int) {
-        //
-    }
-    
-    func formButtonClicked() {
-        //
-    }
-    
-    func uploadDocument(at index: Int) {
-        //
-    }
-    
-    func viewDocument(at index: Int) {
-        //
-    }
-    
-    func removeDocument(at index: Int) {
-        //
-    }
-    
-    func didPickDocument(url: URL) {
-        //
-    }
-
     
     
 }

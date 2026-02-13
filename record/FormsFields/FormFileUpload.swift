@@ -11,10 +11,12 @@ class FormFileUpload: FormFieldCell {
 
     static let identifier = "FormFileUpload"
     
-    let documentImage = UIImageView(image: DocumentConstantData.docImage)
+    
+    let documentImage = UIImageView(image: UIImage(systemName: "arrow.up.document.fill"))
     
     let addLabel: UILabel = {
         let label = UILabel()
+        label.labelSetUp()
         label.text = DocumentConstantData.addDocument
         label.textColor = AppColor.fileUploadColor
         label.font = AppFont.small
@@ -45,20 +47,20 @@ class FormFileUpload: FormFieldCell {
     }()
     
     lazy var uploadButton: UIButton = {
-            let btn = UIButton(type: .system)
-            btn.setTitle("", for: .normal)
-            btn.showsMenuAsPrimaryAction = true
-            btn.isHidden = false
-            return btn
-        }()
+        let btn = UIButton(type: .system)
+        btn.setTitle("", for: .normal)
+        btn.showsMenuAsPrimaryAction = true
+        btn.isHidden = false
+        return btn
+    }()
         
-        private lazy var previewButton: UIButton = {
-            let btn = UIButton(type: .system)
-            btn.setTitle("", for: .normal)
-            btn.showsMenuAsPrimaryAction = true
-            btn.isHidden = true
-            return btn
-        }()
+    private lazy var previewButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle("", for: .normal)
+        btn.showsMenuAsPrimaryAction = true
+        btn.isHidden = true
+        return btn
+    }()
     
     var onUploadDocument: (() -> Void)?
     var onRemoveDocument: (() -> Void)?
@@ -87,7 +89,7 @@ class FormFileUpload: FormFieldCell {
         uploadView.insertArrangedSubview(documentImage, at: 0)
         uploadView.insertArrangedSubview(addLabel, at: 1)
                 
-        addLabel.text = DocumentConstantData.addDocument
+        addLabel.text = "Upload PDF or Image"
         
         addLabel.textColor = AppColor.fileUploadColor
         
@@ -155,6 +157,15 @@ class FormFileUpload: FormFieldCell {
             DocumentThumbnailProvider.generate(for: path) { [weak self] image in
                 self?.fileImagePreview.image = image ?? self?.documentImage.image
             }
+        }
+    }
+    
+    func configure(title: String, filePath: String?,isRequired: Bool = false) {
+        super.configure(title: title, isRequired: isRequired)
+        if let path = filePath {
+            setDocuments(hasDocument: true, fileUrl: path)
+        } else {
+            setDocuments(hasDocument: false)
         }
     }
     

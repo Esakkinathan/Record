@@ -33,7 +33,7 @@ protocol MasterPasswordDatabaseProtocol: DatabaseProtocol {
 
 
 protocol MedicalDatabaseProtocol: DatabaseProtocol {
-    var database: VTDatabase {get}
+    //var database: VTDatabase {get}
     func fetchMedical() -> [Medical]
 }
 
@@ -42,6 +42,24 @@ protocol MedicalItemDatabaseProtocol: DatabaseProtocol {
     func createTable()
     func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem]
 }
+
+protocol UtilityDatabaseProtocol: DatabaseProtocol {
+    //var database: VTDatabase {get}
+    func fetchUtility() -> [Utility]
+}
+
+protocol UtilityAccountDatabaseProtocol: DatabaseProtocol {
+    func createUtilityAccountTable()
+    func fetchUtilityAccounts(utilityId: Int) -> [UtilityAccount]
+}
+
+protocol BillDatabaseProtocol: DatabaseProtocol {
+    func createBillTable()
+    func markAsPaid(billId: Int, paidDate: Date)
+    func fetchBillByUtilityAccountId(utilityAccoundId: Int, billType: BillType) -> [Bill]
+}
+
+
 import VTDB
 import SQLCipher
 
@@ -380,4 +398,159 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
         return medicalItems
     }
 
+}
+
+
+extension DatabaseAdapter: UtilityDatabaseProtocol {
+    func fetchUtility() -> [Utility] {
+        var utilities: [Utility] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Utility.databaseTableName)")
+                for row in rows {
+                    let id: Int = row[Utility.idC]
+                    let name: String = row[Utility.nameC]
+                    utilities.append(Utility(id: id, name: name))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return utilities
+
+    }
+}
+
+extension DatabaseAdapter: UtilityAccountDatabaseProtocol {
+    
+    func createUtilityAccountTable() {
+        let sql = """
+                CREATE TABLE IF NOT EXISTS \(UtilityAccount.databaseTableName) (
+                \(UtilityAccount.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(UtilityAccount.utilityIdC) INTEGER NOT NULL,
+                \(UtilityAccount.titleC) TEXT NOT NULL,
+                \(UtilityAccount.accountNumberC) TEXT NOT NULL,
+                \(UtilityAccount.providerC) TEXT NOT NULL,
+                \(UtilityAccount.createdAtC) TEXT NOT NULL,
+                \(UtilityAccount.lastModifiedC) TEXT NOT NULL,
+                \(UtilityAccount.notesC) TEXT,
+
+                FOREIGN KEY (\(UtilityAccount.utilityIdC))
+                REFERENCES \(Utility.databaseTableName)(\(Utility.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
+        do {
+            try database.writeInTransaction { db in
+                try db.execute(sql)
+                return .commit
+            }
+
+        } catch {
+            print(error)
+        }
+    }
+    
+    func fetchUtilityAccounts(utilityId: Int) -> [UtilityAccount] {
+        var utilityAccounts: [UtilityAccount] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(UtilityAccount.databaseTableName) WHERE \(UtilityAccount.utilityIdC) = ? ",parameters: [utilityId])
+                
+                for row in rows {
+                    let id: Int = row[UtilityAccount.idC]
+                    let utilityId: Int = row[UtilityAccount.utilityIdC]
+                    let title: String = row[UtilityAccount.titleC]
+                    let accountNumber: String = row[UtilityAccount.accountNumberC]
+                    let providerC: String = row[UtilityAccount.providerC]
+                    let createdAtC: Date = row[UtilityAccount.createdAtC]
+                    let lastModifiedC: Date = row[UtilityAccount.lastModifiedC]
+                    let notes: String? = row[UtilityAccount.notesC]
+                    
+                    utilityAccounts.append(UtilityAccount(id: id, utilityId: utilityId, title: title, accountNumber: accountNumber, provider: providerC, createdAt: createdAtC,lastModified: lastModifiedC, notes:   notes))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return utilityAccounts
+
+    }
+}
+
+extension DatabaseAdapter: BillDatabaseProtocol {
+    func createBillTable() {
+        let sql = """
+                CREATE TABLE IF NOT EXISTS \(Bill.databaseTableName) (
+                \(Bill.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(Bill.utilityAccountIdC) INTEGER NOT NULL,
+                \(Bill.billTypeC) TEXT NOT NULL,
+                \(Bill.amountC) TEXT NOT NULL,
+                \(Bill.dueDateC) TEXT,
+                \(Bill.paidDateC) TEXT,
+                \(Bill.createdAtC) TEXT NOT NULL,
+                \(Bill.lastModifiedC) TEXT NOT NULL,
+                \(Bill.notesC) TEXT,
+
+                FOREIGN KEY (\(Bill.utilityAccountIdC))
+                REFERENCES \(UtilityAccount.databaseTableName)(\(UtilityAccount.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
+        do {
+            try database.writeInTransaction { db in
+                try db.execute(sql)
+                return .commit
+            }
+
+        } catch {
+            print(error)
+        }
+
+    }
+    
+    func fetchBillByUtilityAccountId(utilityAccoundId: Int, billType: BillType) -> [Bill] {
+        var bills: [Bill] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Bill.databaseTableName) WHERE \(Bill.utilityAccountIdC) = ? AND \(Bill.billTypeC) = ? ",parameters: [utilityAccoundId, billType.rawValue])
+                
+                for row in rows {
+                    let id: Int = row[Bill.idC]
+                    let utilityId: Int = row[Bill.utilityAccountIdC]
+                    let type: String = row[Bill.billTypeC]
+                    let billType: BillType = BillType(rawValue: type) ?? .ongoing
+                    let amount: Double = row[Bill.amountC]
+                    let dueDate: Date? = row[Bill.dueDateC]
+                    let paidDate: Date? = row[Bill.paidDateC]
+                    let createdAtC: Date = row[Bill.createdAtC]
+                    let lastModifiedC: Date = row[Bill.lastModifiedC]
+                    let notes: String? = row[Bill.notesC]
+                    
+                    bills.append(Bill(id: id, utilityAccountId: utilityId, amount: amount, billType: billType,dueDate: dueDate, paidDate: paidDate, createdAt: createdAtC, lastModified: lastModifiedC, notes: notes))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return bills
+
+    }
+    
+    func markAsPaid(billId: Int, paidDate: Date) {
+        do {
+            try database.writeInTransaction { db in
+                let sql = "UPDATE \(Bill.databaseTableName) SET \(Bill.paidDateC) = ? , \(Bill.billTypeC) = ? WHERE id = ?"
+                try db.execute(sql, [paidDate,BillType.completed.rawValue,billId])
+                return .commit
+            }
+        } catch {
+            print(error)
+        }
+
+    }
+    
+    
 }

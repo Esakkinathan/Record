@@ -10,11 +10,17 @@ enum PaddingSize {
     
     static let content: CGFloat = 8
     
-    static let copyButtonSize: CGFloat = 30
+    static let copyButtonSize: CGFloat = 25
 
     static let height: CGFloat = 12
     
     static let width: CGFloat = 10
+    
+    static let cornerRadius: CGFloat = 12
+    
+    static let cellSpacing: CGFloat = 30
+    
+    static let previewSize: CGFloat = 80
     
 }
 
@@ -53,9 +59,13 @@ enum AppConstantData {
 
 enum IconName {
     
-    static let star = "heart"
+    static let arrowUp = "arrow.up"
     
-    static let starFill = "heart.fill"
+    static let arrowDown = "arrow.down"
+    
+    static let star = "star"
+    
+    static let starFill = "star.fill"
     
     static let share = "square.and.arrow.up"
     
@@ -72,6 +82,8 @@ enum IconName {
     static let eye = "eye"
     
     static let eyeSlash = "eye.slash"
+
+    static let finance = "creditcard"
     
     static let add = "plus"
     
@@ -80,6 +92,10 @@ enum IconName {
     static let trash = "trash"
     
     static let folder = "folder"
+    
+    static let medical = "medical.thermometer"
+    
+    static let password = "key.shield"
     
     static let replace = "pencil.circle"
     

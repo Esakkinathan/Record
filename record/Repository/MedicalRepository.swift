@@ -75,6 +75,7 @@ class MedicalRepository: MedicalRepositoryProtocol {
     func fetchAll() -> [Medical] {
         return db.fetchMedical()
     }
+    
 }
 
 
@@ -88,16 +89,7 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
 
         db.createTable()
     }
-    static let idC = "id"
-    static let medicalC = "medical"
-    static let kindC = "kind"
-    static let nameC = "name"
-    static let instructionC = "instruction"
-    static let dosageC = "dosage"
-    static let sheduleC = "schedule"
-    static let durationC = "duration"
-    static let durationTypeC = "durationType"
-
+    
     func add(medicalItem: MedicalItem, medicalId: Int) {
         let columns: [String: Any?] = [
             MedicalItem.medicalC: medicalId,

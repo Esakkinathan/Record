@@ -147,7 +147,6 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("did selected row at clicked")
         presenter.didSelectRowAt(indexPath: indexPath)
     }
     

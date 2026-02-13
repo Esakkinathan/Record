@@ -30,6 +30,7 @@ class FormCopyLabel: FormFieldCell {
     override func setUpContentView() {
         
         super.setUpContentView()
+        copyLabel.textLabel.font = AppFont.body
         
         rightView.add(copyLabel)
         NSLayoutConstraint.activate([

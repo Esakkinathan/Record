@@ -18,6 +18,7 @@ class TextViewTableViewCell: UITableViewCell {
         textView.isSelectable = true
         textView.isEditable = false
         textView.clipsToBounds = true
+        textView.autocorrectionType = .no
         textView.contentInset = UIEdgeInsets(top: PaddingSize.content, left: PaddingSize.content, bottom: PaddingSize.content, right: PaddingSize.content)
         return textView
     }()

@@ -250,3 +250,29 @@ enum MedicalItemFormMode: FormMode {
     }
 
 }
+enum BillFormMode {
+    case add
+    case edit(Bill)
+    
+    func title(type: BillType) -> String {
+        switch type {
+        case .ongoing:
+            switch self {
+            case .add:
+                return "Add \(BillType.ongoing.rawValue) Bill"
+            case .edit(let bill):
+                return "Edit \(BillType.ongoing.rawValue) Bill"
+            }
+        case .completed:
+            switch self {
+            case .add:
+                return "Add \(BillType.completed.rawValue) Bill"
+            case .edit(let bill):
+                return "Edit \(BillType.completed.rawValue) Bill"
+            }
+
+        }
+    }
+
+}
+

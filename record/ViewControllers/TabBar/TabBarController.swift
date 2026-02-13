@@ -16,17 +16,22 @@ class TabBarController: UITabBarController {
     }
     
     func setUpContents() {
-        let document = UITab(title: "Documents", image: UIImage(systemName: "doc"), identifier: "document"){ tab in
+        let document = UITab(title: "Documents", image: DocumentConstantData.docImage, identifier: "document"){ tab in
             return UINavigationController(rootViewController: ListDocumentAssembler.make())
         }
         
-        let password = UITab(title: "PassWord", image: UIImage(systemName: "key.shield"), identifier: "post"){ tab in
+        let password = UITab(title: "PassWord", image: UIImage(systemName: IconName.password), identifier: "post"){ tab in
             return UINavigationController(rootViewController: MasterPasswordAssembler.make())
         }
-        let medical = UITab(title: "Medical", image: UIImage(systemName: "medical.thermometer"), identifier: "medical") {_ in 
+        let medical = UITab(title: "Medical", image: UIImage(systemName: IconName.medical), identifier: "medical") {_ in 
             return UINavigationController(rootViewController: ListMedicalAssembler.make())
         }
-        setTabs([document, password, medical], animated: true)
+        
+        let finance = UITab(title: "Finance", image: UIImage(systemName: IconName.finance), identifier: "finance") {_ in
+            return UINavigationController(rootViewController: ListUtilityAssembler.make())
+        }
+        
+        setTabs([document, password, medical, finance], animated: true)
         selectedTab = document
         mode = .tabSidebar
         tabBar.tintColor = AppColor.primaryColor

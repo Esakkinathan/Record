@@ -6,7 +6,7 @@
 //
 
 import UIKit
-
+import VTDB
 enum DocumentFormFieldType {
     case select
     case number
@@ -73,4 +73,64 @@ struct MedicalItemFormField {
     var value: Any?
     var returnType: UIReturnKeyType
     var keyboardMode: UIKeyboardType
+}
+
+enum FormFieldType {
+    case text
+    case password
+    case date
+    case select
+    case textSelect
+    case fileUpload
+    case textView
+    case button
+}
+
+struct FormField {
+    let label: String
+    let placeholder: String?
+    let type: FormFieldType
+    let validators: [ValidationRules]
+    var gotoNextField: Bool
+    var value: Any?
+    var returnType: UIReturnKeyType?
+    var keyboardMode: UIKeyboardType?
+
+}
+
+protocol FormFieldPresenterProtocol {
+    var title: String {get}
+    
+    func field(at index: Int) -> FormField
+    func numberOfFields() -> Int
+    func updateValue(_ value: Any?, at index: Int)
+    func viewDidLoad()
+    func validateText(text: String, index: Int,rules: [ValidationRules]) -> ValidationResult
+    
+    func cancelClicked()
+    func saveClicked()
+}
+    extension FormFieldPresenterProtocol {
+        func didSelectOption(at index: Int){}
+        func selectClicked(at index: Int){}
+        func formButtonClicked(){}
+        
+        func uploadDocument(at index: Int){}
+        func viewDocument(at index: Int){}
+        func removeDocument(at index: Int){}
+        func didPickDocument(url: URL){}
+
+    }
+
+    
+
+protocol FormFieldViewDelegate: AnyObject {
+    var onEdit: ((Persistable) -> Void)? { get set }
+    var onAdd: ((Persistable) -> Void)? { get set}
+    func showError(_ message: String?)
+    func reloadData()
+    func reloadField(at index: Int)
+    func dismiss()
+    func configureToOpenDocument(previewUrl: URL)
+    //var previewurl: URL? {get}
 }

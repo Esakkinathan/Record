@@ -69,6 +69,6 @@ protocol BillRepositoryProtocol {
     func update(bill: Bill)
     func updateNotes(text: String?, id: Int)
     func delete(id: Int)
-    func fetchAll(utilityAccountId: Int) -> [Bill]
-
+    func fetchAll(utilityAccountId: Int, billType: BillType) -> [Bill]
+    func markAsPaid(billId: Int, paidDate: Date)
 }

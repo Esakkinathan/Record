@@ -50,6 +50,7 @@ class AddDocumentViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+
     func setUpNavigationBar() {
         title = presenter.title
         

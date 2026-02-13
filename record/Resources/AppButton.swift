@@ -21,7 +21,7 @@ class AppButton: UIButton {
     
     private func setup() {
         var customConfiguration = UIButton.Configuration.borderedTinted()
-        customConfiguration.cornerStyle = .capsule
+        customConfiguration.cornerStyle = .medium
         configuration = customConfiguration
         
     }

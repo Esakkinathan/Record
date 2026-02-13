@@ -14,7 +14,7 @@ class FormFieldCell: UITableViewCell {
     
     let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = AppFont.body
+        label.font = AppFont.small
         label.textAlignment = .right
         label.labelSetUp()
         return label
@@ -88,7 +88,7 @@ class FormFieldCell: UITableViewCell {
             
             let attributedText = NSMutableAttributedString(
                 string: fullText,
-                attributes: [.font: AppFont.caption]
+                attributes: [.font: AppFont.small]
             )
             attributedText.addAttributes([.foregroundColor: UIColor.systemRed],
                                          range: NSRange(location: 0,

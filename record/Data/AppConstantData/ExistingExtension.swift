@@ -30,7 +30,17 @@ extension UIView {
             self.transform = .identity
         }
     }
-
+    
+    func addDashedBorder() {
+        let border = CAShapeLayer()
+        border.strokeColor = AppColor.primaryColor.cgColor
+        border.lineWidth = 3
+        border.lineDashPattern = [6, 3]
+        border.frame = bounds
+        border.fillColor = nil
+        border.path = UIBezierPath(roundedRect: bounds, cornerRadius: 30).cgPath
+        layer.addSublayer(border)
+    }
 
 }
 

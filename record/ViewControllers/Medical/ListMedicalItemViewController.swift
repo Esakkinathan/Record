@@ -9,7 +9,6 @@ import UIKit
 class ListMedicalItemViewController: UIViewController {
     let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .plain)
-        view.translatesAutoresizingMaskIntoConstraints = false
         view.contentInsetAdjustmentBehavior = .automatic
         view.rowHeight = UITableView.automaticDimension
         view.estimatedRowHeight = 100

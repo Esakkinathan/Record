@@ -56,25 +56,25 @@ extension ListMedicalItemPresenter {
         medicalItems = fetchUseCase.execute(id: medical.id, kind: kind)
     }
     
-    func refreshMedicalInfoSection() {
+    func reLoadDataAndView() {
         loadMedicalItems()
         view?.reloadData()
     }
     
     func addMedicalItem(_ medicalItem: MedicalItem) {
         addUseCase.execute(medicalItem: medicalItem, medicalId: medical.id)
-        refreshMedicalInfoSection()
+        reLoadDataAndView()
     }
     
     func updateMedicalItem(_ medicalItem: MedicalItem) {
         updateUseCase.execute(medicalItem: medicalItem)
-        refreshMedicalInfoSection()
+        reLoadDataAndView()
     }
     
     func deleteMedicalItem(at index: Int) {
         let medicalItem = medicalItems[index]
         deleteUseCase.execute(id: medicalItem.id)
-        refreshMedicalInfoSection()
+        reLoadDataAndView()
     }
     
     func editMedicalItem(at index: Int) {

@@ -8,25 +8,29 @@ import UIKit
 
 class ListDocumentViewController: UIViewController {
     
-    let tableView: UITableView = {
-        let view = UITableView()
-        view.translatesAutoresizingMaskIntoConstraints = false
+    let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumLineSpacing = PaddingSize.cellSpacing
+        layout.minimumInteritemSpacing = PaddingSize.cellSpacing
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.contentInsetAdjustmentBehavior = .automatic
-        view.rowHeight = UITableView.automaticDimension
-        view.estimatedRowHeight = 100
+        view.keyboardDismissMode = .onDrag
+        view.backgroundColor = AppColor.background
         return view
     }()
     
-    let sortButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
-        button.tintColor = .label
-        button.showsMenuAsPrimaryAction = true
-        return button
-    }()
+//    let sortButton: UIButton = {
+//        let button = UIButton(type: .system)
+//        button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
+//        button.tintColor = .label
+//        button.showsMenuAsPrimaryAction = true
+//        return button
+//    }()
     
     let searchController = UISearchController(searchResultsController: nil)
     var presenter: ListDocumentPresenterProtocol!
+    
+    let sortView = SortHeaderView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,11 +42,11 @@ class ListDocumentViewController: UIViewController {
     func setUpNavigationBar() {
         title = DocumentConstantData.document
         navigationController?.navigationBar.isTranslucent = false
-//        let searchButton = UIBarButtonItem(
-//            barButtonSystemItem: .search,
-//            target: self,
-//            action: #selector(openSearch)
-//        )
+        let searchButton = UIBarButtonItem(
+            barButtonSystemItem: .search,
+            target: self,
+            action: #selector(openSearch)
+        )
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
         
         let spacer = UIBarButtonItem(
@@ -52,38 +56,56 @@ class ListDocumentViewController: UIViewController {
         )
         spacer.width = 12
 
-        navigationItem.rightBarButtonItems = [addButton, spacer, UIBarButtonItem(customView: sortButton)]
+        navigationItem.rightBarButtonItems = [searchButton, spacer, addButton]
 
         
         searchController.searchResultsUpdater = self
         //searchController.delegate = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = DocumentConstantData.searchDocument
-        searchController.searchBar.searchBarStyle = .minimal
+        searchController.searchBar.searchBarStyle = .prominent
         //searchController.searchBar.backgroundImage = UIImage()
-        //searchController.searchBar.delegate = self
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
-
+        searchController.searchBar.delegate = self
+        //navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = true
+        //searchController.isActive = false
         definesPresentationContext = true
+        //searchController.searchBar.isHidden = true
     }
     
 
     func setUpContents() {
         
         view.backgroundColor = AppColor.background
-        view.add(tableView)
-        tableView.dataSource = self
-        tableView.delegate = self
+        view.add(sortView)
+        view.add(collectionView)
+        collectionView.dataSource = self
+        collectionView.delegate = self
 
-        tableView.register(ListDocumentTableViewCell.self, forCellReuseIdentifier: ListDocumentTableViewCell.identifier)
+        collectionView.register(ListDocumentViewCell.self, forCellWithReuseIdentifier: ListDocumentViewCell.identifier)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            sortView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.content),
+
+            
+            collectionView.topAnchor.constraint(equalTo: sortView.bottomAnchor,constant: PaddingSize.height),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor, ),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width)
         ])
+    }
+    
+    @objc func openSearch() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.navigationItem.searchController = self?.searchController
+            self?.searchController.isActive = true
+            self?.searchController.searchBar.becomeFirstResponder()
+
+        }
+
+        
     }
         
 }
@@ -108,7 +130,7 @@ extension ListDocumentViewController {
         }
 
         let name = UIAction(
-            title: "Name",
+            title: DocumentSortField.name.rawValue,
             subtitle: subtitle(
                 field: .name,
                 asc: "Ascending",
@@ -120,7 +142,7 @@ extension ListDocumentViewController {
         }
 
         let created = UIAction(
-            title: "Created At",
+            title: DocumentSortField.createdAt.rawValue,
             subtitle: subtitle(
                 field: .createdAt,
                 asc: "Newest to Oldest",
@@ -132,7 +154,7 @@ extension ListDocumentViewController {
         }
 
         let updated = UIAction(
-            title: "Updated At",
+            title: DocumentSortField.updatedAt.rawValue,
             subtitle: subtitle(
                 field: .updatedAt,
                 asc: "Newest to Oldest",
@@ -144,7 +166,7 @@ extension ListDocumentViewController {
         }
 
         let expiry = UIAction(
-            title: "Expiry Date",
+            title: DocumentSortField.expiryDate.rawValue,
             subtitle: subtitle(
                 field: .expiryDate,
                 asc: "Newest to Oldest",
@@ -154,8 +176,9 @@ extension ListDocumentViewController {
         ) { [weak self] _ in
             self?.presenter.didSelectSortField(.expiryDate)
         }
-
-        sortButton.menu = UIMenu(
+        
+        sortView.configure(text: current.field.rawValue, iconName: current.direction == .ascending ? IconName.arrowUp : IconName.arrowDown)
+        sortView.button.menu = UIMenu(
             title: "Sort By",
             children: [name, created, updated, expiry]
         )
@@ -164,6 +187,154 @@ extension ListDocumentViewController {
 
 }
 
+
+extension ListDocumentViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return presenter.numberOfRows()
+    }
+    func collectionView(_ collectionView: UICollectionView,
+                        cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let document = presenter.document(at: indexPath.row)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ListDocumentViewCell.identifier, for: indexPath) as! ListDocumentViewCell
+        cell.configure(document: document)
+        cell.onShareButtonClicked = { [weak self] in
+            self?.shareButtonClicked(indexPath)
+        }
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView,
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        let totalSpacing = PaddingSize.cellSpacing
+        
+        let width = (collectionView.frame.width - totalSpacing) / 2
+        return CGSize(width: width, height: width)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView,
+                        contextMenuConfigurationForItemAt indexPath: IndexPath,
+                        point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        //let item = data[indexPath.item]   // your model
+        
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            
+            let delete = UIAction(title: AppConstantData.delete,
+                                  image: UIImage(systemName: IconName.trash),
+                                  attributes: .destructive) { [weak self] _ in
+                self?.presenter.deleteDocument(at: indexPath.row)
+            }
+            
+            return UIMenu(title: "", children: [delete])
+        }
+    }
+
+    
+
+    @objc func shareButtonClicked(_ indexPath: IndexPath) {
+        
+        let alert = UIAlertController(
+            title: "Share Document",
+            message: "How would you like to share?",
+            preferredStyle: .actionSheet
+        )
+
+        alert.addAction(UIAlertAction(title: "Without Lock", style: .default) { [weak self]_ in
+            self?.presenter.shareDocument(at: indexPath.row)
+        })
+
+        alert.addAction(UIAlertAction(title: "With Lock", style: .default) { [weak self] _ in
+            self?.askForPasswordAndShare(at: indexPath.row)
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        present(alert, animated: true)
+
+    }
+    func askForPasswordAndShare(at index: Int) {
+        let alert = UIAlertController(
+            title: "Set Password",
+            message: "Enter a password to protect the document",
+            preferredStyle: .alert
+        )
+
+        alert.addTextField {
+            $0.placeholder = "Password"
+            $0.isSecureTextEntry = true
+        }
+
+        alert.addTextField {
+            $0.placeholder = "Confirm Password"
+            $0.isSecureTextEntry = true
+        }
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        alert.addAction(UIAlertAction(title: "Share", style: .default) { [weak self]_ in
+            let password = alert.textFields?[0].text ?? ""
+            let confirm = alert.textFields?[1].text ?? ""
+
+            guard !password.isEmpty, password == confirm else {
+                return
+            }
+
+            self?.presenter.shareDocumentWithLock(at: index, password: password)
+        })
+
+        present(alert, animated: true)
+
+    }
+
+
+}
+
+
+extension ListDocumentViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        presenter.didSelectedRow(at: indexPath.row)
+    }
+}
+
+extension ListDocumentViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        presenter.search(text: searchController.searchBar.text)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchController.isActive = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.navigationItem.searchController = nil
+        }
+    }
+}
+
+extension ListDocumentViewController: DocumentNavigationDelegate {
+    
+    func presentVC(_ vc: UIViewController) {
+        present(vc, animated: true)
+    }
+    
+    func push(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+}
+extension ListDocumentViewController: ListDocumentViewDelegate {
+    func reloadData() {
+        collectionView.reloadData()
+    }
+    func refreshSortMenu() {
+        buildSortMenu()
+    }
+}
+
+
+/*
 extension ListDocumentViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -266,36 +437,4 @@ extension ListDocumentViewController: UITableViewDelegate {
     }
 
 }
-extension ListDocumentViewController: UISearchResultsUpdating {
-    
-    func updateSearchResults(for searchController: UISearchController) {
-        presenter.search(text: searchController.searchBar.text)
-    }
-    
-//    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-//        UIView.animate(withDuration: 1) { [weak self] in
-//            self?.navigationItem.searchController = nil
-//        }
-//
-//    }
-}
-
-extension ListDocumentViewController: DocumentNavigationDelegate {
-    
-    func presentVC(_ vc: UIViewController) {
-        present(vc, animated: true)
-    }
-    
-    func push(_ vc: UIViewController) {
-        vc.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(vc, animated: true)
-    }
-}
-extension ListDocumentViewController: ListDocumentViewDelegate {
-    func reloadData() {
-        tableView.reloadData()
-    }
-    func refreshSortMenu() {
-        buildSortMenu()
-    }
-}
+ */

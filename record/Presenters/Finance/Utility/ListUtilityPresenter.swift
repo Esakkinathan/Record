@@ -30,10 +30,10 @@ class ListUtilityPresenter: ListUtilityPresenterProtocol {
         self.router = router
     }
     func viewDidLoad() {
-        loadBills()
+        loadUtilities()
     }
 
-    func loadBills() {
+    func loadUtilities() {
         utilities = fetchUseCase.execute()
     }
     
@@ -42,7 +42,7 @@ class ListUtilityPresenter: ListUtilityPresenterProtocol {
     }
     
     func reLoadDataAndView() {
-        loadBills()
+        loadUtilities()
         view?.reloadData()
     }
     func utility(at index: Int) -> Utility {
@@ -55,7 +55,7 @@ class ListUtilityPresenter: ListUtilityPresenterProtocol {
     }
     
     func deleteUtility(at index: Int) {
-        let utility = utilities[index]
+        let utility = utility(at: index)
         deleteUseCase.execute(id: utility.id)
         reLoadDataAndView()
     }
@@ -64,7 +64,7 @@ class ListUtilityPresenter: ListUtilityPresenterProtocol {
         reLoadDataAndView()
     }
     func editUtility(at index: Int) {
-        let utility = utilities[index]
+        let utility = utility(at: index)
         router.openAddUtilityVC(mode: .edit(utility)){ [weak self] persistable in
             self?.updateUtility(utility: persistable as! Utility)
         }
@@ -77,6 +77,10 @@ class ListUtilityPresenter: ListUtilityPresenterProtocol {
         }
     }
     
+    func didSelectedRow(at index: Int) {
+        let utility = utility(at: index)
+        router.openListUtilityAccountVC(utility: utility)
+    }
     
     
     
