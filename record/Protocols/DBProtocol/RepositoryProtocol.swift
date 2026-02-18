@@ -72,3 +72,16 @@ protocol BillRepositoryProtocol {
     func fetchAll(utilityAccountId: Int, billType: BillType) -> [Bill]
     func markAsPaid(billId: Int, paidDate: Date)
 }
+
+protocol UserRepositoryProtocol {
+    func add(user: User)
+    func updatePassword(userId: Int, newHash: String)
+    func getUserByEmail(_ email: String) -> User?
+    func getUserById(_ id: Int) -> User?
+}
+
+protocol LoginRepositoryProtocol {
+    func add(session: LoginSession)
+    func getLoginSession() ->LoginSession?
+    func clearSession()
+}
