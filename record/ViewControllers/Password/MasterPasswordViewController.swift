@@ -21,7 +21,7 @@ class MasterPasswordViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        setUpContens()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -29,9 +29,10 @@ class MasterPasswordViewController: UIViewController {
         presenter.resetPin()
     }
 
-    private func setupUI() {
+    private func setUpContens() {
+        title = "Password Manager"
         view.backgroundColor = .systemBackground
-
+        
         let keypad = createKeypad()
 
         let stack = UIStackView(arrangedSubviews: [

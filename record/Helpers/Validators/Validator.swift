@@ -37,16 +37,17 @@ class Validator {
                     return .init(isValid: false, errorMessage: "Only numbers allowed")
                 }
             case .alphabetic:
-                if !CharacterSet.letters.isSuperset(of: CharacterSet(charactersIn: value)) {
+                let allowed = CharacterSet.letters.union(.whitespaces)
+                if !allowed.isSuperset(of: CharacterSet(charactersIn: value)) {
                     return .init(isValid: false, errorMessage: "Only alphabets allowed")
                 }
-                
+
             case .alphanumeric:
-                let allowed = CharacterSet.alphanumerics
+                let allowed = CharacterSet.alphanumerics.union(.whitespaces)
                 if !allowed.isSuperset(of: CharacterSet(charactersIn: value)) {
                     return .init(isValid: false, errorMessage: "Only letters and numbers allowed")
                 }
-                
+
             case .email:
                 let regex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
                 if !NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: value) {

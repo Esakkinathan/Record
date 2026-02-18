@@ -24,13 +24,7 @@ class ListPasswordViewController: UIViewController {
         return label
     }()
     
-    let sortButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: IconName.threeDot), for: .normal)
-        button.tintColor = .label
-        button.showsMenuAsPrimaryAction = true
-        return button
-    }()
+    let sortView = SortHeaderView()
     
     let searchController = UISearchController(searchResultsController: nil)
     
@@ -39,6 +33,7 @@ class ListPasswordViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
+        tableView.backgroundColor = AppColor.background
         presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
@@ -56,7 +51,7 @@ class ListPasswordViewController: UIViewController {
         )
         spacer.width = 12
 
-        navigationItem.rightBarButtonItems = [addButton, spacer, UIBarButtonItem(customView: sortButton)]
+        navigationItem.rightBarButtonItem = addButton
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(exitClicked))
         
@@ -70,11 +65,12 @@ class ListPasswordViewController: UIViewController {
         definesPresentationContext = true
 
     }
-    
         
     func setUpContents() {
         view.add(tableView)
-        view.add(timerLabel)
+        view.add(sortView)
+        
+        sortView.timerLabel.isHidden = false
         
         tableView.dataSource = self
         tableView.delegate = self
@@ -82,9 +78,13 @@ class ListPasswordViewController: UIViewController {
         tableView.register(ListPasswordCell.self, forCellReuseIdentifier: ListPasswordCell.identifier)
         
         NSLayoutConstraint.activate([
-            timerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
-            timerLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            tableView.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: PaddingSize.height),
+//            timerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
+//            timerLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            sortView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width * 2 ),
+            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.content),
+
+            tableView.topAnchor.constraint(equalTo: sortView.bottomAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
@@ -166,8 +166,8 @@ extension ListPasswordViewController {
         ) { [weak self] _ in
             self?.presenter.didSelectedFavourite()
         }
-
-        sortButton.menu = UIMenu(
+        sortView.configure(text: current.field.rawValue, iconName: current.direction == .ascending ? IconName.arrowUp : IconName.arrowDown)
+        sortView.button.menu = UIMenu(
             title: "Sort By",
             children: [name, created, updated, favorite]
         )
@@ -211,9 +211,6 @@ extension ListPasswordViewController: UITableViewDataSource {
         return swipeAction
     }
 
-    
-    
-    
 }
 
 extension ListPasswordViewController: UITableViewDelegate {
@@ -234,17 +231,38 @@ extension ListPasswordViewController: ListPasswordViewDelegate {
         tableView.reloadRows(at: [IndexPath(row: indexRow, section: 1)], with: .automatic)
     }
     func dismiss() {
-        dismiss(animated: true)
+        if presentedViewController != nil {
+            dismiss(animated: false) { [weak self] in
+                self?.navigationController?.dismiss(animated: true)
+            }
+        } else {
+            navigationController?.dismiss(animated: true)
+        }
     }
     
     func updateTimer(_ time: String) {
-        timerLabel.text = time
+        let fullText = "Auto exit in \(time)"
+        let attributed = NSMutableAttributedString(string: fullText)
+
+        // Find range of number part
+        if let range = fullText.range(of: time) {
+            let nsRange = NSRange(range, in: fullText)
+            
+            attributed.addAttribute(
+                .foregroundColor,
+                value: UIColor.red,
+                range: nsRange
+            )
+        }
+
+        sortView.setTimer(text: attributed)
     }
     
     func showExitPrompt(expired: Bool) {
 
         let title = expired ? "Session Expired" : "Exit Passwords?"
-        let message = "Do you want to stay for another 5 minutes?"
+        var message = expired ? "Do you want to stay for another \(AppConstantData.passwordSession / 60) minutes?" :  "Are you sure want to exit?"
+        message += " Auto Exit in \(AppConstantData.autoExitTime) secoonds"
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
@@ -253,13 +271,15 @@ extension ListPasswordViewController: ListPasswordViewDelegate {
         })
 
         alert.addAction(UIAlertAction(title: "Stay", style: .default) { [weak self] _ in
-            self?.presenter.extendSession()
+            if expired {
+                self?.presenter.extendSession()
+            }
+            
         })
 
         present(alert, animated: true)
     }
-
-
+    
 }
 
 extension ListPasswordViewController: DocumentNavigationDelegate {

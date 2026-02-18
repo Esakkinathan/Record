@@ -95,12 +95,13 @@ enum DefaultDocument: String, CaseIterable {
     }
     
     static var defaultValue: DefaultDocument {
-         .adhar
+        .adhar
     }
     
-    static func valueOf(value: String) -> DefaultDocument {
+    static func valueOf(value: String?) -> DefaultDocument {
+        guard let data = value else {return DefaultDocument.defaultValue}
         for doc in allCases {
-            if doc.rawValue == value {
+            if doc.rawValue == data {
                 return doc
             }
         }
@@ -122,7 +123,7 @@ enum DefaultDocument: String, CaseIterable {
         case .vehicleRegistrationCertificate:
             rules += [.alphanumeric,.minLength(8),.maxLength(10)]
         default:
-            rules += [.minLength(8), .maxLength(20),.alphanumeric,.allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/"), message: "Invalid Character Found")]
+            rules += [.minLength(4), .maxLength(20),.allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/"), message: "Invalid Character Found")]
         }
         return rules
     }
@@ -136,7 +137,7 @@ enum DefaultDocument: String, CaseIterable {
         }
         return has
     }
-    
+}
 //    var documentImage: UIImage {
 //        let image = UIImage
 //        switch self {
@@ -152,11 +153,24 @@ enum DefaultDocument: String, CaseIterable {
 //            <#code#>
 //        }
 //    }
-}
+
 
 protocol FormMode {
     var navigationTitle: String { get }
 }
+
+enum AppFormMode {
+    case add
+    case edit(Persistable)
+    var navigationTitle: String {
+        switch self {
+        case .add: return "Add "
+        case .edit: return "Edit "
+        }
+        
+    }
+}
+
 
 enum DocumentFormMode: FormMode {
     case add

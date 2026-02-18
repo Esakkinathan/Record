@@ -15,13 +15,23 @@ class DocumentRepository: DocumentRepositoryProtocol {
     }
 
     func createTable() {
+//        do {
+//            try db.database.write { db in
+//                let sql = "DROP TABLE \(Document.databaseTableName);"
+//                try db.execute(sql)
+//                
+//            }
+//
+//        } catch {
+//            print(error)
+//        }
         let colums: [String: TableColumnType] = [
             Document.idC: .int,
             Document.nameC: .string,
             Document.numberC: .string,
             Document.createdAtC: .date,
             Document.expiryDateC: .date,
-            Document.fileC: .text,
+            Document.fileC: .blob,
             Document.notesC: .text,
             Document.lastModifiedC: .date
         ]

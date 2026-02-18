@@ -14,7 +14,7 @@ class TabBarController: UITabBarController {
         super.viewDidLoad()
         setUpContents()
     }
-    
+
     func setUpContents() {
         let document = UITab(title: "Documents", image: DocumentConstantData.docImage, identifier: "document"){ tab in
             return UINavigationController(rootViewController: ListDocumentAssembler.make())
@@ -31,10 +31,18 @@ class TabBarController: UITabBarController {
             return UINavigationController(rootViewController: ListUtilityAssembler.make())
         }
         
-        setTabs([document, password, medical, finance], animated: true)
-        selectedTab = document
-        mode = .tabSidebar
+        let timeLine = UITab(title: "TimeLine", image: UIImage(systemName: "calendar.day.timeline.leading"), identifier: "timeline") {_ in 
+            return UINavigationController(rootViewController: ListDocumentAssembler.make())
+        }
+        let settings = UITab(title: "Settings", image: UIImage(systemName: "house"), identifier: "settings") {_ in
+            return UINavigationController(rootViewController: ListMedicalAssembler.make())
+        }
+        setTabs([document, password, medical], animated: true)
+        selectedTab = medical
+        mode = .automatic
         tabBar.tintColor = AppColor.primaryColor
+        tabBarMinimizeBehavior = .onScrollDown
+        
     }
     
 

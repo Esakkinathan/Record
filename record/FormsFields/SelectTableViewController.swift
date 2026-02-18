@@ -13,10 +13,11 @@ class SelectionViewController: UIViewController {
     private let options: [String]
     var selectedOption: String
     var onValueSelected: ((String) -> Void)?
-    
-    init(options: [String], selectedOption: String) {
+    var addExtra: Bool
+    init(options: [String], selectedOption: String, addExtra: Bool) {
         self.options = options
         self.selectedOption = selectedOption
+        self.addExtra = addExtra
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -26,8 +27,17 @@ class SelectionViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setUpNavigationBar()
+        setUpContents()
+    }
+    func setUpNavigationBar() {
+        if addExtra {
+            navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addOption))
+        }
+    }
+    func setUpContents() {
         title = "Select Option"
-        view.backgroundColor = .white
+        view.backgroundColor = AppColor.background
         
         tableView.dataSource = self
         tableView.delegate = self
@@ -39,6 +49,51 @@ class SelectionViewController: UIViewController {
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+
+    }
+    
+    func showAddOptionAlert(_ value: String = "") {
+        let alert = UIAlertController(
+            title: "Add new Option",
+            message: "",
+            preferredStyle: .alert
+        )
+        
+        alert.addTextField {
+            $0.text = value
+            $0.placeholder = "Option"
+            $0.returnKeyType = .done
+            $0.autocorrectionType = .no
+            $0.keyboardType = .alphabet
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak alert] _ in
+            guard let self = self, let alert = alert else { return }
+            alert.textFields?[0].resignFirstResponder()
+            let enteredText = alert.textFields?[0].text ?? ""
+            if enteredText.isEmpty {
+                showToast(message: "Add Option", type: .error)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.addOption()
+                }
+                return
+
+            }
+            if enteredText.count < 4 || enteredText.count > 30 {
+                showToast(message: "Length Should be 4 to 30", type: .error)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.showAddOptionAlert(enteredText)
+                }
+                return
+            }
+            selectedData(text: enteredText)
+        })
+        present(alert, animated: true)
+
+    }
+    
+    @objc func addOption() {
+        showAddOptionAlert()
     }
     
 }
@@ -56,6 +111,10 @@ extension SelectionViewController: UITableViewDataSource, UITableViewDelegate {
         cell.accessoryType = (option == selectedOption) ? .checkmark : .none
         return cell
     }
+    func selectedData(text: String) {
+        onValueSelected?(text)
+        navigationController?.popViewController(animated: true)
+    }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
@@ -63,9 +122,10 @@ extension SelectionViewController: UITableViewDataSource, UITableViewDelegate {
         if selected != selectedOption {
             selectedOption = selected
             tableView.reloadData()
-            onValueSelected?(selected)
+            selectedData(text: selected)
         }
         navigationController?.popViewController(animated: true)
+        
     }
 
 }

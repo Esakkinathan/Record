@@ -6,7 +6,8 @@
 //
 import UIKit
 
-class ListMedicalViewController: UIViewController {
+class ListMedicalViewController: CustomSearchBarController {
+    
     let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .insetGrouped)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -15,8 +16,16 @@ class ListMedicalViewController: UIViewController {
         view.estimatedRowHeight = 100
         return view
     }()
+    
+    
+    let activeTreatementView = InfoCardView()
+    let todayMedicineView = InfoCardView()
+    let categorySelector: CategorySelectorView =  {
+        let view = CategorySelectorView(frame: .zero, options: MedicalType.getList(), images: MedicalType.getImage())
+        return view
+    }()
+    let sortView = SortHeaderView()
 
-    let searchController = UISearchController(searchResultsController: nil)
     var presenter: ListMedicalPresenterProtocol!
 
     let identifier = "ListMedicalTabelViewCell"
@@ -24,6 +33,7 @@ class ListMedicalViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
+        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
 
@@ -31,30 +41,89 @@ class ListMedicalViewController: UIViewController {
     
     func setUpNavigationBar() {
         title = presenter.title
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+
+        let spacer = UIBarButtonItem(
+            barButtonSystemItem: .fixedSpace,
+            target: nil,
+            action: nil
+        )
+        
+        spacer.width = 12
+        
+        let searchButton = UIBarButtonItem(
+            barButtonSystemItem: .search,
+            target: self,
+            action: #selector(openSearch)
+        )
+
+
         navigationController?.navigationBar.isTranslucent = false
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
     }
     
     
     func setUpContents() {
         
         view.backgroundColor = AppColor.background
+        view.add(todayMedicineView)
+        view.add(activeTreatementView)
+        view.add(categorySelector)
+        view.add(sortView)
         view.add(tableView)
         tableView.dataSource = self
         tableView.delegate = self
-        //tableView.register(UITableViewCell.self, forCellReuseIdentifier: identifier)
-
+        categorySelector.onSelect = { [weak self] text in
+            self?.presenter.didSelectCategory(text)
+        }
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+            
+            todayMedicineView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+            todayMedicineView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            todayMedicineView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            
+            activeTreatementView.topAnchor.constraint(equalTo: todayMedicineView.bottomAnchor,constant: PaddingSize.height),
+            activeTreatementView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            activeTreatementView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+
+            
+            categorySelector.topAnchor.constraint(equalTo: activeTreatementView.bottomAnchor,constant: PaddingSize.height),
+            categorySelector.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            categorySelector.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            
+            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            sortView.topAnchor.constraint(equalTo: categorySelector.bottomAnchor, constant: PaddingSize.height),
+            
+            
+            tableView.topAnchor.constraint(equalTo: sortView.bottomAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     
+    @objc func openSearch() {
+        showSearch()
+    }
+
     @objc func addButtonClicked() {
         presenter.gotoAddMedicalScreen()
+    }
+    override func searchScrollingView() -> UIScrollView? {
+        tableView
+    }
+
+    override func performSearch(text: String?) {
+        presenter.search(text: text)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let summary = presenter.getActiveSummary()
+        todayMedicineView.configure(section: summary.row1)
+        activeTreatementView.configure(section: summary.row2)
     }
     
 }
@@ -73,9 +142,10 @@ extension ListMedicalViewController: UITableViewDataSource {
         let medical = presenter.medical(at: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
         cell.textLabel?.text = medical.title
-        cell.detailTextLabel?.text = medical.type.rawValue
+        cell.detailTextLabel?.text = "From \(medical.startDate.toString()) to \(medical.endDate.toString())"
         cell.accessoryType = .disclosureIndicator
         cell.selectionStyle = .none
+        cell.imageView?.image = UIImage(systemName: medical.type.image)
         return cell
 
     }
@@ -109,7 +179,8 @@ extension ListMedicalViewController: ListMedicalViewDelegate {
     }
     
     func refreshSortMenu() {
-        
+        buildSortMenu()
+
     }
 }
 
@@ -122,4 +193,64 @@ extension ListMedicalViewController: DocumentNavigationDelegate {
         //vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
+}
+
+extension ListMedicalViewController {
+    func buildSortMenu() {
+        let current = presenter.currentSort
+
+        func subtitle(
+            field: MedicalSortField,
+            asc: String,
+            desc: String
+        ) -> String {
+            guard current.field == field else { return asc }
+            return current.direction == .ascending ? asc : desc
+        }
+
+        let name = UIAction(
+            title: "Title",
+            subtitle: subtitle(
+                field: .title,
+                asc: "Ascending",
+                desc: "Descending"
+            ),
+            state: current.field == .title ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.title)
+        }
+
+        let created = UIAction(
+            title: "Created At",
+            subtitle: subtitle(
+                field: .createdAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .createdAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.createdAt)
+        }
+
+        let updated = UIAction(
+            title: "Updated At",
+            subtitle: subtitle(
+                field: .updatedAt,
+                asc: "Newest to Oldest",
+                desc: "Oldest to Newest"
+            ),
+            state: current.field == .updatedAt ? .on : .off
+        ) { [weak self] _ in
+            self?.presenter.didSelectSortField(.updatedAt)
+        }
+
+        sortView.configure(text: current.field.rawValue, iconName: current.direction == .ascending ? IconName.arrowUp : IconName.arrowDown)
+        sortView.button.menu = UIMenu(
+            title: "Sort By",
+            children: [name, created, updated]
+        )
+    }
+    
+    
+
 }

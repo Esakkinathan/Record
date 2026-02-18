@@ -5,6 +5,7 @@
 //  Created by Esakkinathan B on 10/02/26.
 //
 import UIKit
+import VTDB
 
 class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
     weak var viewController: DocumentNavigationDelegate?
@@ -13,8 +14,8 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
         self.viewController = viewController
     }
     
-    func openAddMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind,onAdd: @escaping (MedicalItem) -> Void) {
-        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind)
+    func openAddMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind,startDate: Date,onAdd: @escaping (Persistable) -> Void) {
+        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind,startDate: startDate)
         vc.onAdd = onAdd
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .formSheet
@@ -22,8 +23,8 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
 
     }
     
-    func openEditMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind, onEdit: @escaping (MedicalItem) -> Void) {
-        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind)
+    func openEditMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind, startDate: Date, onEdit: @escaping (Persistable) -> Void) {
+        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind, startDate: startDate)
         vc.onEdit = onEdit
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .formSheet

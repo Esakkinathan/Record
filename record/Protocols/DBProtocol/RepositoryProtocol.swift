@@ -43,6 +43,7 @@ protocol MedicalRepositoryProtocol {
 protocol MedicalItemRepositoryProtocol {
     func add(medicalItem: MedicalItem, medicalId: Int)
     func update(medicalItem: MedicalItem)
+    func updateEndDate(medicalItemId: Int, date: Date) 
     func delete(id: Int)
     func fetchByMedicalId(_ id: Int, kind: MedicalKind) -> [MedicalItem]
 }
@@ -84,4 +85,10 @@ protocol LoginRepositoryProtocol {
     func add(session: LoginSession)
     func getLoginSession() ->LoginSession?
     func clearSession()
+}
+
+protocol MedicalIntakeLogRepositoryProtocol {
+    func add(log: MedicalIntakeLog)
+    func update(log: MedicalIntakeLog)
+    func fetch(medicalId: Int,date: Date) -> [MedicalIntakeLog]
 }

@@ -25,6 +25,7 @@ class ListPasswordPresenter: ListPasswordProtocol {
     var isSearching = false
     
     var uiTimer: Timer?
+    var autoExitTimer: Timer?
     var remainingTime: Int = AppConstantData.passwordSession
     var sessionManager = PasswordSessionManager.shared
     var isFavoriteSelected = false
@@ -111,7 +112,20 @@ extension ListPasswordPresenter {
         sessionManager.onSessionExpired = { [weak self] in
             self?.stopUITimer()
             self?.view?.showExitPrompt(expired: true)
+            self?.startAutoExitTimer()
         }
+    }
+    
+    func startAutoExitTimer() {
+        autoExitTimer?.invalidate()
+        autoExitTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(AppConstantData.autoExitTime), repeats: false) { [weak self] _ in
+            self?.exitPassoword()
+        }
+    }
+    
+    func stopAutoExitTimer() {
+        autoExitTimer?.invalidate()
+        autoExitTimer = nil
     }
     func stopUITimer() {
         uiTimer?.invalidate()
@@ -140,11 +154,13 @@ extension ListPasswordPresenter {
     }
 
     func exitPassoword() {
+        stopAutoExitTimer()
         sessionManager.logout()
         view?.dismiss()
     }
     
     func extendSession() {
+        stopAutoExitTimer()
         sessionManager.extendSession()
         startUITimer()
     }

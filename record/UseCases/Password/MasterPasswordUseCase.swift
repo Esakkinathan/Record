@@ -12,7 +12,8 @@ class MasterPasswordUseCase {
         self.repository = repository
     }
     func add(_ password: String) {
-        repository.insertInto(password: password)
+        let data = HashManager.hash(for: password)
+        repository.insertInto(password: data)
     }
     func fetch() -> String? {
         repository.fetchPassword()

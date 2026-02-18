@@ -27,6 +27,7 @@ class DetailMedicalPresenter: DetailMedicalPresenterProtocol {
     }
 }
 
+
 extension DetailMedicalPresenter {
     
     func viewDidLoad() {
@@ -37,7 +38,7 @@ extension DetailMedicalPresenter {
     func buildSection() {
         sections = []
         var infoRows: [DetailMedicalRow] = [
-            .info(.init(title: "Diagoned by", value: medical.title)),
+            .info(.init(title: "Title", value: medical.title)),
             .info(.init(title: "Type", value: medical.type.rawValue)),
         ]
         if let hospital = medical.hospital {
@@ -49,6 +50,8 @@ extension DetailMedicalPresenter {
         if let date = medical.date {
             infoRows.append(.info(.init(title: "Diagoned at", value: date.toString())))
         }
+        infoRows.append(.info(.init(title: "Duration", value: medical.durationText)))
+        
         var itemRow: [DetailMedicalRow] = []
         for kind in MedicalKind.allCases {
             itemRow.append(.medicalItem(kind))
@@ -63,8 +66,8 @@ extension DetailMedicalPresenter {
 
 extension DetailMedicalPresenter {
     
-    func updateMedical(_ medical: Medical) {
-        self.medical.update(title: medical.title, type: medical.type,hospital: medical.hospital, doctor: medical.doctor, date: medical.date)
+    func updateMedical() {
+//        self.medical.update(title: medical.title, type: medical.type,hospital: medical.hospital, doctor: medical.doctor, date: medical.date)
         buildSection()
         view?.reloadData()
     }
@@ -72,7 +75,7 @@ extension DetailMedicalPresenter {
     func editButtonClicked() {
         router.openEditMedicalVC(mode: .edit(medical)) { [weak self] updatedMedical in
             guard let self = self else { return }
-            updateMedical(updatedMedical)
+            updateMedical()
             view?.updateMedicalRecord(updatedMedical)
         }
     }

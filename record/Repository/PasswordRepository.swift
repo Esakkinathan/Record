@@ -73,6 +73,7 @@ class MasterPasswordRepository: MasterPasswordRepositoryProtocol {
         createTable()
     }
     func createTable() {
+        //deleteAllPassword()
         let columns: [String:TableColumnType] = [
             Password.idC: .int,
             Password.passwordC: .text,
@@ -94,17 +95,5 @@ class MasterPasswordRepository: MasterPasswordRepositoryProtocol {
     func fetchPassword() -> String? {
         return db.fetchPassword(table: MasterPasswordRepository.tableName)
     }
-    
-    func update(document: Document) {
-        db.updateInto(data: document)
-    }
-    
-    func updateNotes(text: String?, id: Int) {
-        db.updateNotes(table: Document.databaseTableName, id: id, text: text, date: Date())
-    }
-
-    func delete(id: Int) {
-        db.delete(table: Document.databaseTableName, id: id)
-    }
-    
+        
 }

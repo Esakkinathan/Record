@@ -11,14 +11,6 @@ class MedicalRepository: MedicalRepositoryProtocol {
     init() {
         createTable()
     }
-    static let idC = "id"
-    static let titleC =  "title"
-    static let typeC =  "type"
-    static let hospitalC = "hospital"
-    static let doctorC = "doctor"
-    static let dateC =  "date"
-    static let createdAtC =  "createdAt"
-    static let notesC = "notes"
 
     func createTable() {
 //        do {
@@ -34,6 +26,8 @@ class MedicalRepository: MedicalRepositoryProtocol {
             Medical.idC: .int,
             Medical.titleC: .string,
             Medical.typeC: .string,
+            Medical.durationC: .int,
+            Medical.durationTypeC: .string,
             Medical.hospitalC: .string,
             Medical.doctorC: .string,
             Medical.dateC: .date,
@@ -49,6 +43,8 @@ class MedicalRepository: MedicalRepositoryProtocol {
         let columns: [String: Any?] = [
             Medical.titleC: medical.title,
             Medical.typeC: medical.type.rawValue,
+            Medical.durationC: medical.duration,
+            Medical.durationTypeC: medical.durationType.rawValue,
             Medical.hospitalC: medical.hospital,
             Medical.doctorC: medical.doctor,
             Medical.dateC: medical.date,
@@ -83,7 +79,7 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
     var db: MedicalItemDatabaseProtocol =  DatabaseAdapter.shared
     
     init() {
-        //createTable()
+        createTable()
     }
     func createTable() {
 
@@ -97,12 +93,16 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
             MedicalItem.nameC: medicalItem.name,
             MedicalItem.instructionC: medicalItem.instruction.value,
             MedicalItem.dosageC: medicalItem.dosage,
+            MedicalItem.startDateC: medicalItem.startDate,
             MedicalItem.sheduleC: medicalItem.shedule.dbValue,
-            MedicalItem.durationC: medicalItem.duration,
-            MedicalItem.durationTypeC: medicalItem.durationType.rawValue
+            MedicalItem.endDateC: medicalItem.endDate
         ]
         
         db.insertInto(tableName: MedicalItem.databaseTableName, values: columns)
+    }
+    
+    func updateEndDate(medicalItemId: Int, date: Date) {
+        db.updateEndDate(medicalItemId: medicalItemId, date: date)
     }
     
     func update(medicalItem: MedicalItem) {
@@ -115,5 +115,9 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
     
     func fetchByMedicalId(_ id: Int, kind: MedicalKind) -> [MedicalItem] {
         return db.fetchMedialItemById(id, kind: kind)
+    }
+    
+    func activeMedicalItems(_ medicalId: Int, date: Date) -> [MedicalItem] {
+        return db.fetchActiveMedicalItem(medicalId, date: date)
     }
 }

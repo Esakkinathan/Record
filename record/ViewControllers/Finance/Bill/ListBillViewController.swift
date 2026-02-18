@@ -127,7 +127,7 @@ extension ListBillViewController: ListBillViewDelegate {
     func openMarkAsPaidAlert(completion: @escaping (Date) -> Void) {
         let alert = UIAlertController(
             title: "Mark as Paid",
-            message: "\n\n\n\n\n\n", // space for date picker
+            message: "", // space for date picker
             preferredStyle: .alert
         )
         

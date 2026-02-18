@@ -5,8 +5,12 @@
 //  Created by Esakkinathan B on 10/02/26.
 //
 
+protocol AddMedicalItemUseCaseProtocol {
+    func execute(medicalItem: MedicalItem, medicalId: Int)
 
-class AddMedicalItemUseCase {
+}
+
+class AddMedicalItemUseCase: AddMedicalItemUseCaseProtocol {
     private let repository: MedicalItemRepositoryProtocol
     
     init(repository: MedicalItemRepositoryProtocol) {

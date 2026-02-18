@@ -41,6 +41,7 @@ class NoImagePreview: UIView {
     let button: AppButton = {
         let button = AppButton(type: .system)
         button.setTitle("Upload Document", for: .normal)
+        button.enableDialPadEffect()
         return button
     }()
     

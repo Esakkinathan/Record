@@ -8,7 +8,7 @@
 import UIKit
 
 class DetailDocumentAssembler {
-    static func makeDetailDocumentScreen(document: Document) -> DetailDocumentViewController {
+    static func make(document: Document) -> DetailDocumentViewController {
         let vc = DetailDocumentViewController()
         let router = DetailDocumentRouter(viewController: vc)
         let presenter = DetailDocumentPresenter(document: document, router: router)

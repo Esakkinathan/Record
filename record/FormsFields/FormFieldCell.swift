@@ -29,6 +29,8 @@ class FormFieldCell: UITableViewCell {
         return label
     }()
     
+    private var errorHeightConstraint: NSLayoutConstraint!
+
     static let required = "*"
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -47,6 +49,9 @@ class FormFieldCell: UITableViewCell {
         leftView.backgroundColor = AppColor.gray
         selectionStyle = .none
         
+        errorHeightConstraint = errorLabel.heightAnchor.constraint(equalToConstant: 0)
+        errorHeightConstraint.isActive = true
+
         NSLayoutConstraint.activate([
             leftView.topAnchor.constraint(equalTo: contentView.topAnchor),
             leftView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
@@ -81,6 +86,43 @@ class FormFieldCell: UITableViewCell {
         ])
     }
 
+    private func hideError() {
+        guard let tableView = self.superview as? UITableView else { return }
+
+        errorHeightConstraint.constant = 0
+        
+        UIView.animate(withDuration: 0.25) {
+            tableView.beginUpdates()
+            tableView.endUpdates()
+            self.layoutIfNeeded()
+        }
+    }
+
+    
+    func setErrorLabelText(_ error: String?) {
+        guard let tableView = self.superview as? UITableView else { return }
+
+        if let text = error {
+            errorLabel.text = text
+            errorLabel.isHidden = false
+            
+            errorHeightConstraint.constant = 20
+            
+            UIView.animate(withDuration: 0.25) {
+                tableView.beginUpdates()
+                tableView.endUpdates()
+                self.layoutIfNeeded()
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                self?.hideError()
+            }
+
+        } else {
+            hideError()
+        }
+    }
+
     
     func configure(title: String, isRequired: Bool = false) {
         if isRequired {
@@ -101,17 +143,17 @@ class FormFieldCell: UITableViewCell {
         }
     }
     
-    func setErrorLabelText(_ error: String?) {
-        if let text = error {
-            errorLabel.text = text
-            errorLabel.isHidden = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-                self?.errorLabel.isHidden = true
-            }
-        } else {
-            errorLabel.isHidden = true
-        }
-        
-    }
+//    func setErrorLabelText(_ error: String?) {
+//        if let text = error {
+//            errorLabel.text = text
+//            errorLabel.isHidden = false
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+//                self?.errorLabel.isHidden = true
+//            }
+//        } else {
+//            errorLabel.isHidden = true
+//        }
+//        
+//    }
     
 }

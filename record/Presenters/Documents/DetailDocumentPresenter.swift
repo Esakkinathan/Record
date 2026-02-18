@@ -10,8 +10,7 @@ import UIKit
 
 
 class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
-    
-    
+        
     var title: String {
         return document.name
     }
@@ -40,7 +39,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
     func editButtonClicked() {
         router.openEditDocumentVC(mode: .edit(document)) { [weak self] document in
             guard let self = self else { return }
-            updateDocument(document)
+            updateDocument(document as! Document)
             view?.updateDocument(document: document)
             
             
@@ -120,5 +119,47 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
         buildSection()
         view?.reloadData()
     }
+    
+    func uploadDocument() {
+        router.openDocumentPicker()
+    }
+    func saveFileLocally(_ sourceURL: URL, name: String, number: String) -> String? {
+
+        let fileManager = FileManager.default
+        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let govtDocsDir = documentsDir.appendingPathComponent("GovtDocs", isDirectory: true)
+
+        do {
+            if !fileManager.fileExists(atPath: govtDocsDir.path) {
+                try fileManager.createDirectory(at: govtDocsDir,withIntermediateDirectories: true,attributes: nil)
+            }
+
+            let docName = name.replacingOccurrences(of: " ", with: "")
+            let fileName = "\(docName)_\(number).\(sourceURL.pathExtension)"
+            let destinationURL = govtDocsDir.appendingPathComponent(fileName)
+
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+
+            try fileManager.copyItem(at: sourceURL, to: destinationURL)
+
+            return destinationURL.path
+
+        } catch {
+            print("File save failed:", error)
+            return nil
+        }
+    }
+
+    
+    func didPickDocument(url: URL) {
+        let path = saveFileLocally(url, name: document.name, number: document.number)
+        document.file = path
+        buildSection()
+        view?.reloadData()
+        view?.updateDocument(document: document)
+    }
+
 
 }

@@ -33,6 +33,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
+        tableView.backgroundColor = AppColor.background
         setUpContent()
         setUpNavigationBar()
         hideKeyboardWhenTappedAround()

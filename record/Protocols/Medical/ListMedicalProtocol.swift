@@ -4,9 +4,10 @@
 //
 //  Created by Esakkinathan B on 08/02/26.
 //
-
+import VTDB
 protocol ListMedicalPresenterProtocol {
-    var title: String {get}
+    var title: String { get }
+    var currentSort: MedicalSortOption { get }
     func numberOfRows() -> Int
     func medical(at index: Int) -> Medical
     func addMedical(_ medical: Medical)
@@ -15,8 +16,11 @@ protocol ListMedicalPresenterProtocol {
     func didSelectedRow(at index: Int)
     func gotoAddMedicalScreen()
     func search(text: String?)
-    func didSelectSortField(_ field: DocumentSortField)
+    func didSelectSortField(_ field: MedicalSortField)
     func viewDidLoad()
+    func didSelectCategory(_ text: String)
+    func getActiveSummary() -> DashBoardData
+    
 }
 
 protocol ListMedicalViewDelegate: AnyObject {
@@ -24,6 +28,6 @@ protocol ListMedicalViewDelegate: AnyObject {
     func refreshSortMenu()
 }
 protocol ListMedicalRouterProtocol {
-    func openAddMedicalVC(mode: MedicalFormMode, onAdd: @escaping (Medical) -> Void)
-    func openDetailMedicalVC(medical: Medical,onUpdate: @escaping (Medical) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
+    func openAddMedicalVC(mode: MedicalFormMode, onAdd: @escaping (Persistable) -> Void)
+    func openDetailMedicalVC(medical: Medical,onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
 }

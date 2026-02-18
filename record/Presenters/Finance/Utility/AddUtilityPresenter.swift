@@ -7,6 +7,30 @@
 import UIKit
 
 class AddUtilityPresenter: FormFieldPresenterProtocol {
+    func selectClicked(at index: Int) {
+        //
+    }
+    
+    func formButtonClicked() {
+        //
+    }
+    
+    func uploadDocument(at index: Int) {
+        //
+    }
+    
+    func viewDocument(at index: Int) {
+        //
+    }
+    
+    func removeDocument(at index: Int) {
+        //
+    }
+    
+    func didPickDocument(url: URL) {
+        //
+    }
+    
     
     weak var view: FormFieldViewDelegate?
     let mode: UtilityFormMode
@@ -22,7 +46,7 @@ class AddUtilityPresenter: FormFieldPresenterProtocol {
     func buildFields() {
         let existing = existingUtility()
         fields = [
-            FormField(label: "Utility", placeholder: "Enter Utility", type: .text, validators: [.required, .maxLength(20)], gotoNextField: false, value: existing?.name, returnType: .done, keyboardMode: .alphabet)
+            FormField(label: "Utility", type: .text, validators: [.required, .maxLength(20)], gotoNextField: false, placeholder: "Enter Utility", value: existing?.name, returnType: .done, keyboardMode: .alphabet)
         ]
     }
 

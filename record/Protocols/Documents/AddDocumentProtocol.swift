@@ -38,5 +38,5 @@ protocol AddDocumentViewDelegate: AnyObject {
 protocol AddDocumentRouterProtocol {
     func openDocumentPicker()
     func openDocumentViewer(filePath: String)
-    func openSelectVC(options: [String], selected: String, onSelect: @escaping (String) -> Void )
+    func openSelectVC(options: [String], selected: String, addExtra: Bool,onSelect: @escaping (String) -> Void )
 }

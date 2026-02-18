@@ -16,7 +16,7 @@ class ListDocumentViewCell: UICollectionViewCell {
         let label = UILabel()
         label.adjustsFontSizeToFitWidth = true
         label.font = AppFont.small
-        label.numberOfLines = 0
+        label.numberOfLines = 2
         label.lineBreakMode = .byTruncatingTail
         label.adjustsFontSizeToFitWidth = false
         return label
@@ -110,19 +110,38 @@ class ListDocumentViewCell: UICollectionViewCell {
             view2.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content)
 
         ])
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        nameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        dateLabel.setContentHuggingPriority(.required, for: .horizontal)     // or at least .high
+
+        // Optional but often helpful:
+        dateLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        // Keep view1 stretching
+//        view1.bottomAnchor.constraint(lessThanOrEqualTo: dateLabel.bottomAnchor, constant: PaddingSize.content).isActive = true
+
+        // But make sure nameLabel doesn't get squished too much
+//        nameLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+//        nameLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        view1.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        view1.setContentHuggingPriority(.defaultHigh, for: .vertical)
+
+        // And copyLabel should be more flexible
+        copyLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         NSLayoutConstraint.activate([
+
+            // name takes as much space as possible
             nameLabel.topAnchor.constraint(equalTo: view1.topAnchor),
             nameLabel.leadingAnchor.constraint(equalTo: view1.leadingAnchor),
             nameLabel.bottomAnchor.constraint(equalTo: view1.bottomAnchor),
-            nameLabel.trailingAnchor.constraint(equalTo: dateLabel.leadingAnchor, constant: PaddingSize.width),
-            
+            nameLabel.trailingAnchor.constraint(equalTo: dateLabel.leadingAnchor, constant: -PaddingSize.width),
+            // date sticks to the right
             dateLabel.trailingAnchor.constraint(equalTo: view1.trailingAnchor),
-            //dateLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            dateLabel.topAnchor.constraint(equalTo: view1.topAnchor),
-            dateLabel.bottomAnchor.constraint(equalTo: view1.bottomAnchor),
+            dateLabel.centerYAnchor.constraint(equalTo: nameLabel.centerYAnchor),   // ← usually better visually
 
+            // IMPORTANT: let name compress / truncate before date disappears
         ])
-
+        
         NSLayoutConstraint.activate([
             view1.topAnchor.constraint(equalTo: view2.topAnchor, constant: PaddingSize.content),
             view1.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content),
@@ -145,53 +164,6 @@ class ListDocumentViewCell: UICollectionViewCell {
     @objc func shareButtonClicked() {
         onShareButtonClicked?()
     }
-
-    
-    func setUpContentView() {
-        
-        let labelsStack = UIStackView(arrangedSubviews: [
-            nameLabel,
-            copyLabel,
-            dateLabel
-        ])
-        labelsStack.axis = .vertical
-        labelsStack.spacing = PaddingSize.content
-
-        let actionStack = UIStackView(arrangedSubviews: [
-            shareButton,
-        ])
-        actionStack.axis = .vertical
-        actionStack.spacing = PaddingSize.content
-        actionStack.alignment = .center
-
-        contentView.add(filePreview)
-        contentView.add(labelsStack)
-        contentView.add(actionStack)
-        
-        
-        shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
-
-        //selectionStyle = .none
-        
-        NSLayoutConstraint.activate([
-
-            filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
-            filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
-            filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            filePreview.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.25),
-
-            labelsStack.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
-            labelsStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
-            labelsStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            labelsStack.trailingAnchor.constraint(lessThanOrEqualTo: actionStack.leadingAnchor, constant: -PaddingSize.width),
-
-            actionStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
-            actionStack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: PaddingSize.height),
-            actionStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -PaddingSize.height),
-            actionStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-        ])
-    }
-    
     func configure(document: Document) {
         nameLabel.text = document.name
         copyLabel.setText(document.number)  
@@ -221,7 +193,51 @@ class ListDocumentViewCell: UICollectionViewCell {
 }
 
 /*
- 
+ func setUpContentView() {
+     
+     let labelsStack = UIStackView(arrangedSubviews: [
+         nameLabel,
+         copyLabel,
+         dateLabel
+     ])
+     labelsStack.axis = .vertical
+     labelsStack.spacing = PaddingSize.content
+
+     let actionStack = UIStackView(arrangedSubviews: [
+         shareButton,
+     ])
+     actionStack.axis = .vertical
+     actionStack.spacing = PaddingSize.content
+     actionStack.alignment = .center
+
+     contentView.add(filePreview)
+     contentView.add(labelsStack)
+     contentView.add(actionStack)
+     
+     
+     shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
+
+     //selectionStyle = .none
+     
+     NSLayoutConstraint.activate([
+
+         filePreview.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
+         filePreview.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+         filePreview.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+         filePreview.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.25),
+
+         labelsStack.leadingAnchor.constraint(equalTo: filePreview.trailingAnchor, constant: PaddingSize.width),
+         labelsStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+         labelsStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+         labelsStack.trailingAnchor.constraint(lessThanOrEqualTo: actionStack.leadingAnchor, constant: -PaddingSize.width),
+
+         actionStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+         actionStack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: PaddingSize.height),
+         actionStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+         actionStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+     ])
+ }
+
  let labelsStack = UIStackView(arrangedSubviews: [
      nameLabel,
      numberLabel,

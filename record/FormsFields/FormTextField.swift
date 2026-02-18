@@ -16,9 +16,19 @@ class FormTextField: FormFieldCell {
     var enteredText: String {
         return textField.text ?? ""
     }
+    let countLabel: UILabel = {
+        let label = UILabel()
+        label.font = AppFont.small
+        label.textColor = .secondaryLabel
+        label.textAlignment = .left
+        label.sizeToFit()
+        return label
+    }()
     
+    var maxCount = 30
     var onReturn: ((String) -> String?)?
     var onValueChange: ((String) -> String?)?
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
@@ -30,40 +40,51 @@ class FormTextField: FormFieldCell {
     }
     
     override func setUpContentView() {
-        
         super.setUpContentView()
         
         rightView.add(textField)
         textField.delegate = self
         textField.addTarget(self, action: #selector(valueChanged), for: .editingChanged)
         
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: countLabel.frame.width + 12, height: textField.frame.height))
+        paddingView.add(countLabel)
+        //countLabel.text = "\(textField.text?.count ?? 0)/\(maxCount)"
+        textField.rightView = countLabel
+        
+        textField.rightViewMode = .whileEditing
+        
         NSLayoutConstraint.activate([
             textField.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
-            textField.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -FormSpacing.height),
+            textField.bottomAnchor.constraint(equalTo: errorLabel.topAnchor, constant: -2),
             textField.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
             textField.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width),
         ])
         
     }
     
-    
-    func configure(field: DocumentFormField,isRequired: Bool = false) {
-        super.configure(title: field.label, isRequired: isRequired)
         
-        if let text = field.value as? String {
-            textField.text = text
-        }
-        textField.placeholder = field.placeholder ?? ""
-    }
-    
-    func configure(title: String, text: String?,placeholder: String?,isRequired: Bool = false) {
+    func configure(title: String, text: String?,placeholder: String?,isRequired: Bool = false, maxCount: Int = 30) {
         super.configure(title: title, isRequired: isRequired)
         textField.text = text
         textField.placeholder = placeholder ?? ""
+        self.maxCount = maxCount
     }
     
     
     @objc func valueChanged() {
+        let text = textField.text ?? ""
+        let textCount = text.count
+        if textCount > maxCount {
+            let endIndex = text.index(text.startIndex, offsetBy: maxCount, limitedBy: text.endIndex) ?? text.endIndex
+            
+            textField.text = String(text[..<endIndex])
+            
+            if let newPosition = textField.position(from: textField.beginningOfDocument, offset: maxCount) {
+                textField.selectedTextRange = textField.textRange(from: newPosition, to: newPosition)
+                }
+        }
+        countLabel.text = "\(textField.text?.count ?? 0)/\(maxCount)"
+        
         let error = onValueChange?(enteredText)
         if let text = error {
             setErrorLabelText(text)
@@ -73,6 +94,8 @@ class FormTextField: FormFieldCell {
 }
 
 extension FormTextField: UITextFieldDelegate {
+    
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         let error = onReturn?(enteredText)
         if let text = error {

@@ -6,7 +6,7 @@
 //
 
 import UIKit
-
+import VTDB
 
 class DetailMedicalViewController: KeyboardNotificationViewController {
     
@@ -19,7 +19,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
     
     var presenter: DetailMedicalPresenterProtocol!
     var onUpdateNotes: ((String?,Int) -> Void)?
-    var onEdit: ((Medical) -> Void)?
+    var onEdit: ((Persistable) -> Void)?
     
     override var keyboardScrollableView: UIScrollView? {
         return tableView
@@ -140,6 +140,7 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
         case .medicalItem(let medicalKind):
             let newCell = tableView.dequeueReusableCell(withIdentifier: DetailMedicalViewController.cellIdentifier, for: indexPath)
             newCell.textLabel?.text = medicalKind.rawValue
+            newCell.imageView?.image = UIImage(systemName: medicalKind.image)
             newCell.accessoryType = .disclosureIndicator
             //newCell.selectionStyle = .none
             cell = newCell
@@ -198,7 +199,7 @@ extension DetailMedicalViewController: DetailMedicalViewDelegate {
         tableView.reloadData()
     }
     
-    func updateMedicalRecord(_ medical: Medical) {
+    func updateMedicalRecord(_ medical: Persistable) {
         onEdit?(medical)
     }
     

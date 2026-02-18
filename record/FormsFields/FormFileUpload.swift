@@ -98,6 +98,7 @@ class FormFileUpload: FormFieldCell {
                 
         let previewSize: CGFloat = 110
         NSLayoutConstraint.activate([
+                        
             uploadView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.height),
             uploadView.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.width),
             uploadView.bottomAnchor.constraint(equalTo: rightView.bottomAnchor, constant: -FormSpacing.width),
@@ -107,6 +108,9 @@ class FormFileUpload: FormFieldCell {
             uploadButton.trailingAnchor.constraint(equalTo: uploadView.trailingAnchor),
             uploadButton.topAnchor.constraint(equalTo: uploadView.topAnchor),
             uploadButton.bottomAnchor.constraint(equalTo: uploadView.bottomAnchor),
+            
+//            documentImage.widthAnchor.constraint(equalTo: uploadView.widthAnchor, multiplier: 0.2),
+//            documentImage.heightAnchor.constraint(equalTo: uploadView.heightAnchor, multiplier: 0.2),
 
             fileImagePreview.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
             fileImagePreview.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
@@ -150,18 +154,19 @@ class FormFileUpload: FormFieldCell {
     
     func setDocuments(hasDocument: Bool, fileUrl: String? = nil) {
         uploadView.isHidden = hasDocument
-        fileImagePreview.isHidden = !hasDocument
         uploadButton.isHidden = hasDocument
+        fileImagePreview.isHidden = !hasDocument
         previewButton.isHidden = !hasDocument
         if let path = fileUrl {
             DocumentThumbnailProvider.generate(for: path) { [weak self] image in
-                self?.fileImagePreview.image = image ?? self?.documentImage.image
+                self?.fileImagePreview.image = image ?? DocumentConstantData.docImage
             }
         }
     }
     
     func configure(title: String, filePath: String?,isRequired: Bool = false) {
         super.configure(title: title, isRequired: isRequired)
+        print(filePath ?? "notinh")
         if let path = filePath {
             setDocuments(hasDocument: true, fileUrl: path)
         } else {

@@ -16,7 +16,14 @@ class ListMedicalItemAssembler {
         let deleteUseCase = DeleteMedicalItemUseCase(repository: repo)
         let fetchUseCase = FetchMedicalItemUseCase(repository: repo)
 
-        let presenter = ListMedicalItemPresenter(view: vc, router: router, kind: kind, addUseCase: addUseCase, updateUseCase: updateUseCase, deleteUseCase: deleteUseCase, fetchUseCase: fetchUseCase, medical: medical)
+        let logRepo = MedicalIntakeLogRepository()
+        
+        let addLogUseCase = AddLogUseCase(repository: logRepo)
+        let updateLogUseCase = UpdateLogUseCase(repository: logRepo)
+        let fetchLogUseCase = FetchLogUseCase(repository: logRepo)
+
+        
+        let presenter = ListMedicalItemPresenter(view: vc, router: router, kind: kind, addUseCase: addUseCase, updateUseCase: updateUseCase, deleteUseCase: deleteUseCase, fetchUseCase: fetchUseCase, medical: medical, addLogUseCase: addLogUseCase, updateLogUseCase: updateLogUseCase, fetchLogUseCase: fetchLogUseCase)
         vc.presenter = presenter
         
         return vc

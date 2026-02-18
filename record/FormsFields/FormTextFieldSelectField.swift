@@ -22,6 +22,7 @@ class FormTextFieldSelectField: FormFieldCell {
         label.textAlignment = .right
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
+        label.font = AppFont.body
         return label
     }()
     
@@ -57,8 +58,10 @@ class FormTextFieldSelectField: FormFieldCell {
         textField.addTarget(self, action: #selector(valueChanged), for: .editingChanged)
         
         let stack = UIStackView(arrangedSubviews: [valueLabel,arrowImageView])
+        stack.distribution = .fillProportionally
         stack.axis = .horizontal
         stack.spacing = PaddingSize.content
+//        stack.backgroundColor = .secondarySystemBackground
         rightView.add(stack)
                         
         rightView.isUserInteractionEnabled = true
@@ -67,32 +70,24 @@ class FormTextFieldSelectField: FormFieldCell {
 
         NSLayoutConstraint.activate([
             textField.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
-            textField.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -FormSpacing.height),
+            textField.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -2),
             textField.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
-            textField.trailingAnchor.constraint(equalTo: stack.leadingAnchor, constant: -FormSpacing.width),
-            textField.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.5),
+            textField.trailingAnchor.constraint(equalTo: stack.leadingAnchor),
+            textField.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.4),
 
-            stack.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
-            stack.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -FormSpacing.height),
+            stack.centerYAnchor.constraint(equalTo: rightView.centerYAnchor),
+            stack.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -2),
             stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width * 2 ),
-            stack.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.4),
+            //stack.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.4),
         ])
         
     }
 
-    func configure(field: DocumentFormField,isRequired: Bool = false) {
-        super.configure(title: field.label, isRequired: isRequired)
-        
-        if let text = field.value as? String {
-            textField.text = text
-        }
-        textField.placeholder = field.placeholder ?? ""
-    }
-    
     func configure(title: String, text: String?,placeholder: String?,selectedValue: String,isRequired: Bool = false) {
         super.configure(title: title, isRequired: isRequired)
         textField.text = text
         textField.placeholder = placeholder ?? ""
+        valueLabel.text = selectedValue
     }
     
     

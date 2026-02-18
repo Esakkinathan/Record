@@ -60,10 +60,19 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     
     func validateFields() -> Bool{
         for field in fields {
-            let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
-            if !result.isValid {
-                view?.showError( "\(field.label) \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
-                return result.isValid
+            if field.type == .date {
+                let input = field.value as? Date
+                let result = Validator.Validate(input: input?.toString() ?? "" , rules: field.validators)
+                if !result.isValid {
+                    view?.showError( "\(field.label) \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
+                    return result.isValid
+                }
+            } else {
+                let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
+                if !result.isValid {
+                    view?.showError( "\(field.label) \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
+                    return result.isValid
+                }
             }
         }
         return true
@@ -78,7 +87,9 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     func uploadDocument(at index: Int){}
     func viewDocument(at index: Int){}
     func removeDocument(at index: Int){}
-    func didPickDocument(url: URL){}
+    func didPickDocument(url: URL){
+        print("i was executing")
+    }
 
 
         
@@ -204,17 +215,17 @@ class AddDocumentFormPresenter: FormFieldPresenter {
     
     override func didPickDocument(url: URL) {
         guard let index = fields.firstIndex(where: { $0.type == .fileUpload }) else { return }
-        updateValue(url, at: index)
+        print("i executed",url)
+        updateValue(url.path, at: index)
         view?.reloadField(at: index)
     }
     
     override func selectClicked(at index: Int ) {
-        print("select click at presenter")
         let field = field(at: index)
         let options = DefaultDocument.getList()
         let selected = field.value as? String ?? DefaultDocument.defaultValue.rawValue
         
-        router.openSelectVC(options: options, selected: selected) { [weak self] value in
+        router.openSelectVC(options: options, selected: selected, addExtra: true) { [weak self] value in
             self?.didSelectOption(at: index,value)
         }
     }
@@ -238,6 +249,4 @@ class AddDocumentFormPresenter: FormFieldPresenter {
             view?.dismiss()
         }
     }
-    
-    
 }

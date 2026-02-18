@@ -7,7 +7,7 @@
 
 import UIKit
 import QuickLook
-
+import VTDB
 
 
 class DetailDocumentViewController: KeyboardNotificationViewController {
@@ -19,7 +19,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         return tableView
     }()
     var previewUrl: URL?
-    var onEdit: ((Document) -> Void)?
+    var onEdit: ((Persistable) -> Void)?
     
     var presenter: DetailDocumentPresenterProtocol!
     var onUpdateNotes: ((String?,Int) -> Void)?
@@ -36,6 +36,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
+        tableView.backgroundColor = AppColor.background
         setUpContent()
         setUpNavigationBar()
         hideKeyboardWhenTappedAround()
@@ -131,7 +132,9 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
         case .image(let filePath):
             let newCell = tableView.dequeueReusableCell(withIdentifier: ImagePreviewTableViewCell.identifier, for: indexPath) as! ImagePreviewTableViewCell
             newCell.configure(with: filePath)
-            
+            newCell.onUploadButtonClicked = { [weak self] in
+                self?.presenter.uploadDocument()
+            }
             newCell.onShow = { [weak self] in
                 guard let self = self, let path = filePath else {return}
                     self.previewUrl = URL(fileURLWithPath: path)
@@ -164,6 +167,16 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
 
     
 }
+extension DetailDocumentViewController: UIDocumentPickerDelegate {
+
+    func documentPicker(
+        _ controller: UIDocumentPickerViewController,
+        didPickDocumentsAt urls: [URL]
+    ) {
+        guard let url = urls.first else { return }
+        presenter.didPickDocument(url: url)
+    }
+}
 
 extension DetailDocumentViewController: QLPreviewControllerDataSource {
     
@@ -191,7 +204,7 @@ extension DetailDocumentViewController: DetailDocumentViewDelegate {
         onUpdateNotes?(text,id)
     }
     
-    func updateDocument(document: Document) {
+    func updateDocument(document: Persistable) {
         onEdit?(document)
     }
 }

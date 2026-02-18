@@ -18,9 +18,9 @@ enum PaddingSize {
     
     static let cornerRadius: CGFloat = 12
     
-    static let cellSpacing: CGFloat = 30
+    static let cellSpacing: CGFloat = 26
     
-    static let previewSize: CGFloat = 80
+    static let previewSize: CGFloat = 75
     
 }
 
@@ -32,6 +32,8 @@ enum FormSpacing {
 }
 
 enum AppConstantData {
+    
+    static let autoExitTime: Int = 10
     
     static let passwordSession: Int = 300
     
@@ -59,6 +61,7 @@ enum AppConstantData {
 
 enum IconName {
     
+    
     static let arrowUp = "arrow.up"
     
     static let arrowDown = "arrow.down"
@@ -77,7 +80,7 @@ enum IconName {
     
     static let edit = "pencil"
     
-    static let emptyDocument = "doc"
+    static let emptyDocument = "document.fill"
     
     static let eye = "eye"
     
@@ -103,7 +106,13 @@ enum IconName {
     
     static let x = "xmark.circle.fill"
     
-    static let threeDot = "ellipsis.circle" 
+    static let threeDot = "ellipsis.circle"
+    
+    static let medicalName = "cross.case"
+    
+    static let instruction = "list.bullet.clipboard.fill"
+    
+    static let dosage = "drop.fill"
 }
 
 

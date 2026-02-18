@@ -11,13 +11,12 @@ class FormPasswordField: FormTextField {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: IconName.eyeSlash), for: .normal)
         button.setImage(UIImage(systemName: IconName.eye), for: .selected)
-        button.tintColor = AppColor.primaryColor
         button.layer.cornerRadius = 20
         button.clipsToBounds = true
         return button
         
     }()
-    
+    let rightContainer = UIView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -30,10 +29,24 @@ class FormPasswordField: FormTextField {
     }
     override func setUpContentView() {
         super.setUpContentView()
+        rightContainer.add(eyeButton)
+        
         eyeButton.addTarget(self, action: #selector(togglePassword), for: .touchUpInside)
         textField.isSecureTextEntry = true
-        textField.rightView = eyeButton
+        textField.rightView = rightContainer
         textField.rightViewMode = .always
+        
+        NSLayoutConstraint.activate([
+            eyeButton.centerYAnchor.constraint(equalTo: rightContainer.centerYAnchor),
+            eyeButton.leadingAnchor.constraint(equalTo: rightContainer.leadingAnchor, constant: 8),
+            eyeButton.trailingAnchor.constraint(equalTo: rightContainer.trailingAnchor, constant: -12),
+            eyeButton.widthAnchor.constraint(equalToConstant: 18),
+            eyeButton.heightAnchor.constraint(equalToConstant: 18),
+            
+            rightContainer.widthAnchor.constraint(equalToConstant: 38),
+            rightContainer.heightAnchor.constraint(equalToConstant: 18)
+        ])
+
     }
     
     @objc func togglePassword() {

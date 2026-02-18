@@ -29,6 +29,13 @@ class SortHeaderView: UIView {
         return label
     }()
     
+    let timerLabel: CopyTextLabel = {
+        let label = CopyTextLabel()
+        label.copyButton.isHidden = true
+        label.textLabel.font = AppFont.body
+        return label
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setUpContent()
@@ -39,20 +46,26 @@ class SortHeaderView: UIView {
     }
     
     func setUpContent() {
+        timerLabel.isHidden = true
         add(button)
         add(textLabel)
-        
+        add(timerLabel)
         NSLayoutConstraint.activate([
             textLabel.topAnchor.constraint(equalTo: topAnchor),
             textLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
-            textLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            textLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
+            timerLabel.topAnchor.constraint(equalTo: topAnchor),
+            timerLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
+            timerLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
             
             button.topAnchor.constraint(equalTo: topAnchor),
             button.bottomAnchor.constraint(equalTo: bottomAnchor ),
             button.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
-    
+    func setTimer(text: NSMutableAttributedString) {
+        timerLabel.textLabel.attributedText = text
+    }
     func configure(text: String, iconName: String) {
         textLabel.text = text
         button.configuration?.image = UIImage(systemName: iconName)

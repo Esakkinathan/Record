@@ -12,8 +12,8 @@ class AddMedicalRouter: AddMedicalRouterProtocol {
         self.viewController = viewController
     }
 
-    func openSelectVC(options: [String], selected: String, onSelect: @escaping (String) -> Void) {
-        let vc = SelectionViewController(options: options,selectedOption: selected)
+    func openSelectVC(options: [String], selected: String, addExtra: Bool, onSelect: @escaping (String) -> Void) {
+        let vc = SelectionViewController(options: options,selectedOption: selected, addExtra: addExtra)
         vc.onValueSelected = onSelect
         viewController?.push(vc)
     }

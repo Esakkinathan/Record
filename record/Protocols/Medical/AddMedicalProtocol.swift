@@ -26,5 +26,5 @@ protocol AddMedicalViewDelegate: AnyObject {
 }
 
 protocol AddMedicalRouterProtocol {
-    func openSelectVC(options: [String], selected: String, onSelect: @escaping (String) -> Void )
+    func openSelectVC(options: [String], selected: String, addExtra: Bool, onSelect: @escaping (String) -> Void )
 }

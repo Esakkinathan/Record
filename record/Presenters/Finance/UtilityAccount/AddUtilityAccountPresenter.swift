@@ -8,6 +8,34 @@
 import UIKit
 
 class AddUtilityAccountPresenter: FormFieldPresenterProtocol {
+    func didSelectOption(at index: Int) {
+        //
+    }
+    
+    func selectClicked(at index: Int) {
+        //
+    }
+    
+    func formButtonClicked() {
+        //
+    }
+    
+    func uploadDocument(at index: Int) {
+        //
+    }
+    
+    func viewDocument(at index: Int) {
+        //
+    }
+    
+    func removeDocument(at index: Int) {
+        //
+    }
+    
+    func didPickDocument(url: URL) {
+        //
+    }
+    
     
     weak var view: FormFieldViewDelegate?
     let mode: UtilityAccountFormMode
@@ -26,9 +54,9 @@ class AddUtilityAccountPresenter: FormFieldPresenterProtocol {
     func buildFields() {
         let existing = existingUtilityAccount()
         fields = [
-            FormField(label: "Title", placeholder: "Enter Title", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, value: existing?.title, returnType: .next),
-            FormField(label: "Account Number", placeholder: "Enter Account Number", type: .text, validators: [.required], gotoNextField: true, value: existing?.accountNumber, returnType: .next),
-            FormField(label: "Provider", placeholder: "Enter Provided", type: .text, validators: [.required, .maxLength(30)], gotoNextField: false, value: existing?.provider, returnType: .done)
+            FormField(label: "Title", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Title",value: existing?.title, returnType: .next),
+            FormField(label: "Account Number", type: .text, validators: [.required], gotoNextField: true, placeholder: "Enter Account Number", value: existing?.accountNumber, returnType: .next),
+            FormField(label: "Provider", type: .text, validators: [.required, .maxLength(30)], gotoNextField: false, placeholder: "Enter Provider", value: existing?.provider, returnType: .done)
         ]
     }
     

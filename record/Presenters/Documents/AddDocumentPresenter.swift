@@ -5,9 +5,8 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 import Foundation
-
+/*
 class AddDocumentPresenter: AddDocumentPresenterProtocol {
-    static var counter = 0
     var fields: [DocumentFormField] = []
     weak var view: AddDocumentViewDelegate?
     let mode: DocumentFormMode
@@ -125,8 +124,7 @@ class AddDocumentPresenter: AddDocumentPresenterProtocol {
         }
         switch mode {
         case .add:
-            AddDocumentPresenter.counter += 1
-            return Document(id:AddDocumentPresenter.counter,name: name, number: number, expiryDate: expiryDate, file: file)
+            return Document(id:1,name: name, number: number, expiryDate: expiryDate, file: file)
         case .edit(let document):
             document.update(name: name, number: number, expiryDate: expiryDate, file: file)
             return document
@@ -202,3 +200,4 @@ class AddDocumentPresenter: AddDocumentPresenterProtocol {
     }
 
 }
+*/

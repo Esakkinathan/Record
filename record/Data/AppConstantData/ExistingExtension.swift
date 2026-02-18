@@ -7,10 +7,10 @@
 import UIKit
 
 extension Date {
-    func toString(format: String = "yyyy-MM-dd") -> String {
+    func toString(format: String = "dd-MM-yyyy") -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = format
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        //formatter.locale = Locale(identifier: "en_US_POSIX")
         return formatter.string(from: self)
     }
 }
@@ -77,7 +77,7 @@ extension UIViewController {
     @objc func dismissKeyboard(view: UIView) {
         self.view.endEditing(true)
     }
-
+    
 }
 extension String {
     

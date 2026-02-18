@@ -7,6 +7,34 @@
 import UIKit
 
 class AddBillPresenter: FormFieldPresenterProtocol {
+    func didSelectOption(at index: Int) {
+        //
+    }
+    
+    func selectClicked(at index: Int) {
+        //
+    }
+    
+    func formButtonClicked() {
+        //
+    }
+    
+    func uploadDocument(at index: Int) {
+        //
+    }
+    
+    func viewDocument(at index: Int) {
+        //
+    }
+    
+    func removeDocument(at index: Int) {
+        //
+    }
+    
+    func didPickDocument(url: URL) {
+        //
+    }
+    
     weak var view: FormFieldViewDelegate?
     
     let mode: BillFormMode
@@ -27,16 +55,16 @@ class AddBillPresenter: FormFieldPresenterProtocol {
     func buildFields() {
         let existing = existingBill()
         fields = []
-        fields.append(FormField(label: "Amount", placeholder: "Enter Amount", type: .text, validators: [.required, .numeric, .maxValue(100000000000)], gotoNextField: false, value: existing?.amount != nil ? String(existing!.amount) : nil, returnType: .next, keyboardMode: .numberPad))
+        fields.append(FormField(label: "Amount", type: .text, validators: [.required, .numeric, .maxValue(100000000000)], gotoNextField: false, placeholder: "Enter Amount", value: existing?.amount != nil ? String(existing!.amount) : nil, returnType: .next, keyboardMode: .numberPad))
         switch billType {
         case .ongoing:
-            fields.append(FormField(label: "Due Date", placeholder: nil, type: .date, validators: [.required], gotoNextField: false))
+            fields.append(FormField(label: "Due Date", type: .date, validators: [.required], gotoNextField: false))
         case .completed:
-            fields.append(FormField(label: "Due Date", placeholder: nil, type: .date, validators: [], gotoNextField: false))
-            fields.append(FormField(label: "Paid Date", placeholder: nil, type: .date, validators: [.required], gotoNextField: false))
+            fields.append(FormField(label: "Due Date", type: .date, validators: [], gotoNextField: false))
+            fields.append(FormField(label: "Paid Date", type: .date, validators: [.required], gotoNextField: false))
         }
         
-        fields.append(FormField(label: "Notes", placeholder: nil, type: .textView, validators: [.maxLength(100)], gotoNextField: false, value: existing?.notes))
+        fields.append(FormField(label: "Notes", type: .textView, validators: [.maxLength(100)], gotoNextField: false, value: existing?.notes))
         
     }
     

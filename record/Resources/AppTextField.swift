@@ -29,7 +29,7 @@ class AppTextField: UITextField {
 
     private func setup() {
         borderStyle = .none
-        layer.cornerRadius = 20
+        layer.cornerRadius = PaddingSize.cornerRadius
         layer.borderWidth = 1
         layer.borderColor = normalBorderColor
 

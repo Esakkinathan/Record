@@ -18,12 +18,31 @@ enum MedicalType: String, CaseIterable {
         return .checkup
     }
     
+    var image: String {
+        switch self {
+        case .checkup:
+            "stethoscope"
+        case .longTerm:
+            "waveform.path.ecg"
+        case .vaccination:
+            "syringe.fill"
+        case .treatement:
+            "cross.case.fill"
+        case .emergency:
+            "bolt.heart.fill"
+        }
+    }
+    
     static func getList() -> [String] {
         var list: [String] = []
         for type in MedicalType.allCases {
             list.append(type.rawValue)
         }
         return list
+    }
+
+    static func getImage() -> [String] {
+        return ["stethoscope", "waveform.path.ecg", "syringe.fill", "cross.case.fill", "bolt.heart.fill"]
     }
 }
 
@@ -38,11 +57,15 @@ class Medical: Persistable {
     static let createdAtC =  "createdAt"
     static let lastModifiedC = "lastModified"
     static let notesC = "notes"
+    static let durationC = "duration"
+    static let durationTypeC = "durationType"
 
     
     func encode(to container: inout VTDB.Container) {
         container[Medical.idC] = id
         container[Medical.typeC] = type.rawValue
+        container[Medical.durationC] = duration
+        container[Medical.durationTypeC] = durationType.rawValue
         container[Medical.hospitalC] = hospital
         container[Medical.doctorC] = doctor
         container[Medical.dateC] = date
@@ -58,6 +81,8 @@ class Medical: Persistable {
     let id: Int
     var title: String
     var type: MedicalType
+    var duration: Int
+    var durationType: DurationType
     var hospital: String?
     var doctor: String?
     var date: Date?
@@ -65,10 +90,14 @@ class Medical: Persistable {
     var lastModified: Date
     var notes: String?
     
-    init(id: Int, title: String, type: MedicalType, hospital: String? = nil, doctor: String? = nil,date: Date? = nil, createdAt: Date = Date(), lastModified: Date = Date() ,notes: String? = nil) {
+    
+
+    init(id: Int, title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date? = nil, createdAt: Date = Date(), lastModified: Date = Date() ,notes: String? = nil, ) {
         self.id = id
         self.title = title
         self.type = type
+        self.duration = duration
+        self.durationType = durationType
         self.hospital = hospital
         self.doctor = doctor
         self.date = date
@@ -77,15 +106,78 @@ class Medical: Persistable {
         self.notes = notes
     }
     
-    func update(title: String, type: MedicalType, hospital: String? = nil, doctor: String? = nil,date: Date? = nil) {
+    func update(title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date? = nil) {
         self.title = title
         self.type = type
         self.hospital = hospital
         self.doctor = doctor
         self.date = date
+        self.duration = duration
+        self.durationType = durationType
         self.lastModified = Date()
     }
 }
+
+extension Medical {
+    var startDate: Date {
+        date ?? createdAt
+    }
+
+    var endDate: Date {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: startDate)
+
+        switch durationType {
+        case .day:
+            return calendar.date(byAdding: .day, value: duration - 1, to: start)!
+            
+        case .week:
+            return calendar.date(byAdding: .day, value: (duration * 7) - 1, to: start)!
+            
+        case .month:
+            let added = calendar.date(byAdding: .month, value: duration, to: start)!
+            return calendar.date(byAdding: .day, value: -1, to: added)!
+        }
+    }
+    var durationText: String {
+        return "\(duration) \(durationType.rawValue)"
+    }
+
+}
+
+enum MedicalSortField: String, Codable {
+    case title = "Title"
+    case createdAt = "Created At"
+    case updatedAt = "Recent"
+}
+
+
+
+struct MedicalSortOption: Codable, Equatable  {
+    let field: MedicalSortField
+    let direction: SortDirection
+}
+
+
+enum MedicalSortStore {
+    private static let key = "Medical_sort_option"
+
+    static func load() -> MedicalSortOption {
+        guard
+            let data = UserDefaults.standard.data(forKey: key),
+            let option = try? JSONDecoder().decode(MedicalSortOption.self, from: data)
+        else {
+            return MedicalSortOption(field: .title, direction: .ascending)
+        }
+        return option
+    }
+
+    static func save(_ option: MedicalSortOption) {
+        let data = try? JSONEncoder().encode(option)
+        UserDefaults.standard.set(data, forKey: key)
+    }
+}
+
 
 enum MedicalKind: String, CaseIterable {
     case tablet = "Tablet"
@@ -93,7 +185,18 @@ enum MedicalKind: String, CaseIterable {
     case injection = "Injection"
     case topical = "Ointment"
     
-    
+    var image: String {
+        switch self {
+        case .tablet:
+            "pill.circle"
+        case .syrup:
+            "cross.vial"
+        case .injection:
+            "syringe"
+        case .topical:
+            "bandage.fill"
+        }
+    }
 }
 
 enum MedicalInstruction {
@@ -136,18 +239,34 @@ extension Array where Element == MedicalSchedule {
     }
 }
 
-enum MedicalSchedule: String, CaseIterable {
+enum MedicalSchedule: String, CaseIterable, Hashable {
     case morning = "Morning"
     case afternoon = "Afternoon"
     case evening = "Evening"
     case night = "Night"
+    static func getList() -> [String] {
+        var list: [String] = []
+        for ind in allCases {
+            list.append(ind.rawValue)
+        }
+        return list
+    }
+    static func getImage() -> [String] {
+        return ["sunrise.fill","sun.max.fill","sunset.fill","moon"]
+    }
 }
 
 enum DurationType: String, CaseIterable {
     case day = "Day"
     case week = "Week"
     case month = "Month"
-    
+    static func getList() -> [String] {
+        var list: [String] = []
+        for type in allCases {
+            list.append(type.rawValue)
+        }
+        return list
+    }
     static let count = 3
     static func valueOf(input: String) -> DurationType {
         switch input {
@@ -170,9 +289,8 @@ class MedicalItem: Persistable {
         container[MedicalItem.nameC] = name
         container[MedicalItem.instructionC] = instruction.value
         container[MedicalItem.dosageC] = dosage
+        container[MedicalItem.startDateC] = startDate
         container[MedicalItem.sheduleC] = shedule.dbValue
-        container[MedicalItem.durationC] = duration
-        container[MedicalItem.durationTypeC] = durationType.rawValue
     }
     
     static var databaseTableName: String {
@@ -187,9 +305,8 @@ class MedicalItem: Persistable {
     static let instructionC = "instruction"
     static let dosageC = "dosage"
     static let sheduleC = "schedule"
-    static let durationC = "duration"
-    static let durationTypeC = "durationType"
-
+    static let startDateC = "startDate"
+    static let endDateC = "endDate"
     
     let id: Int
     let medical: Int
@@ -198,29 +315,28 @@ class MedicalItem: Persistable {
     var instruction: MedicalInstruction
     var dosage: String
     var shedule: [MedicalSchedule]
-    var duration: Int
-    var durationType: DurationType
+    var startDate: Date
+    var endDate: Date?
     
-    init(id: Int, medical: Int,kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, shedule: [MedicalSchedule], duration: Int, durationType: DurationType) {
+    init(id: Int, medical: Int,kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, startDate: Date = Date(),shedule: [MedicalSchedule], endDate: Date? = nil) {
         self.id = id
         self.medical = medical
         self.kind = kind
         self.name = name
         self.instruction = instruction
         self.dosage = dosage
+        self.startDate = startDate
+        self.endDate = endDate
         self.shedule = shedule
-        self.duration = duration
-        self.durationType = durationType
     }
     
-    func update(kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, shedule: [MedicalSchedule], duration: Int, durationType: DurationType) {
+    func update(kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, shedule: [MedicalSchedule], startDate: Date) {
         self.kind = kind
         self.name = name
         self.instruction = instruction
         self.dosage = dosage
         self.shedule = shedule
-        self.duration = duration
-        self.durationType = durationType
+        self.startDate = startDate
     }
 
 }
@@ -260,14 +376,14 @@ enum BillFormMode {
             switch self {
             case .add:
                 return "Add \(BillType.ongoing.rawValue) Bill"
-            case .edit(let bill):
+            case .edit(_):
                 return "Edit \(BillType.ongoing.rawValue) Bill"
             }
         case .completed:
             switch self {
             case .add:
                 return "Add \(BillType.completed.rawValue) Bill"
-            case .edit(let bill):
+            case .edit(_):
                 return "Edit \(BillType.completed.rawValue) Bill"
             }
 

@@ -53,7 +53,6 @@ class FormFieldViewController: UIViewController {
         ])
     }
 
-    
     func setUpNavigationBar() {
         title = presenter.title
         
@@ -133,6 +132,7 @@ extension FormFieldViewController: UIDocumentPickerDelegate {
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
+        print(url.path)
         presenter.didPickDocument(url: url)
     }
 }
@@ -155,8 +155,24 @@ extension FormFieldViewController {
         return field.validators.contains(.required)
     }
     
+    func getMaxValue(rules: [ValidationRules]) -> Int {
+        for rule in rules {
+            switch rule {
+            case .maxLength(let value):
+                return value
+            case .exactLength(let value):
+                //print("value passing \(value)")
+                return value
+            default:
+                continue
+            }
+        }
+        return 30
+    }
+
+    
     func configureCell(cell: FormTextField,field: FormField, indexPath: IndexPath) -> FormTextField {
-        cell.configure(title: field.label, text: field.value as? String, placeholder: field.placeholder, isRequired: isFieldRequired(field: field))
+        cell.configure(title: field.label, text: field.value as? String, placeholder: field.placeholder, isRequired: isFieldRequired(field: field),  maxCount: getMaxValue(rules: field.validators))
         cell.textField.returnKeyType = field.returnType ?? .default
         cell.textField.keyboardType = field.keyboardMode ?? .default
         
@@ -246,7 +262,7 @@ extension FormFieldViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: FormTextFieldSelectField.identifier, for: indexPath) as! FormTextFieldSelectField
         
         cell.textField.returnKeyType = field.returnType ?? .default
-        cell.textField.keyboardType = field.keyboardMode ?? .default
+        cell.textField.keyboardType = field.keyboardMode ?? .alphabet
         
         let selectValue = presenter.field(at: indexPath.row+1).value as? String ?? ""
         

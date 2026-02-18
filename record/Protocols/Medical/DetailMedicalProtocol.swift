@@ -7,7 +7,7 @@
 
 import UIKit
 
-
+import VTDB
 
 protocol DetailMedicalPresenterProtocol {
     var title: String { get }
@@ -28,12 +28,12 @@ protocol DetailMedicalPresenterProtocol {
 protocol DetailMedicalViewDelegate: AnyObject {
     func reloadData()
     func updateMedicalNotes(text: String?, id: Int)
-    func updateMedicalRecord(_ medical: Medical)
+    func updateMedicalRecord(_ medical: Persistable)
     func reloadSection(at section: Int)
 }
 
 protocol DetailMedicalRouterProtocol {
-    func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Medical) -> Void))
+    func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Persistable) -> Void))
     func openListMedicalItemVC(kind: MedicalKind, medical: Medical)
 }
 

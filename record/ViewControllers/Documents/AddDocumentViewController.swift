@@ -9,6 +9,7 @@ import UIKit
 internal import UniformTypeIdentifiers
 import QuickLook
 
+/*
 class AddDocumentViewController: UIViewController {
     
     let tableView: UITableView = {
@@ -73,7 +74,20 @@ extension AddDocumentViewController: UITableViewDataSource {
         presenter.numberOfFields()
     }
     
-    
+    func getMaxValue(rules: [ValidationRules]) -> Int {
+        for rule in rules {
+            switch rule {
+            case .maxLength(let value):
+                return value
+            case .exactLength(let value):
+                print("value passing \(value)")
+                return value
+            default:
+                continue
+            }
+        }
+        return 30
+    }
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var cell: UITableViewCell
         let field = presenter.field(at: indexPath.row)
@@ -90,7 +104,8 @@ extension AddDocumentViewController: UITableViewDataSource {
         case .number:
             
             let newCell = tableView.dequeueReusableCell(withIdentifier: FormTextField.identifier, for: indexPath) as! FormTextField
-            newCell.configure(field: field,isRequired: true)
+            let maxCount = getMaxValue(rules: field.validators)
+            newCell.configure(field: field,isRequired: true, maxCount: maxCount)
             
             newCell.onValueChange = { [weak self] text in
                 return self?.presenter.validateText(text: text, index: indexPath.row,rules: field.validators).errorMessage
@@ -197,7 +212,7 @@ extension AddDocumentViewController: QLPreviewControllerDataSource {
 
 }
 
-/*
+
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var cell: UITableViewCell

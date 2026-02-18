@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import VTDB
 
 class DetailMedicalRouter: DetailMedicalRouterProtocol {
     
@@ -16,7 +17,7 @@ class DetailMedicalRouter: DetailMedicalRouterProtocol {
         self.viewController = viewController
     }
     
-    func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Medical) -> Void)) {
+    func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Persistable) -> Void)) {
         let vc = AddMedicalAssembler.make(mode: mode)
         vc.onEdit = onEdit
         

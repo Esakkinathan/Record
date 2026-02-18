@@ -53,13 +53,28 @@ struct PasswordGenerator {
         label.text = "—"
         return label
     }()
-    
+     let minLabel: UILabel = {
+         let label = UILabel()
+         label.font = AppFont.body
+         label.text = "6"
+         return label
+     }()
+     let maxLabel: UILabel = {
+         let label = UILabel()
+         label.font = AppFont.body
+         label.text = "20"
+         return label
+     }()
      private let lengthSlider: AppSlider = {
          let slider = AppSlider()
+         slider.minimumValue = 6
+         slider.maximumValue = 20
+         slider.value = 12
+         //slider.isContinuous = false
          slider.tintColor = AppColor.primaryColor
-         slider.setMinimumTrackImage(UIImage(systemName: "6"), for: .normal)
-         slider.setMaximumTrackImage(UIImage(systemName: "20"), for: .normal)
-         slider.sliderStyle = .thumbless
+//         slider.setMinimumTrackImage(UIImage(systemName: "6"), for: .normal)
+//         slider.setMaximumTrackImage(UIImage(systemName: "20"), for: .normal)
+         slider.sliderStyle = .default
          return slider
      }()
     private let lengthLabel: UILabel = {
@@ -78,7 +93,7 @@ struct PasswordGenerator {
 
     private var currentPassword: String = ""
     var lengthLabeText: String {
-         return "\(Int(lengthSlider.value))"
+         return "Current: \(Int(lengthSlider.value))"
      }
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -93,21 +108,25 @@ struct PasswordGenerator {
          navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.apply, style: AppConstantData.buttonStyle, target: self, action: #selector(applyButtonClicked))
      }
     func setUpContents() {
-        lengthSlider.minimumValue = 6
-        lengthSlider.maximumValue = 20
-        lengthSlider.value = 12
         lengthLabel.text = lengthLabeText
         lettersSwitch.isOn = true
         numbersSwitch.isOn = true
         symbolsSwitch.isOn = true
         
         lengthSlider.addTarget(self,action: #selector(lengthChanged),for: .valueChanged)
-        
+        let sliderStack: UIStackView = {
+           let stack = UIStackView(arrangedSubviews: [minLabel, lengthSlider, maxLabel])
+            stack.axis = .horizontal
+            stack.spacing = PaddingSize.content
+            stack.distribution = .fill
+            return stack
+        }()
+
         let stackView: UIStackView = {
             let stack = UIStackView(arrangedSubviews: [
                 passwordLabel,
                 lengthLabel,
-                lengthSlider,
+                sliderStack,
                 optionRow(title: "Include Letters", toggle: lettersSwitch),
                 optionRow(title: "Include Numbers", toggle: numbersSwitch),
                 optionRow(title: "Include Symbols", toggle: symbolsSwitch),

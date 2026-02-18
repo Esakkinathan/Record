@@ -8,11 +8,11 @@
 import UIKit
 
 class AddDocumentAssembler {
-    static func makeAddDocumentScreen(mode: DocumentFormMode) -> AddDocumentViewController {
+    static func make(mode: DocumentFormMode) -> FormFieldViewController {
         
-        let vc = AddDocumentViewController()
+        let vc = FormFieldViewController()
         let router = AddDocumentRouter(viewController: vc)
-        let presenter = AddDocumentPresenter(view: vc, router: router, mode: mode)
+        let presenter = AddDocumentFormPresenter(view: vc, router: router, mode: mode)
         vc.presenter = presenter
         return vc
         

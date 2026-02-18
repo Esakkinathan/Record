@@ -31,7 +31,8 @@ class FormCopyLabel: FormFieldCell {
         
         super.setUpContentView()
         copyLabel.textLabel.font = AppFont.body
-        
+        rightView.backgroundColor = .secondarySystemBackground
+        copyLabel.contentView.backgroundColor = .tertiarySystemBackground
         rightView.add(copyLabel)
         NSLayoutConstraint.activate([
             copyLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),

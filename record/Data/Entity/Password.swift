@@ -75,9 +75,9 @@ class Password: Persistable {
 }
 
 enum PasswordSortField: String, Codable {
-    case title
-    case createdAt
-    case updatedAt
+    case title = "Title"
+    case createdAt = "Created At"
+    case updatedAt = "Recent"
 }
 
 struct PasswordSortOption: Codable, Equatable  {

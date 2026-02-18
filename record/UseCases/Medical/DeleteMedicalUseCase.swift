@@ -5,7 +5,11 @@
 //  Created by Esakkinathan B on 08/02/26.
 //
 
-class DeleteMedicalUseCase {
+protocol DeleteMedicalUseCaseProtocol {
+    func execute(id: Int)
+}
+
+class DeleteMedicalUseCase: DeleteMedicalUseCaseProtocol {
     private let repository: MedicalRepositoryProtocol
     
     init(repository: MedicalRepositoryProtocol) {

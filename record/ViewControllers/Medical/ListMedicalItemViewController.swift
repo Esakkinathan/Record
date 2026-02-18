@@ -14,11 +14,18 @@ class ListMedicalItemViewController: UIViewController {
         view.estimatedRowHeight = 100
         return view
     }()
+    
+    let categorySelector: CategorySelectorView =  {
+        let view = CategorySelectorView(frame: .zero, options: MedicalSchedule.getList(), images: MedicalSchedule.getImage())
+        return view
+    }()
 
-    //let searchController = UISearchController(searchResultsController: nil)
+    
     var presenter: ListMedicalItemPresenterProtocol!
 
     let identifier = "ListMedicalItemTabelViewCell"
+    
+    let dateNavigator = DateNavigatorView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,13 +47,31 @@ class ListMedicalItemViewController: UIViewController {
         
         view.backgroundColor = AppColor.background
         view.add(tableView)
+        view.add(dateNavigator)
+        view.add(categorySelector)
         tableView.dataSource = self
         tableView.delegate = self
-        //tableView.register(UITableViewCell.self, forCellReuseIdentifier: identifier)
-
+        
+        dateNavigator.delegate = self
+        dateNavigator.minimumDate = presenter.startDate
+        dateNavigator.maximumDate = Date()
+        
+        categorySelector.onSelect = { [weak self] text in
+            self?.presenter.didSelectCategory(text)
+        }
+        
+        tableView.register(ListMedicalItemViewCell.self, forCellReuseIdentifier: ListMedicalItemViewCell.identifier)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+            dateNavigator.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
+            dateNavigator.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            dateNavigator.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            
+            categorySelector.topAnchor.constraint(equalTo: dateNavigator.bottomAnchor, constant: PaddingSize.height),
+            categorySelector.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
+            categorySelector.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            
+            tableView.topAnchor.constraint(equalTo: categorySelector.bottomAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
@@ -60,28 +85,67 @@ class ListMedicalItemViewController: UIViewController {
 }
 
 
+extension ListMedicalItemViewController: DateNavigatorViewDelegate {
+    func dateNavigator(_ navigator: DateNavigatorView, didChange date: Date) {
+        presenter.changeSelectedDate(date)
+    }
+    
+    func dateNavigatorRequestedPicker(_ navigator: DateNavigatorView, current: Date) {
+
+        let picker = UIDatePicker()
+        picker.datePickerMode = .date
+        picker.preferredDatePickerStyle = .compact
+        picker.minimumDate = presenter.startDate
+        picker.maximumDate = presenter.endDate < Date() ? presenter.endDate : Date()
+        picker.date = current
+
+        let alert = UIAlertController(
+            title: "Select Date",
+            message: "\n\n",
+            preferredStyle: .alert
+        )
+
+        alert.view.addSubview(picker)
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 50)
+        ])
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Select", style: .default) { _ in
+            navigator.setDate(picker.date)
+        })
+
+        present(alert, animated: true)
+    }
+
+    
+}
+
 extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDelegate {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        1
     }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return presenter.numberOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let medical = presenter.medicalItem(at: indexPath.row)
-        let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
-        cell.textLabel?.text = "Take \(medical.kind.rawValue) for \(medical.duration) \(medical.durationType.rawValue) Dosage: \(medical.dosage) on \(medical.instruction.value)"
-        cell.detailTextLabel?.text = "Name \(medical.name) At \(medical.shedule.dbValue)"
-        //cell.accessoryType = .disclosureIndicator
-        cell.selectionStyle = .none
+        let medical = presenter.medicalItemViewModel(at: indexPath.row)
+        let cell = tableView.dequeueReusableCell(withIdentifier: ListMedicalItemViewCell.identifier, for: indexPath) as! ListMedicalItemViewCell
+        cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, canShow: medical.canShowToggle, state: medical.toggled)
+        cell.onToggleChanged = { [weak self] value in
+            self?.presenter.itemToggledAt(indexPath.row, value: value)
+        }
         return cell
-
     }
     
+    
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
+        presenter.canEdit
     }
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -97,9 +161,30 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
 
     }
     
+    func showDeleteAlert(index: Int) {
+        
+        let alert = UIAlertController(
+            title: "Delete Medicine",
+            message: "• Delete Completely will remove all past and future records.\n\n• Stop From \(presenter.selectedDate.toString()) will keep past history but prevent future doses.",
+            preferredStyle: .actionSheet
+        )
+        
+        alert.addAction(UIAlertAction(title: "Delete Completely", style: .destructive) { [weak self] _ in
+            self?.presenter.deleteMedicalItem(at: index)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Stop From \(presenter.selectedDate.toString())", style: .default) { [weak self] _ in
+            self?.presenter.updateEndDate(at: index)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
-            self?.presenter.deleteMedicalItem(at: indexPath.row)
+            self?.showDeleteAlert(index: indexPath.row)
             completion(true)
         }
         
@@ -115,15 +200,11 @@ extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
     func reloadData() {
         tableView.reloadData()
     }
-    
-    func refreshSortMenu() {
         
-    }
-    
-    
 }
 
 extension ListMedicalItemViewController: DocumentNavigationDelegate {
+    
     func presentVC(_ vc: UIViewController) {
         present(vc, animated: true)
     }

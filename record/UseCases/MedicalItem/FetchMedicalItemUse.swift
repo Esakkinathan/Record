@@ -5,7 +5,12 @@
 //  Created by Esakkinathan B on 10/02/26.
 //
 
-class FetchMedicalItemUseCase {
+
+protocol FetchMedicalItemUseCaseProtocol {
+    func execute(id: Int, kind: MedicalKind) -> [MedicalItem]
+}
+
+class FetchMedicalItemUseCase: FetchMedicalItemUseCaseProtocol {
     private let repository: MedicalItemRepositoryProtocol
     
     init(repository: MedicalItemRepositoryProtocol) {

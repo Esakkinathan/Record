@@ -38,7 +38,7 @@ class FormLabel: FormFieldCell {
     override func setUpContentView() {
         
         super.setUpContentView()
-        //rightView.backgroundColor = AppColor.background
+        rightView.backgroundColor = .secondarySystemBackground
         rightView.add(contentLabel)
         contentLabel.font = AppFont.body
         contentLabel.labelSetUp()

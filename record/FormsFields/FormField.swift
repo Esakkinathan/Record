@@ -7,6 +7,7 @@
 
 import UIKit
 import VTDB
+
 enum DocumentFormFieldType {
     case select
     case number
@@ -88,10 +89,10 @@ enum FormFieldType {
 
 struct FormField {
     let label: String
-    let placeholder: String?
     let type: FormFieldType
     let validators: [ValidationRules]
     var gotoNextField: Bool
+    var placeholder: String?
     var value: Any?
     var returnType: UIReturnKeyType?
     var keyboardMode: UIKeyboardType?
@@ -109,18 +110,16 @@ protocol FormFieldPresenterProtocol {
     
     func cancelClicked()
     func saveClicked()
-}
-    extension FormFieldPresenterProtocol {
-        func didSelectOption(at index: Int){}
-        func selectClicked(at index: Int){}
-        func formButtonClicked(){}
-        
-        func uploadDocument(at index: Int){}
-        func viewDocument(at index: Int){}
-        func removeDocument(at index: Int){}
-        func didPickDocument(url: URL){}
+    //func didSelectOption(at index: Int)
+    func selectClicked(at index: Int)
+    func formButtonClicked()
+    
+    func uploadDocument(at index: Int)
+    func viewDocument(at index: Int)
+    func removeDocument(at index: Int)
+    func didPickDocument(url: URL)
 
-    }
+}
 
     
 

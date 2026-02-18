@@ -75,7 +75,8 @@ extension MasterPasswordPresenter {
     }
     
     func validatePin(_ existingPin: String) {
-        if enteredPin == existingPin {
+        let hashed = HashManager.hash(for: enteredPin)
+        if hashed == existingPin {
             resetPin()
             PasswordSessionManager.shared.authenticate()
             openListPasswordScreen()
@@ -101,9 +102,9 @@ extension MasterPasswordPresenter {
     func confirmPin(_ firstPin: String) {
         if enteredPin == firstPin {
             useCase.add(enteredPin)
+            flow = .verify(existingPin: HashManager.hash(for: enteredPin))
             resetPin()
             view?.showInfo("Enter PIN")
-            flow = .verify(existingPin: enteredPin)
             PasswordSessionManager.shared.authenticate()
             
             router.openListPasswordVC()

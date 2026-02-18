@@ -5,7 +5,7 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 import UIKit
-
+import VTDB
 protocol DetailDocumentPresenterProtocol {
     var title: String { get }
     func editButtonClicked()
@@ -18,17 +18,20 @@ protocol DetailDocumentPresenterProtocol {
     func getSection(at section: Int) -> DetailDocumentSection
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
+    func uploadDocument()
+    func didPickDocument(url: URL)
 }
 
 protocol DetailDocumentViewDelegate: AnyObject {
     func reloadData()
     func configureToOpenDocument(previewUrl: URL)
     func updateDocumentNotes(text: String?,id: Int)
-    func updateDocument(document: Document)
+    func updateDocument(document: Persistable)
 }
 
 protocol DetailDocumentRouterProtocol {
-    func openEditDocumentVC(mode: DocumentFormMode, onEdit: @escaping (Document) -> Void)
+    func openDocumentPicker()
+    func openEditDocumentVC(mode: DocumentFormMode, onEdit: @escaping (Persistable) -> Void)
     func openDocumentViewer(filePath: String)
 }
 

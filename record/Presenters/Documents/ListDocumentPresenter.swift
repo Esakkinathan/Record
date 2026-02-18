@@ -67,7 +67,7 @@ extension ListDocumentPresenter {
         loadDocuments()
     }
 
-    func updateDocument(document: Document) {
+    func updateDocument(_ document: Document) {
         updateUseCase.execute(document: document)
         loadDocuments()
     }
@@ -121,7 +121,7 @@ extension ListDocumentPresenter {
     
     func gotoAddDocumentScreen() {
         router.openAddDocumentVC(mode: .add) { [weak self] document in
-            self?.addDocument(document)
+            self?.addDocument(document as! Document)
         }
     }
     
@@ -135,7 +135,7 @@ extension ListDocumentPresenter {
     func didSelectedRow(at index: Int) {
         let document = document(at: index)
         router.openDetailDocumentVC(document: document,onUpdate: { [weak self] updatedDoc in
-            self?.updateDocument(document: updatedDoc)
+            self?.updateDocument(updatedDoc as! Document)
         }, onUpdateNotes: { [weak self] text, id in
             self?.updateNotes(text: text, id: id)
             }
@@ -221,6 +221,25 @@ extension ListDocumentPresenter {
 }
 
 extension ListDocumentPresenter {
+    
+    func validatePassword(_ password1: String, _ password2: String, at index: Int) {
+        
+        if password1.isEmpty || password2.isEmpty {
+            view?.showToastVC(message: "Enter Password", type: .error)
+            return
+        }
+        
+        if password1 != password2 {
+            view?.showToastVC(message: "Password does not match", type: .error)
+        }
+        
+        if password1.count > 8 || password1.count < 4 {
+            view?.showToastVC(message: "Password length between 4 to 8", type: .error)
+        }
+        shareDocumentWithLock(at: index, password: password1)
+        
+        
+    }
     func createPasswordProtectedPDF(password: String, sourceURL: URL) -> URL? {
         let lockedFileName = "Locked-\(sourceURL.lastPathComponent)"
         let lockedURL = FileManager.default.temporaryDirectory
