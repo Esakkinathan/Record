@@ -5,7 +5,7 @@
 //  Created by Esakkinathan B on 30/01/26.
 //
 import Foundation
-
+/*
 protocol AddDocumentPresenterProtocol {
     var title: String {get}
     func field(at index: Int) -> DocumentFormField
@@ -34,7 +34,7 @@ protocol AddDocumentViewDelegate: AnyObject {
     func reloadField(at index: Int)
     func configureToOpenDocument(previewUrl: URL)
 }
-
+*/
 protocol AddDocumentRouterProtocol {
     func openDocumentPicker()
     func openDocumentViewer(filePath: String)

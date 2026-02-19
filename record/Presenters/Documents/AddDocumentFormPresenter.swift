@@ -80,7 +80,6 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     
     func didSelectOption(at index: Int,_ value: String){}
     func selectClicked(at index: Int){
-        print("insted i got detected")
     }
     func formButtonClicked(){}
     
@@ -88,7 +87,6 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     func viewDocument(at index: Int){}
     func removeDocument(at index: Int){}
     func didPickDocument(url: URL){
-        print("i was executing")
     }
 
 
@@ -215,7 +213,6 @@ class AddDocumentFormPresenter: FormFieldPresenter {
     
     override func didPickDocument(url: URL) {
         guard let index = fields.firstIndex(where: { $0.type == .fileUpload }) else { return }
-        print("i executed",url)
         updateValue(url.path, at: index)
         view?.reloadField(at: index)
     }

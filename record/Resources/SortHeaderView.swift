@@ -31,7 +31,7 @@ class SortHeaderView: UIView {
     
     let timerLabel: CopyTextLabel = {
         let label = CopyTextLabel()
-        label.copyButton.isHidden = true
+        label.copyIconView.isHidden = true
         label.textLabel.font = AppFont.body
         return label
     }()

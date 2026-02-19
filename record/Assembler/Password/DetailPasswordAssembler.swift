@@ -8,7 +8,7 @@
 import UIKit
 
 class DetailPasswordAssembler {
-    static func makePasswordScreen(password: Password) -> DetailPasswordViewController {
+    static func make(password: Password) -> DetailPasswordViewController {
         let vc = DetailPasswordViewController()
         let router = DetailPasswordRouter(viewController: vc)
         let presenter = DetailPasswordPresenter(password: password, view: vc, router: router)

@@ -24,6 +24,8 @@ class UpdateMedicalItemUseCase: UpdateMedicalItemUseCaseProtocol {
     }
     func execute(medicalItemId: Int, date: Date) {
         repository.updateEndDate(medicalItemId: medicalItemId, date: date)
+        NotificationManager.shared.syncMedicalNotifications()
+
     }
 
 }

@@ -5,7 +5,7 @@
 //  Created by Esakkinathan B on 09/02/26.
 //
 import UIKit
-
+/*
 class AddMedicalViewController: UIViewController {
     let tableView: UITableView = {
         let tableView = UITableView()
@@ -188,3 +188,4 @@ extension AddMedicalViewController: DocumentNavigationDelegate {
         present(vc, animated: true)
     }
 }
+*/

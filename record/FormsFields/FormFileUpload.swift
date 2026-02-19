@@ -18,7 +18,7 @@ class FormFileUpload: FormFieldCell {
         let label = UILabel()
         label.labelSetUp()
         label.text = DocumentConstantData.addDocument
-        label.textColor = AppColor.fileUploadColor
+        label.textColor = .label
         label.font = AppFont.small
         return label
     }()
@@ -43,6 +43,7 @@ class FormFileUpload: FormFieldCell {
         iv.setAsEmptyDocument()
         iv.layer.cornerRadius = 10
         iv.isUserInteractionEnabled = false
+        iv.tintColor = AppColor.primaryColor
         return iv
     }()
     
@@ -166,7 +167,6 @@ class FormFileUpload: FormFieldCell {
     
     func configure(title: String, filePath: String?,isRequired: Bool = false) {
         super.configure(title: title, isRequired: isRequired)
-        print(filePath ?? "notinh")
         if let path = filePath {
             setDocuments(hasDocument: true, fileUrl: path)
         } else {

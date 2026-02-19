@@ -47,9 +47,7 @@ extension DetailMedicalPresenter {
         if let doctor = medical.doctor {
             infoRows.append(.info(.init(title: "Doctor", value: doctor)))
         }
-        if let date = medical.date {
-            infoRows.append(.info(.init(title: "Diagoned at", value: date.toString())))
-        }
+        infoRows.append(.info(.init(title: "Diagoned at", value: medical.date.toString())))
         infoRows.append(.info(.init(title: "Duration", value: medical.durationText)))
         
         var itemRow: [DetailMedicalRow] = []

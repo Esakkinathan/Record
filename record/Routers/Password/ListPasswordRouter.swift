@@ -5,6 +5,7 @@
 //  Created by Esakkinathan B on 03/02/26.
 //
 import UIKit
+import VTDB
 
 class ListPasswordRouter: ListPasswordRouterProtocol {
         
@@ -14,16 +15,16 @@ class ListPasswordRouter: ListPasswordRouterProtocol {
         self.viewController = viewController
     }
     
-    func openAddPasswordVC(mode: PasswordFormMode, onAdd: @escaping (Password) -> Void) {
-        let vc = AddPasswordAssembler.makeAddPasswordScreen(mode: mode)
+    func openAddPasswordVC(mode: PasswordFormMode, onAdd: @escaping (Persistable) -> Void) {
+        let vc = AddPasswordAssembler.make(mode: mode)
         vc.onAdd = onAdd
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .formSheet
         viewController?.presentVC(navVc)
     }
     
-    func openDetailPasswordVC(password: Password, onUpdate: @escaping (Password) -> Void, onUpdateNotes: @escaping (String?, Int) -> Void) {
-        let vc = DetailPasswordAssembler.makePasswordScreen(password: password)
+    func openDetailPasswordVC(password: Password, onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?, Int) -> Void) {
+        let vc = DetailPasswordAssembler.make(password: password)
         vc.onEdit = onUpdate
         viewController?.push(vc)
     }

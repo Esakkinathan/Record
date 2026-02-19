@@ -7,6 +7,7 @@
 
 import UIKit
 
+import VTDB
 
 class DetailPasswordViewController: KeyboardNotificationViewController {
     
@@ -20,7 +21,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
     
     var presenter: DetailPasswordPresenterProtocol!
     var onUpdateNotes: ((String?,Int) -> Void)?
-    var onEdit: ((Password) -> Void)?
+    var onEdit: ((Persistable) -> Void)?
     
     override var keyboardScrollableView: UIScrollView? {
         return tableView
@@ -156,7 +157,7 @@ extension DetailPasswordViewController: DetailPasswordViewDelegate {
         onUpdateNotes?(text,id)
     }
     
-    func updatePassword(_ password: Password) {
+    func updatePassword(_ password: Persistable) {
         onEdit?(password)
     }
     

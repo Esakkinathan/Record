@@ -18,6 +18,8 @@ class DeleteMedicalItemUseCase: DeleteMedicalItemUseCaseProtocol {
     
     func execute(id: Int) {
         repository.delete(id: id)
+        NotificationManager.shared.syncMedicalNotifications()
+
     }
 
 }

@@ -34,6 +34,7 @@ class MedicalRepository: MedicalRepositoryProtocol {
             Medical.createdAtC: .date,
             Medical.lastModifiedC: .date,
             Medical.notesC: .text,
+            Medical.receiptC: .blob,
             
         ]
         db.create(table: Medical.databaseTableName, columnDefinitions: colums, primaryKey: [Medical.idC])
@@ -50,7 +51,8 @@ class MedicalRepository: MedicalRepositoryProtocol {
             Medical.dateC: medical.date,
             Medical.createdAtC: medical.createdAt,
             Medical.lastModifiedC: medical.lastModified,
-            Medical.notesC: medical.notes
+            Medical.notesC: medical.notes,
+            Medical.receiptC: medical.receipt
         ]
         
         db.insertInto(tableName: Medical.databaseTableName, values: columns)
@@ -70,6 +72,10 @@ class MedicalRepository: MedicalRepositoryProtocol {
     
     func fetchAll() -> [Medical] {
         return db.fetchMedical()
+    }
+    
+    func fetchMedicalByDate(from date: Date) -> [Medical] {
+        return db.fetchMedicalByDate(date: date)
     }
     
 }
@@ -119,5 +125,9 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
     
     func activeMedicalItems(_ medicalId: Int, date: Date) -> [MedicalItem] {
         return db.fetchActiveMedicalItem(medicalId, date: date)
+    }
+    
+    func fetchMedicalItemsByDate(from date: Date, to dateTo: Date) -> [MedicalItem] {
+        return db.fetchMedicalItems(from: date, to: dateTo)
     }
 }

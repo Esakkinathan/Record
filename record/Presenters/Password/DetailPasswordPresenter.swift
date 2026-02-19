@@ -38,7 +38,7 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
     func editButtonClicked() {
         router.openEditPasswordVC(mode: .edit(password)) { [weak self] updatedPassword in
             guard let self = self else { return }
-            updatePassword(updatedPassword)
+            updatePassword(updatedPassword as! Password)
             view?.updatePassword(updatedPassword)
         }
     }

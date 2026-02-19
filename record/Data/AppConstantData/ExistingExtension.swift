@@ -89,3 +89,14 @@ extension String {
         return self.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
+
+extension Date {
+    var start: Date {
+        return Calendar.current.startOfDay(for: self)
+    }
+    var end: Date {
+        let calendar = Calendar.current
+        let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: start)!
+        return calendar.date(byAdding: .second, value: -1, to: startOfNextDay)!
+    }
+}

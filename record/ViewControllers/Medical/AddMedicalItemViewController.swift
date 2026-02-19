@@ -6,7 +6,7 @@
 //
 
 import UIKit
-
+/*
 class AddMedicalItemViewController: UIViewController {
     let tableView: UITableView = {
         let tableView = UITableView()
@@ -186,3 +186,4 @@ extension AddMedicalItemViewController: DocumentNavigationDelegate {
         present(vc, animated: true)
     }
 }
+*/

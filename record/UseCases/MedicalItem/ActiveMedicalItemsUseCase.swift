@@ -87,17 +87,18 @@ class ActiveMedicalItemsUseCase {
         }
     }
      */
-    func execute(medicals: [Medical]) -> SectionViewModel {
+    func execute() -> SectionViewModel {
 
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = Date().start
+        let end = Date().end
 
-        let medicalItems = medicals.flatMap {
-            itemRepository.activeMedicalItems($0.id, date: today)
-        }
-
+        let medicalItems = itemRepository.fetchMedicalItemsByDate(from: today, to: end)
+            
+        print("medical item count",medicalItems.count)
         let logs = medicalItems.flatMap {
             logRepository.fetch(medicalId: $0.id, date: today)
         }
+        print("log item count",medicalItems.count)
 
         let logMap = Dictionary(
             uniqueKeysWithValues: logs.map {
@@ -135,7 +136,7 @@ class ActiveMedicalItemsUseCase {
 
             if remainingCount == 0 {
                 style = .success
-                summary = "All taken"
+                summary = "No Medicines"
             } else {
                 style = .danger
                 summary = "\(remainingCount) medicines remaining"

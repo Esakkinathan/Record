@@ -11,17 +11,31 @@ struct DashBoardData {
 }
 
 class ActiveMedicalUseCase {
-    func execute(medical: [Medical]) -> DashBoardData {
-        let active = medical.filter {
-            return $0.endDate >= Date()
-        }
+    
+    func activeMedicals(medicals: [Medical]) -> [Medical] {
+        let today = Calendar.current.startOfDay(for: Date())
         
-        let sections = ActiveMedicalItemsUseCase().execute(medicals: active)
+        return medicals.filter { medical in
+            let start = Calendar.current.startOfDay(for: medical.startDate)
+            let end = Calendar.current.startOfDay(for: medical.endDate)
+            
+            return start <= today && end >= today
+        }
+
+    }
+    
+    func execute(medical: [Medical]) -> DashBoardData {
+        
+        let active = activeMedicals(medicals: medical)
+        let sections = ActiveMedicalItemsUseCase().execute()
         
         
         var summary: [InfoRowModel] = []
         for act in active {
             summary.append(.init(title: act.title, summary: remainingText(for: act), style: .normal))
+        }
+        if summary.isEmpty {
+            summary.append(.init(title: "No Active Treatements", summary: "", style: .success))
         }
         return .init(row1: sections, row2: .init(title: "Active Treatements", rows: summary))
     }

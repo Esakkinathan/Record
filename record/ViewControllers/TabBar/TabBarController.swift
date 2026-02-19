@@ -27,18 +27,19 @@ class TabBarController: UITabBarController {
             return UINavigationController(rootViewController: ListMedicalAssembler.make())
         }
         
-        let finance = UITab(title: "Finance", image: UIImage(systemName: IconName.finance), identifier: "finance") {_ in
-            return UINavigationController(rootViewController: ListUtilityAssembler.make())
-        }
+//        let finance = UITab(title: "Finance", image: UIImage(systemName: IconName.finance), identifier: "finance") {_ in
+//            return UINavigationController(rootViewController: ListUtilityAssembler.make())
+//        }
+//        
+//        let timeLine = UITab(title: "TimeLine", image: UIImage(systemName: "calendar.day.timeline.leading"), identifier: "timeline") {_ in 
+//            return UINavigationController(rootViewController: ListDocumentAssembler.make())
+//        }
         
-        let timeLine = UITab(title: "TimeLine", image: UIImage(systemName: "calendar.day.timeline.leading"), identifier: "timeline") {_ in 
-            return UINavigationController(rootViewController: ListDocumentAssembler.make())
+        let settings = UITab(title: "Settings", image: UIImage(systemName: IconName.settings), identifier: "settings") {_ in
+            return UINavigationController(rootViewController: SettingsAssembler.make())
         }
-        let settings = UITab(title: "Settings", image: UIImage(systemName: "house"), identifier: "settings") {_ in
-            return UINavigationController(rootViewController: ListMedicalAssembler.make())
-        }
-        setTabs([document, password, medical], animated: true)
-        selectedTab = medical
+        setTabs([document, password, medical,settings], animated: true)
+        selectedTab = document
         mode = .automatic
         tabBar.tintColor = AppColor.primaryColor
         tabBarMinimizeBehavior = .onScrollDown

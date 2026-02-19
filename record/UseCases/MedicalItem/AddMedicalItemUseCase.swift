@@ -19,5 +19,7 @@ class AddMedicalItemUseCase: AddMedicalItemUseCaseProtocol {
     
     func execute(medicalItem: MedicalItem, medicalId: Int) {
         repository.add(medicalItem: medicalItem, medicalId: medicalId)
+        NotificationManager.shared.syncMedicalNotifications()
+
     }
 }

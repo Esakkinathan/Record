@@ -26,7 +26,7 @@ class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
     var title: String {
         kind.rawValue
     }
-    var selectedDate = Date() 
+    var selectedDate = Date().start
     
     var selectedSchedule: MedicalSchedule?
     
@@ -103,15 +103,11 @@ extension ListMedicalItemPresenter {
     
     func loadLogs() {
         var temp: [MedicalIntakeLog] = []
-        print(medicalItems.count)
         let date = Calendar.current.startOfDay(for: selectedDate)
         for item in self.medicalItems {
             temp += fetchLogUseCase.execute(medicalId: item.id, date: date)
         }
         logs = temp
-        for log in self.logs {
-            print(log.id, log.medicalItemId, log.date.toString(), log.taken)
-        }
     }
     
     func reloadItems() {
@@ -145,22 +141,21 @@ extension ListMedicalItemPresenter {
     
     func updateEndDate(at index: Int) {
         let medicalItem = medicalItem(at: index)
-        updateUseCase.execute(medicalItemId: medicalItem.id, date: Calendar.current.startOfDay(for: selectedDate))
+        updateUseCase.execute(medicalItemId: medicalItem.id, date: selectedDate.start)
     }
     
     func editMedicalItem(at index: Int) {
         let medicalItem = medicalItem(at: index)
-        router.openEditMedicalItemVC(mode: .edit(medicalItem), medicalId: medical.id, kind: medicalItem.kind, startDate: selectedDate) { [weak self] updatedMedicalItem in
+        router.openAddMedicalItemVC(mode: .edit(medicalItem), medical: medical, kind: medicalItem.kind, startDate: selectedDate.start) { [weak self] updatedMedicalItem in
             self?.updateMedicalItem(updatedMedicalItem as! MedicalItem)
         }
 
     }
     
     func gotoAddMedicalItemScreen() {
-        router.openAddMedicalItemVC(mode: .add, medicalId: medical.id, kind: kind, startDate: selectedDate) { [weak self] medicalItem in
+        router.openAddMedicalItemVC(mode: .add, medical: medical, kind: kind, startDate: selectedDate.start) { [weak self] medicalItem in
             self?.addMedicalItem(medicalItem as! MedicalItem)
         }
-
     }
 }
 
@@ -183,7 +178,7 @@ extension ListMedicalItemPresenter {
         let calendar = Calendar.current
 
         let start = calendar.startOfDay(for: item.startDate)
-        let end = calendar.startOfDay(for: item.endDate ?? endDate)
+        let end = calendar.startOfDay(for: item.endDate)
         let selected = calendar.startOfDay(for: selectedDate)
 
         return selected >= start && selected <= end

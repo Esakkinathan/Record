@@ -14,22 +14,19 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
         self.viewController = viewController
     }
     
-    func openAddMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind,startDate: Date,onAdd: @escaping (Persistable) -> Void) {
-        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind,startDate: startDate)
-        vc.onAdd = onAdd
+    func openAddMedicalItemVC(mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind,startDate: Date,onAdd: @escaping (Persistable) -> Void) {
+        let vc = AddMedicalItemAssembler.make(mode: mode, medical: medical, kind: kind,startDate: startDate)
+        switch mode {
+        case .add:
+            vc.onAdd = onAdd
+        case .edit(_):
+            vc.onEdit = onAdd
+        }
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .formSheet
         viewController?.presentVC(navVc)
 
     }
     
-    func openEditMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind, startDate: Date, onEdit: @escaping (Persistable) -> Void) {
-        let vc = AddMedicalItemAssembler.make(mode: mode, medicalId: medicalId, kind: kind, startDate: startDate)
-        vc.onEdit = onEdit
-        let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
-        viewController?.presentVC(navVc)
-
-    }
 
 }

@@ -59,6 +59,7 @@ class Medical: Persistable {
     static let notesC = "notes"
     static let durationC = "duration"
     static let durationTypeC = "durationType"
+    static let receiptC = "receipt"
 
     
     func encode(to container: inout VTDB.Container) {
@@ -85,14 +86,14 @@ class Medical: Persistable {
     var durationType: DurationType
     var hospital: String?
     var doctor: String?
-    var date: Date?
+    var date: Date
     let createdAt: Date
     var lastModified: Date
     var notes: String?
-    
+    var receipt: String?
     
 
-    init(id: Int, title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date? = nil, createdAt: Date = Date(), lastModified: Date = Date() ,notes: String? = nil, ) {
+    init(id: Int, title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date, createdAt: Date = Date(), lastModified: Date = Date() ,notes: String? = nil, receipt: String? = nil) {
         self.id = id
         self.title = title
         self.type = type
@@ -104,9 +105,10 @@ class Medical: Persistable {
         self.createdAt = createdAt
         self.lastModified = lastModified
         self.notes = notes
+        self.receipt = receipt
     }
     
-    func update(title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date? = nil) {
+    func update(title: String, type: MedicalType, duration: Int, durationType: DurationType,hospital: String? = nil, doctor: String? = nil,date: Date, receipt: String? = nil) {
         self.title = title
         self.type = type
         self.hospital = hospital
@@ -115,30 +117,33 @@ class Medical: Persistable {
         self.duration = duration
         self.durationType = durationType
         self.lastModified = Date()
+        self.receipt = receipt
     }
 }
 
 extension Medical {
     var startDate: Date {
-        date ?? createdAt
+        date
     }
 
     var endDate: Date {
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: startDate)
-
+        let start = date
+        let date: Date
         switch durationType {
         case .day:
-            return calendar.date(byAdding: .day, value: duration - 1, to: start)!
+            date = calendar.date(byAdding: .day, value: duration - 1, to: start)!
             
         case .week:
-            return calendar.date(byAdding: .day, value: (duration * 7) - 1, to: start)!
+            date = calendar.date(byAdding: .day, value: (duration * 7) - 1, to: start)!
             
         case .month:
             let added = calendar.date(byAdding: .month, value: duration, to: start)!
-            return calendar.date(byAdding: .day, value: -1, to: added)!
+            date = calendar.date(byAdding: .day, value: -1, to: added)!
         }
+        return date.end
     }
+    
     var durationText: String {
         return "\(duration) \(durationType.rawValue)"
     }
@@ -316,9 +321,9 @@ class MedicalItem: Persistable {
     var dosage: String
     var shedule: [MedicalSchedule]
     var startDate: Date
-    var endDate: Date?
+    var endDate: Date
     
-    init(id: Int, medical: Int,kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, startDate: Date = Date(),shedule: [MedicalSchedule], endDate: Date? = nil) {
+    init(id: Int, medical: Int,kind: MedicalKind, name: String, instruction: MedicalInstruction, dosage: String, startDate: Date = Date(),shedule: [MedicalSchedule], endDate: Date) {
         self.id = id
         self.medical = medical
         self.kind = kind
@@ -337,6 +342,10 @@ class MedicalItem: Persistable {
         self.dosage = dosage
         self.shedule = shedule
         self.startDate = startDate
+    }
+    
+    func setEndDate(endDate: Date) {
+        self.endDate = endDate
     }
 
 }

@@ -296,7 +296,8 @@ extension ListPasswordViewController: DocumentNavigationDelegate {
 extension ListPasswordViewController: UISearchResultsUpdating, UISearchBarDelegate {
     
     func updateSearchResults(for searchController: UISearchController) {
-        presenter.search(text: searchController.searchBar.text)
+        guard let text = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) else {return}
+        presenter.search(text: text)
     }
     
 }

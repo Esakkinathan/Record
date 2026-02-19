@@ -44,7 +44,7 @@ class FormFieldViewController: UIViewController {
         tableView.register(FormTextView.self, forCellReuseIdentifier: FormTextView.identifier)
         tableView.register(FormPasswordField.self, forCellReuseIdentifier: FormPasswordField.myidentifier)
         tableView.register(FormTextFieldSelectField.self, forCellReuseIdentifier: FormTextFieldSelectField.identifier)
-
+        tableView.register(ButtonTableViewCell.self, forCellReuseIdentifier: ButtonTableViewCell.identifier)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -161,7 +161,6 @@ extension FormFieldViewController {
             case .maxLength(let value):
                 return value
             case .exactLength(let value):
-                //print("value passing \(value)")
                 return value
             default:
                 continue
@@ -174,7 +173,7 @@ extension FormFieldViewController {
     func configureCell(cell: FormTextField,field: FormField, indexPath: IndexPath) -> FormTextField {
         cell.configure(title: field.label, text: field.value as? String, placeholder: field.placeholder, isRequired: isFieldRequired(field: field),  maxCount: getMaxValue(rules: field.validators))
         cell.textField.returnKeyType = field.returnType ?? .default
-        cell.textField.keyboardType = field.keyboardMode ?? .default
+        cell.textField.keyboardType = field.keyboardMode ?? .alphabet
         
         cell.onValueChange = { [weak self] text in
             return self?.presenter.validateText(text: text, index: indexPath.row,rules: field.validators).errorMessage
@@ -308,6 +307,7 @@ extension FormFieldViewController {
     func textViewCell(_ indexPath: IndexPath,_ field: FormField) -> FormTextView {
         let cell = tableView.dequeueReusableCell(withIdentifier: FormTextView.identifier, for: indexPath) as! FormTextView
         cell.configure(title: field.label, text: field.value as? String, isRequired: isFieldRequired(field: field))
+        cell.textView.keyboardType = .default
         cell.onValueChange = { [weak self] text in
             return self?.presenter.validateText(text: text, index: indexPath.row, rules: field.validators).errorMessage
         }

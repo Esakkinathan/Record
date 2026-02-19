@@ -8,6 +8,7 @@
 import UIKit
 
 
+
 class ListDocumentViewCell: UICollectionViewCell {
     
     static let identifier = "listDocumentTableViewCell"
@@ -191,6 +192,9 @@ class ListDocumentViewCell: UICollectionViewCell {
     }
     
 }
+
+
+
 
 /*
  func setUpContentView() {

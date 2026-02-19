@@ -48,12 +48,10 @@ class RegistrationPresenter: RegistrationFormPresenterProtocol {
     
 
     func numberOfFields() -> Int {
-        print("number of field is asked \(fields.count)")
         return fields.count
     }
     
     func field(at index: Int) -> LoginFormField {
-        print("return fields")
         return fields[index]
     }
     

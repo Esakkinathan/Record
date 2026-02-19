@@ -7,7 +7,7 @@
 
 
 import UIKit
-
+/*
 class AddPasswordViewController: UIViewController {
     
     let tableView: UITableView = {
@@ -183,3 +183,4 @@ extension AddPasswordViewController: DocumentNavigationDelegate {
         present(vc, animated: true)
     }
 }
+*/

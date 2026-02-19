@@ -112,7 +112,6 @@ extension RegistrationFormViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        print("cell for row at called")
         let field = presenter.field(at: indexPath.row)
         var cell: UITableViewCell
         switch field.type {

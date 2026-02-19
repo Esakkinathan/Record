@@ -31,7 +31,6 @@ protocol ListMedicalItemViewDelegate: AnyObject {
 }
 
 protocol ListMedicalItemRouterProtocol {
-    func openAddMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind, startDate: Date,onAdd: @escaping (Persistable) -> Void)
-    func openEditMedicalItemVC(mode: MedicalItemFormMode, medicalId: Int, kind: MedicalKind, startDate: Date, onEdit: @escaping (Persistable) -> Void)
+    func openAddMedicalItemVC(mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind, startDate: Date,onAdd: @escaping (Persistable) -> Void)
 
 }

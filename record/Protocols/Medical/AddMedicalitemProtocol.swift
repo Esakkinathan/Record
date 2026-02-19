@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 10/02/26.
 //
-
+/*
 protocol AddMedicalItemPresenterProtocol {
     var title: String {get}
     func field(at index: Int) -> MedicalItemFormField
@@ -26,7 +26,7 @@ protocol AddMedicalItemViewDelegate: AnyObject {
     func dismiss()
 
 }
-
+*/
 protocol AddMedicalItemRouterProtocol {
     func openSelectVC(options: [String], selected: String, addExtra: Bool,onSelect: @escaping (String) -> Void )
     

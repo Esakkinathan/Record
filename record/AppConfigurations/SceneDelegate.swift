@@ -10,7 +10,7 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    private var isLocked = true
+    private var isLocked = SettingsManager.shared.faceId
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -18,24 +18,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         
-//        let appearance = UINavigationBarAppearance()
-//        appearance.configureWithOpaqueBackground()
-//        appearance.backgroundColor = AppColor.primaryColor
-//        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
-//        UINavigationBar.appearance().standardAppearance = appearance
-//        UINavigationBar.appearance().scrollEdgeAppearance = appearance
-//        UINavigationBar.appearance().compactAppearance = appearance
         
-//        let vc = RegisterScreenAssembler.make()
-//        
-//        window?.rootViewController = vc
-        showLockScreen()
+        applyTheme()
+        applyAccent()
+        setUpNavigation()
         window?.makeKeyAndVisible()
 
-        window?.overrideUserInterfaceStyle = .unspecified
-        UINavigationBar.appearance().tintColor = AppColor.primaryColor
-        UITabBar.appearance().tintColor = AppColor.primaryColor
-        window?.tintColor = AppColor.primaryColor
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -48,12 +36,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
-        guard isLocked == false else { return }
+        if isLocked == false {
+            showMainInterface()
+            return
+        }
         showLockScreen()
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
-        isLocked = true
+        //isLocked = true
 
     }
     func showLockScreen() {
@@ -76,8 +67,56 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window?.rootViewController = mainVC
         })
     }
+    
+    func applyTheme(animated: Bool = false) {
+        
+        guard let window = self.window else { return }
+        
+        let theme = SettingsManager.shared.theme
+        
+        let style: UIUserInterfaceStyle
+        
+        switch theme {
+        case .system:
+            style = .unspecified
+        case .light:
+            style = .light
+        case .dark:
+            style = .dark
+        }
+        
+        if animated {
+            UIView.transition(
+                with: window,
+                duration: 0.3,
+                options: .transitionCrossDissolve,
+                animations: {
+                    window.overrideUserInterfaceStyle = style
+                }
+            )
+        } else {
+            window.overrideUserInterfaceStyle = style
+        }
+    }
+    
+    func setUpNavigation() {
+        let accent = SettingsManager.shared.accent
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = accent.color
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+    }
+    
+    func applyAccent() {
+        let accent: AppAccent = SettingsManager.shared.accent
+        UINavigationBar.appearance().tintColor = accent.color
+        UITabBar.appearance().tintColor = accent.color
+        window?.tintColor = accent.color
 
-
+    }
 
 }
 

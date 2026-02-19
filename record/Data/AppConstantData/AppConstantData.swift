@@ -56,11 +56,22 @@ enum AppConstantData {
     static let save = "Save"
     
     static let none = "None"
+    
+    static let morningRemainder: Int = 8
+    
+    static let afternoonRemainder: Int = 14
+    
+    static let eveningRemainder: Int = 19
+    
+    static let nightRemainder: Int = 20
+    
 }
 
 
 enum IconName {
     
+    
+    static let settings = "gear"
     
     static let arrowUp = "arrow.up"
     

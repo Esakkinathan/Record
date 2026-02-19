@@ -13,7 +13,7 @@ class MasterPasswordRouter: MasterPasswordRouterProtocol {
         self.viewController = viewController
     }
     func openListPasswordVC() {
-        let vc = ListPasswordAssembler.makeListPasswordVC()
+        let vc = ListPasswordAssembler.make()
         let navVc = UINavigationController(rootViewController: vc)
         viewController?.presentVC(navVc)
     }

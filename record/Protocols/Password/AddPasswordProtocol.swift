@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 03/02/26.
 //
-
+/*
 protocol AddPasswordPresenterProtocol {
     var title: String {get}
     func field(at index: Int) -> PasswordFormField
@@ -23,7 +23,7 @@ protocol AddPasswordViewDelegate: AnyObject {
     func reloadData()
     func dismiss()
 }
-
+*/
 protocol AddPasswordRouterProtocol {
     func openSuggestPasswordScreen(onApply: ((String) -> Void)?)
 }

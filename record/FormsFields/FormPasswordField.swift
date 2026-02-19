@@ -11,7 +11,7 @@ class FormPasswordField: FormTextField {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: IconName.eyeSlash), for: .normal)
         button.setImage(UIImage(systemName: IconName.eye), for: .selected)
-        button.layer.cornerRadius = 20
+        button.backgroundColor = .clear
         button.clipsToBounds = true
         return button
         
@@ -40,11 +40,11 @@ class FormPasswordField: FormTextField {
             eyeButton.centerYAnchor.constraint(equalTo: rightContainer.centerYAnchor),
             eyeButton.leadingAnchor.constraint(equalTo: rightContainer.leadingAnchor, constant: 8),
             eyeButton.trailingAnchor.constraint(equalTo: rightContainer.trailingAnchor, constant: -12),
-            eyeButton.widthAnchor.constraint(equalToConstant: 18),
-            eyeButton.heightAnchor.constraint(equalToConstant: 18),
+            eyeButton.widthAnchor.constraint(equalToConstant: 25),
+            eyeButton.heightAnchor.constraint(equalToConstant: 25),
             
-            rightContainer.widthAnchor.constraint(equalToConstant: 38),
-            rightContainer.heightAnchor.constraint(equalToConstant: 18)
+            rightContainer.widthAnchor.constraint(equalToConstant: 45),
+            rightContainer.heightAnchor.constraint(equalToConstant: 25)
         ])
 
     }

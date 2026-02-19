@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 09/02/26.
 //
-
+/*
 protocol AddMedicalPresenterProtocol {
     var title: String {get}
     func field(at index: Int) -> MedicalFormField
@@ -24,7 +24,7 @@ protocol AddMedicalViewDelegate: AnyObject {
     func reloadField(at index: Int)
     func dismiss()
 }
-
+*/
 protocol AddMedicalRouterProtocol {
     func openSelectVC(options: [String], selected: String, addExtra: Bool, onSelect: @escaping (String) -> Void )
 }

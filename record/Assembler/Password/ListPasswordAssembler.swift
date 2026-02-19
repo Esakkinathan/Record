@@ -8,7 +8,7 @@
 import UIKit
 
 class ListPasswordAssembler {
-    static func makeListPasswordVC() -> ListPasswordViewController {
+    static func make() -> ListPasswordViewController {
         let vc = ListPasswordViewController()
         let router = ListPasswordRouter(viewController: vc)
         

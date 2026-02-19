@@ -178,6 +178,7 @@ extension ListMedicalPresenter {
         MedicalSortStore.save(currentSort)
         rebuildList()
     }
+    
     func didSelectCategory(_ text: String) {
         selectedType = MedicalType(rawValue: text)
         rebuildList()

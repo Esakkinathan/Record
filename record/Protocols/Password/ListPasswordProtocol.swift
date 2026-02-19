@@ -4,6 +4,7 @@
 //
 //  Created by Esakkinathan B on 03/02/26.
 //
+import VTDB
 
 protocol ListPasswordProtocol {
     var isFavoriteSelected: Bool {get}
@@ -33,6 +34,6 @@ protocol ListPasswordViewDelegate: AnyObject {
 }
 
 protocol ListPasswordRouterProtocol {
-    func openAddPasswordVC(mode: PasswordFormMode, onAdd: @escaping (Password) -> Void)
-    func openDetailPasswordVC(password: Password,onUpdate: @escaping (Password) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
+    func openAddPasswordVC(mode: PasswordFormMode, onAdd: @escaping (Persistable) -> Void)
+    func openDetailPasswordVC(password: Password,onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
 }

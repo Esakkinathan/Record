@@ -8,8 +8,8 @@
 import UIKit
 
 class AddPasswordAssembler {
-    static func makeAddPasswordScreen(mode: PasswordFormMode) -> AddPasswordViewController {
-        let vc = AddPasswordViewController()
+    static func make(mode: PasswordFormMode) -> FormFieldViewController {
+        let vc = FormFieldViewController()
         let router = AddPasswordRouter(viewController: vc)
         let presenter = AddPasswordPresenter(view: vc, router: router, mode: mode)
         vc.presenter = presenter

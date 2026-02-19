@@ -63,7 +63,7 @@ class ListPasswordPresenter: ListPasswordProtocol {
     func didSelectedRow(at index: Int) {
         let password = password(at: index)
         router.openDetailPasswordVC(password: password, onUpdate: { [weak self] updatedPassword in
-            self?.updatePassword(updatedPassword)
+            self?.updatePassword(updatedPassword as! Password)
         }, onUpdateNotes: { [weak self] text, id in
             self?.updateNotes(text: text, id: id)
             }
@@ -169,7 +169,7 @@ extension ListPasswordPresenter {
 extension ListPasswordPresenter {
     func gotoAddPasswordScreen() {
         router.openAddPasswordVC(mode: .add) { [weak self] newPassword in
-            self?.addPassword(newPassword)
+            self?.addPassword(newPassword as! Password)
         }
     }
 
