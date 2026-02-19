@@ -38,6 +38,7 @@ protocol MedicalRepositoryProtocol {
     func delete(id: Int)
     func fetchAll() -> [Medical]
     func updateNotes(text: String?, id: Int)
+    func fetchMedicalByDate(from date: Date) -> [Medical]
 
 }
 protocol MedicalItemRepositoryProtocol {
@@ -46,6 +47,7 @@ protocol MedicalItemRepositoryProtocol {
     func updateEndDate(medicalItemId: Int, date: Date) 
     func delete(id: Int)
     func fetchByMedicalId(_ id: Int, kind: MedicalKind) -> [MedicalItem]
+    func fetchMedicalItemsByDate(from date: Date, to dateTo: Date) -> [MedicalItem]
 }
 
 protocol UtilityRepositoryProtocol {

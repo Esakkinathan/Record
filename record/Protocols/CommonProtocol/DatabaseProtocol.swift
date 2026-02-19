@@ -38,6 +38,7 @@ protocol MasterPasswordDatabaseProtocol: DatabaseProtocol {
 protocol MedicalDatabaseProtocol: DatabaseProtocol {
     var database: VTDatabase {get}
     func fetchMedical() -> [Medical]
+    func fetchMedicalByDate(date: Date) -> [Medical] 
 }
 
 
@@ -46,6 +47,7 @@ protocol MedicalItemDatabaseProtocol: DatabaseProtocol {
     func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem]
     func fetchActiveMedicalItem(_ medicalId: Int, date: Date) -> [MedicalItem]
     func updateEndDate(medicalItemId: Int, date: Date)
+    func fetchMedicalItems(from date: Date, to dateTo: Date) -> [MedicalItem]
 }
 
 protocol UtilityDatabaseProtocol: DatabaseProtocol {
