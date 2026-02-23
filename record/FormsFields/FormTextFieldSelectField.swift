@@ -70,13 +70,13 @@ class FormTextFieldSelectField: FormFieldCell {
 
         NSLayoutConstraint.activate([
             textField.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
-            textField.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -2),
+            textField.bottomAnchor.constraint(equalTo: errorLabel.topAnchor, constant: -2),
             textField.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
             textField.trailingAnchor.constraint(equalTo: stack.leadingAnchor),
             textField.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.4),
 
             stack.centerYAnchor.constraint(equalTo: rightView.centerYAnchor),
-            stack.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -2),
+            stack.bottomAnchor.constraint(equalTo: errorLabel.topAnchor, constant: -2),
             stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width * 2 ),
             //stack.widthAnchor.constraint(equalTo: rightView.widthAnchor, multiplier: 0.4),
         ])

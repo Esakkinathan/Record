@@ -7,7 +7,7 @@
 import UIKit
 
 class CustomSearchBarController: UIViewController {
-    func searchScrollingView() -> UIScrollView? { nil }
+    var searchScrollingView: UIScrollView? { nil }
 
     func performSearch(text: String?) { }
 
@@ -75,8 +75,8 @@ class CustomSearchBarController: UIViewController {
         }
 
         bottomSearchBar.becomeFirstResponder()
-        view.layoutIfNeeded()
-        updateScrollInsets()
+//        view.layoutIfNeeded()
+//        updateScrollInsets()
     }
 
     func hideSearch() {
@@ -94,8 +94,8 @@ class CustomSearchBarController: UIViewController {
             self.view.layoutIfNeeded()
         }
 
-        view.layoutIfNeeded()
-        updateScrollInsets()
+        //view.layoutIfNeeded()
+        //updateScrollInsets()
     }
 
 
@@ -124,7 +124,6 @@ extension CustomSearchBarController {
     }
 
     @objc private func keyboardWillChange(_ notification: Notification) {
-
         guard
             let userInfo = notification.userInfo,
             let frame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
@@ -133,7 +132,6 @@ extension CustomSearchBarController {
         else { return }
 
         let keyboardFrame = view.convert(frame, from: nil)
-
         let overlap = max(0, view.bounds.maxY - keyboardFrame.origin.y)
         let safeBottom = view.safeAreaInsets.bottom
         let keyboardHeight = max(0, overlap - safeBottom)
@@ -142,18 +140,17 @@ extension CustomSearchBarController {
             bottomConstraint.constant = -(keyboardHeight + 8)
         }
 
-        updateScrollInsets(extra: keyboardHeight)
-
         let options = UIView.AnimationOptions(rawValue: curveRaw << 16)
 
         UIView.animate(withDuration: duration, delay: 0, options: options) {
+            self.updateScrollInsets(extra: keyboardHeight) // ← moved INSIDE
             self.view.layoutIfNeeded()
         }
     }
-
+    
     private func updateScrollInsets(extra: CGFloat = 0) {
 
-        guard let scroll = searchScrollingView() else { return }
+        guard let scroll = searchScrollingView else { return }
 
         let searchHeight: CGFloat = isSearchVisible ? 52 : 0
         let inset = searchHeight + extra

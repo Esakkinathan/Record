@@ -27,6 +27,7 @@ class ListDocumentRouter: ListDocumentRouterProtocol {
         vc.onAdd = onAdd
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .pageSheet
+        
         viewController?.presentVC(navVc)
     }
         

@@ -13,8 +13,6 @@ protocol ListDocumentPresenterProtocol {
     var currentSort: DocumentSortOption { get }
     func numberOfRows() -> Int
     func document(at index: Int)  -> Document
-//    func addDocument(_ document: Document)
-//    func updateDocument(_ document: Document)
     func deleteDocument(at index: Int)
     func gotoAddDocumentScreen()
     func didSelectedRow(at index: Int)
@@ -24,6 +22,8 @@ protocol ListDocumentPresenterProtocol {
     func viewDidLoad()
     func shareDocumentWithLock(at index: Int, password: String)
     func validatePassword(_ password1: String, _ password2: String, at index: Int)
+    var isEmpty: Bool { get }
+    var isSearching: Bool { get }
 }
 
 protocol DocumentNavigationDelegate: AnyObject {

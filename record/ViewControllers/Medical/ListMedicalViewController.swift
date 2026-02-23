@@ -33,10 +33,21 @@ class ListMedicalViewController: CustomSearchBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
-        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
         setupTableHeader()
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewDidLoad()
+        let summary = presenter.getActiveSummary()
+        todayMedicineView.configure(section: summary.row1)
+        activeTreatementView.configure(section: summary.row2)
+
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
     }
     
     func setUpNavigationBar() {
@@ -66,10 +77,6 @@ class ListMedicalViewController: CustomSearchBarController {
     func setUpContents() {
         
         view.backgroundColor = AppColor.background
-//        view.add(todayMedicineView)
-//        view.add(activeTreatementView)
-//        view.add(categorySelector)
-//        view.add(sortView)
         view.add(tableView)
         tableView.dataSource = self
         tableView.delegate = self
@@ -78,26 +85,8 @@ class ListMedicalViewController: CustomSearchBarController {
         }
         
         NSLayoutConstraint.activate([
-            
-//            todayMedicineView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
-//            todayMedicineView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-//            todayMedicineView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
-//            
-//            activeTreatementView.topAnchor.constraint(equalTo: todayMedicineView.bottomAnchor,constant: PaddingSize.height),
-//            activeTreatementView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-//            activeTreatementView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
-//
-//            
-//            categorySelector.topAnchor.constraint(equalTo: activeTreatementView.bottomAnchor,constant: PaddingSize.height),
-//            categorySelector.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-//            categorySelector.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
-//            
-//            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-//            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
-//            sortView.topAnchor.constraint(equalTo: categorySelector.bottomAnchor, constant: PaddingSize.height),
-            
-            
-            tableView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
+                        
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
@@ -114,11 +103,9 @@ class ListMedicalViewController: CustomSearchBarController {
         ])
         headerStack.axis = .vertical
         headerStack.spacing = PaddingSize.height
-        headerStack.translatesAutoresizingMaskIntoConstraints = false
 
-        // Outer wrapper using FRAME layout — this is key
         let headerWrapper = UIView()
-        headerWrapper.addSubview(headerStack)
+        headerWrapper.add(headerStack)
 
         let padding = PaddingSize.width
         NSLayoutConstraint.activate([
@@ -130,9 +117,11 @@ class ListMedicalViewController: CustomSearchBarController {
 
         tableView.tableHeaderView = headerWrapper
     }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
+        guard tableView.window != nil else { return }
         guard let header = tableView.tableHeaderView else { return }
 
         header.frame.size.width = tableView.bounds.width
@@ -148,7 +137,6 @@ class ListMedicalViewController: CustomSearchBarController {
             tableView.tableHeaderView = header
         }
     }
-
     
     @objc func openSearch() {
         showSearch()
@@ -157,23 +145,14 @@ class ListMedicalViewController: CustomSearchBarController {
     @objc func addButtonClicked() {
         presenter.gotoAddMedicalScreen()
     }
-    override func searchScrollingView() -> UIScrollView? {
-        tableView
+    override var searchScrollingView: UIScrollView? {
+        return tableView
     }
 
     override func performSearch(text: String?) {
         presenter.search(text: text)
     }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        let summary = presenter.getActiveSummary()
-        todayMedicineView.configure(section: summary.row1)
-        activeTreatementView.configure(section: summary.row2)
-    }
-    
 }
-
 
 extension ListMedicalViewController: UITableViewDataSource {
     
@@ -222,11 +201,24 @@ extension ListMedicalViewController: UITableViewDelegate {
 extension ListMedicalViewController: ListMedicalViewDelegate {
     func reloadData() {
         tableView.reloadData()
+        if presenter.isEmpty {
+//            tableView.tableHeaderView?.isHidden = true
+//            tableView.tableHeaderView?.frame.size.height = 0
+            if !presenter.isSearching {
+                tableView.setEmptyFoooterView(image: "tray.full", title: "No Health Records", subtitle: "Tap + on top to create your first Record.")
+
+            } else {
+                tableView.setEmptyFoooterView(image: "tray.full", title: "No Matching Health Record Found", subtitle: "Search with title, hospital and doctor name")
+            }
+        } else {
+//            tableView.tableHeaderView?.isHidden = false
+            //setupTableHeader()
+            tableView.restoreFooter()
+        }
     }
     
     func refreshSortMenu() {
         buildSortMenu()
-
     }
 }
 
@@ -296,7 +288,4 @@ extension ListMedicalViewController {
             children: [name, created, updated]
         )
     }
-    
-    
-
 }

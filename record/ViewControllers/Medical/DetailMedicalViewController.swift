@@ -7,6 +7,7 @@
 
 import UIKit
 import VTDB
+import QuickLook
 
 class DetailMedicalViewController: KeyboardNotificationViewController {
     
@@ -20,14 +21,15 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
     var presenter: DetailMedicalPresenterProtocol!
     var onUpdateNotes: ((String?,Int) -> Void)?
     var onEdit: ((Persistable) -> Void)?
-    
+    var previewUrl: URL?
+
     override var keyboardScrollableView: UIScrollView? {
         return tableView
     }
     
-    override var scrollToIndexPathOnKeyboardShow: IndexPath? {
-        return IndexPath(row: 0, section: 1)
-    }
+//    override var scrollToIndexPathOnKeyboardShow: IndexPath? {
+//        return IndexPath(row: 0, section: 1)
+//    }
     
     static let cellIdentifier = "DetailMedicalCell"
     
@@ -60,7 +62,8 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         tableView.register(TextViewTableViewCell.self, forCellReuseIdentifier: TextViewTableViewCell.identifier)
         tableView.register(EditNoteTableHeaderView.self, forHeaderFooterViewReuseIdentifier: EditNoteTableHeaderView.identifier)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: DetailMedicalViewController.cellIdentifier)
-        
+        tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
+
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -123,7 +126,16 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
         var cell: UITableViewCell
         
         switch field {
+        case .image(let filePath):
+            let newCell = tableView.dequeueReusableCell(withIdentifier: ImagePreviewTableViewCell.identifier, for: indexPath) as! ImagePreviewTableViewCell
+            newCell.configure(with: filePath)
+            newCell.onShow = { [weak self] in
+                guard let self = self else {return}
+                    self.previewUrl = URL(fileURLWithPath: filePath)
+                    presenter.viewDocument()
+                }
             
+            cell = newCell
         case .info(let section):
             let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
             newCell.configure(title: section.title, text: section.value)
@@ -189,6 +201,21 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
 
 }
 
+extension DetailMedicalViewController: QLPreviewControllerDataSource {
+    
+    func configureToOpenDocument(previewUrl: URL) {
+        self.previewUrl  = previewUrl
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        1
+    }
+    
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> any QLPreviewItem {
+        return previewUrl! as QLPreviewItem
+    }
+
+}
 
 extension DetailMedicalViewController: DetailMedicalViewDelegate {
     func updateMedicalNotes(text: String?, id: Int) {

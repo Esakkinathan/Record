@@ -14,7 +14,6 @@ final class SettingsPresenter: SettingsPresenterProtocol {
         self.view = view
     }
 
-    // MARK: - Data
     
     var currentTheme: AppTheme {
         SettingsManager.shared.theme
@@ -28,7 +27,6 @@ final class SettingsPresenter: SettingsPresenterProtocol {
         UserDefaults.standard.bool(forKey: "faceIdEnabled")
     }
     
-    // MARK: - Actions
     
     func selectTheme(_ theme: AppTheme) {
         SettingsManager.shared.theme = theme
@@ -54,5 +52,15 @@ final class SettingsPresenter: SettingsPresenterProtocol {
     
     func toggleFaceId(_ isOn: Bool) {
         SettingsManager.shared.faceId = isOn
+    }
+    
+    func openSettings() {
+        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+            if UIApplication.shared.canOpenURL(settingsURL) {
+                UIApplication.shared.open(settingsURL, options: [:]) { success in
+                }
+            }
+        }
+
     }
 }

@@ -188,7 +188,7 @@ enum MedicalKind: String, CaseIterable {
     case tablet = "Tablet"
     case syrup = "Syrup"
     case injection = "Injection"
-    case topical = "Ointment"
+    case topical = "Paste"
     
     var image: String {
         switch self {

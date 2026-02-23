@@ -20,7 +20,9 @@ protocol ListMedicalPresenterProtocol {
     func viewDidLoad()
     func didSelectCategory(_ text: String)
     func getActiveSummary() -> DashBoardData
-    
+    var isEmpty: Bool { get }
+    var isSearching: Bool { get }
+
 }
 
 protocol ListMedicalViewDelegate: AnyObject {

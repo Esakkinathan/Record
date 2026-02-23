@@ -7,6 +7,34 @@
 import UIKit
 
 class AddBillPresenter: FormFieldPresenterProtocol {
+    func didPickDocuments(urls: [URL]) {
+        //
+    }
+    
+    func uploadDocument(at index: Int, type: DocumentType) {
+        //
+    }
+    
+    func processImages(from images: [UIImage]) {
+        //
+    }
+    
+    func exitScreen() {
+        //
+    }
+    
+    func recognizeText(from image: UIImage) {
+        //
+    }
+    
+    func saveImage(_ image: UIImage) {
+        //
+    }
+    
+    func openCameraClicked() {
+        //
+    }
+    
     func didSelectOption(at index: Int) {
         //
     }

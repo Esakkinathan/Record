@@ -13,9 +13,9 @@ struct ActiveTreatement {
 
 import Foundation
 class ListMedicalPresenter: ListMedicalPresenterProtocol {
-    
+        
     var title: String {
-        "Medical Check-Up"
+        "Health Records"
     }
     
         
@@ -35,8 +35,12 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
     var categoryFiltered: [Medical] = []
     var searchFiltered: [Medical] = []
     var finalMedicals: [Medical] = []
-
     
+    var isEmpty: Bool {
+        finalMedicals.isEmpty
+    }
+    var isSearching: Bool = false 
+
     var selectedType: MedicalType?
     
     init(view: ListMedicalViewDelegate? = nil,
@@ -54,7 +58,6 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
         self.fetchUseCase = fetchUseCase
         self.updateNotesUseCase = updateNotesUseCase
         currentSort = MedicalSortStore.load()
-        
         
     }
     
@@ -153,12 +156,14 @@ extension ListMedicalPresenter {
         
         
         if let text = searchText, !text.isEmpty {
+            isSearching = true
             let value = text.prepareSearchWord()
             searchFiltered = categoryFiltered.filter {
                 $0.title.filterForSearch(value) ||
                 $0.type.rawValue.filterForSearch(value)
             }
         } else {
+            isSearching = false
             searchFiltered = categoryFiltered
         }
         

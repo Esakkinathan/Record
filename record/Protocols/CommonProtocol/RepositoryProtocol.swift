@@ -39,6 +39,8 @@ protocol MedicalRepositoryProtocol {
     func fetchAll() -> [Medical]
     func updateNotes(text: String?, id: Int)
     func fetchMedicalByDate(from date: Date) -> [Medical]
+    func fetchHospitals() -> [String]
+    func fetchDoctors() -> [String]
 
 }
 protocol MedicalItemRepositoryProtocol {

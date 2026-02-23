@@ -37,6 +37,9 @@ extension DetailMedicalPresenter {
     
     func buildSection() {
         sections = []
+        if let receipt = medical.receipt {
+            sections.append(.init(title: "Reciept Preview", rows: [.image(path: receipt)]))
+        }
         var infoRows: [DetailMedicalRow] = [
             .info(.init(title: "Title", value: medical.title)),
             .info(.init(title: "Type", value: medical.type.rawValue)),
@@ -133,13 +136,20 @@ extension DetailMedicalPresenter {
 extension DetailMedicalPresenter {
     
     func didSelectRowAt(indexPath: IndexPath) {
-        if indexPath.section == 2 {
+        let index = sections.endIndex - 1
+        print(index)
+        if index == indexPath.section {
             let kind = MedicalKind.allCases[indexPath.row]
             
             router.openListMedicalItemVC(kind: kind, medical: medical)
-
         }
     }
+    func viewDocument() {
+        if let filePath = medical.receipt {
+            router.openDocumentViewer(filePath: filePath)
+            view?.configureToOpenDocument(previewUrl: URL(filePath: filePath))
+        }
         
+    }
 }
 

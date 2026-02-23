@@ -115,6 +115,62 @@ class CopyTextLabel: UIView {
 }
 */
 
+
+class TimerView: UIView {
+    let textLabel: UILabel = {
+        let label = UILabel()
+        label.font = AppFont.body
+        label.numberOfLines = 0
+        return label
+    }()
+    let contentView: UIView = {
+        let v = UIView()
+        v.backgroundColor = .secondarySystemBackground
+        v.layer.cornerRadius = PaddingSize.cornerRadius
+        v.layer.borderWidth = 1
+        v.layer.borderColor = UIColor.separator.withAlphaComponent(0.5).cgColor
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    func setText(_ text: String) {
+        textLabel.text = text
+    }
+
+
+    init() {
+        super.init(frame: .zero)
+        setupLayout()
+    }
+    private func setupLayout() {
+        translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.add(textLabel)
+        add(contentView)
+
+        let p = PaddingSize.content
+
+        NSLayoutConstraint.activate([
+            // contentView fills self
+            contentView.topAnchor.constraint(equalTo: topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: trailingAnchor),
+
+            // textLabel
+            textLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: p),
+            textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -p),
+            textLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: p),
+            textLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -p),
+        ])
+    }
+
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+}
+
 class CopyTextLabel: UIView {
     
     
@@ -122,7 +178,7 @@ class CopyTextLabel: UIView {
         let label = UILabel()
         label.font = AppFont.verysmall
         label.numberOfLines = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
+        label.adjustsFontSizeToFitWidth = true
         return label
     }()
 
@@ -133,7 +189,6 @@ class CopyTextLabel: UIView {
         iv.tintColor = .secondaryLabel
         iv.clipsToBounds = true
         iv.isUserInteractionEnabled = true
-        iv.translatesAutoresizingMaskIntoConstraints = false
         return iv
     }()
 
@@ -145,7 +200,6 @@ class CopyTextLabel: UIView {
         iv.clipsToBounds = true
         iv.alpha = 0
         iv.transform = CGAffineTransform(scaleX: 0.5, y: 0.5)
-        iv.translatesAutoresizingMaskIntoConstraints = false
         return iv
     }()
 
@@ -155,7 +209,6 @@ class CopyTextLabel: UIView {
         v.layer.cornerRadius = PaddingSize.cornerRadius
         v.layer.borderWidth = 1
         v.layer.borderColor = UIColor.separator.withAlphaComponent(0.5).cgColor
-        v.translatesAutoresizingMaskIntoConstraints = false
         return v
     }()
 
@@ -185,14 +238,13 @@ class CopyTextLabel: UIView {
 
         // Icon container — stack copy + check on top of each other
         let iconContainer = UIView()
-        iconContainer.translatesAutoresizingMaskIntoConstraints = false
         iconContainer.isUserInteractionEnabled = true
-        iconContainer.addSubview(copyIconView)
-        iconContainer.addSubview(checkIconView)
+        iconContainer.add(copyIconView)
+        iconContainer.add(checkIconView)
 
-        contentView.addSubview(textLabel)
-        contentView.addSubview(iconContainer)
-        addSubview(contentView)
+        contentView.add(textLabel)
+        contentView.add(iconContainer)
+        add(contentView)
 
         let p = PaddingSize.content
         let iconSize = PaddingSize.copyButtonSize
@@ -208,7 +260,7 @@ class CopyTextLabel: UIView {
             textLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: p),
             textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -p),
             textLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: p),
-            textLabel.trailingAnchor.constraint(equalTo: iconContainer.leadingAnchor, constant: -p),
+            textLabel.trailingAnchor.constraint(equalTo: iconContainer.leadingAnchor, constant: -3),
 
             // iconContainer
             iconContainer.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),

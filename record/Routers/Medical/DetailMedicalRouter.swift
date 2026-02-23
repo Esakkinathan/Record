@@ -7,6 +7,7 @@
 
 import UIKit
 import VTDB
+import QuickLook
 
 class DetailMedicalRouter: DetailMedicalRouterProtocol {
     
@@ -22,7 +23,7 @@ class DetailMedicalRouter: DetailMedicalRouterProtocol {
         vc.onEdit = onEdit
         
         let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
         
     }
@@ -31,7 +32,10 @@ class DetailMedicalRouter: DetailMedicalRouterProtocol {
         viewController?.push(vc)
     }
 
-    
+    func openDocumentViewer(filePath: String) {
+        let preview = QLPreviewController()
+        preview.dataSource = viewController as? QLPreviewControllerDataSource
+        viewController?.push(preview)
 
-
+    }
 }

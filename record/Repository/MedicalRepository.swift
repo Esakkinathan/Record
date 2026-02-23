@@ -57,6 +57,13 @@ class MedicalRepository: MedicalRepositoryProtocol {
         
         db.insertInto(tableName: Medical.databaseTableName, values: columns)
     }
+    func fetchDoctors() -> [String] {
+        return db.fetchDistinctValues(table: Medical.databaseTableName, column: Medical.doctorC)
+    }
+    
+    func fetchHospitals() -> [String] {
+        return db.fetchDistinctValues(table: Medical.databaseTableName, column: Medical.hospitalC)
+    }
     
     func update(medical: Medical) {
         db.updateInto(data: medical)
@@ -85,11 +92,6 @@ class MedicalItemRepository: MedicalItemRepositoryProtocol {
     var db: MedicalItemDatabaseProtocol =  DatabaseAdapter.shared
     
     init() {
-        createTable()
-    }
-    func createTable() {
-
-        db.createTable()
     }
     
     func add(medicalItem: MedicalItem, medicalId: Int) {

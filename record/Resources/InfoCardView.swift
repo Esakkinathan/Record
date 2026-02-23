@@ -18,9 +18,10 @@ struct InfoRowModel {
         case danger
     }
 }
+
+/*
 class InfoCardView: UIView {
 
-    // MARK: - UI
 
     private let headerStack = UIStackView()
     private let iconView = UIImageView()
@@ -28,7 +29,6 @@ class InfoCardView: UIView {
     private let subtitleLabel = UILabel()
     private let rowsStack = UIStackView()
 
-    // MARK: - Init
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -39,7 +39,6 @@ class InfoCardView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
 
     private func setupUI() {
         backgroundColor = .secondarySystemBackground
@@ -60,35 +59,28 @@ class InfoCardView: UIView {
             iconView.heightAnchor.constraint(equalToConstant: 28),
         ])
 
-        // Title
         titleLabel.font = .systemFont(ofSize: 17, weight: .bold)
         titleLabel.textColor = .label
 
-        // Subtitle (optional, hidden by default)
         subtitleLabel.font = .systemFont(ofSize: 13, weight: .regular)
         subtitleLabel.textColor = .tertiaryLabel
         subtitleLabel.isHidden = true
 
-        // Title text column
         let titleColumn = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         titleColumn.axis = .vertical
         titleColumn.spacing = 2
 
-        // Header row: icon + title column
         headerStack.axis = .horizontal
         headerStack.alignment = .center
         headerStack.spacing = 10
         headerStack.addArrangedSubview(iconView)
         headerStack.addArrangedSubview(titleColumn)
 
-        // Divider under header
         let headerDivider = makeDivider()
 
-        // Rows stack
         rowsStack.axis = .vertical
-        rowsStack.spacing = 0  // We'll manage spacing via dividers
-
-        // Root container
+        rowsStack.spacing = 0
+        
         let root = UIStackView(arrangedSubviews: [headerStack, headerDivider, rowsStack])
         root.axis = .vertical
         root.spacing = 16
@@ -103,9 +95,7 @@ class InfoCardView: UIView {
         ])
     }
 
-    // MARK: - Configure
 
-    /// Basic configure — matches your existing SectionViewModel API
     func configure(section: SectionViewModel) {
         titleLabel.text = section.title
         subtitleLabel.isHidden = true
@@ -113,7 +103,6 @@ class InfoCardView: UIView {
         rebuildRows(section.rows)
     }
 
-    /// Extended configure with icon + subtitle
     func configure(section: SectionViewModel, icon: UIImage? = nil, subtitle: String? = nil, iconTint: UIColor = .systemBlue) {
         titleLabel.text = section.title
 
@@ -145,7 +134,6 @@ class InfoCardView: UIView {
             let rowView = makeRowView(for: row)
             rowsStack.addArrangedSubview(rowView)
 
-            // Divider between rows (not after the last one)
             if index < rows.count - 1 {
                 let divider = makeDivider()
                 rowsStack.addArrangedSubview(divider)
@@ -155,10 +143,8 @@ class InfoCardView: UIView {
         }
     }
 
-    // MARK: - Row View
 
     private func makeRowView(for model: InfoRowModel) -> UIView {
-        // Left side: label + optional detail
         let leftLabel = UILabel()
         leftLabel.text = model.title
         leftLabel.font = .systemFont(ofSize: 15, weight: .medium)
@@ -166,7 +152,6 @@ class InfoCardView: UIView {
         leftLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         leftLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        // Right side: colored pill badge
         let badge = makeBadge(text: model.summary, style: model.style)
 
         let rowStack = UIStackView(arrangedSubviews: [leftLabel, badge])
@@ -178,7 +163,6 @@ class InfoCardView: UIView {
         return rowStack
     }
 
-    // MARK: - Badge
 
     private func makeBadge(text: String, style: InfoRowModel.Style) -> UIView {
         let colors = badgeColors(for: style)
@@ -216,7 +200,6 @@ class InfoCardView: UIView {
         }
     }
 
-    // MARK: - Helpers
 
     private func makeDivider() -> UIView {
         let line = UIView()
@@ -226,14 +209,11 @@ class InfoCardView: UIView {
         return line
     }
 
-    // MARK: - Shadow
-
     override func layoutSubviews() {
         super.layoutSubviews()
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 20).cgPath
     }
 
-    // MARK: - Press feedback
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
@@ -260,8 +240,8 @@ class InfoCardView: UIView {
         }
     }
 }
+*/
 
-/*
 class InfoCardView: UIView {
     
     private let titleLabel = UILabel()
@@ -357,7 +337,7 @@ class InfoCardView: UIView {
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 16).cgPath
     }
 }
-*/
+
 /*
 class SectionView: UIView {
     

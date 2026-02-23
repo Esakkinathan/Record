@@ -7,12 +7,13 @@
 
 import Foundation
 import UIKit
+import Vision
 
 class FormFieldPresenter: FormFieldPresenterProtocol {
-
+    
     weak var view: FormFieldViewDelegate?
     var fields: [FormField] = []
-    
+    var isEdited: Bool = false
     init(view: FormFieldViewDelegate? = nil, ) {
         self.view = view
     }
@@ -32,6 +33,7 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     }
     
     func updateValue(_ value: Any?, at index: Int) {
+        isEdited = true
         fields[index].value = value
     }
     
@@ -42,15 +44,25 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     
     
     func validateText(text: String, index: Int, rules: [ValidationRules]) -> ValidationResult {
+        isEdited = true
         let result = Validator.Validate(input: text, rules: rules)
         if result.isValid {
             updateValue(text, at: index)
         }
         return result
-
     }
+    func recognizeText(from image: UIImage){}
     
     func cancelClicked() {
+        if isEdited{
+            view?.showExitAlert()
+        } else {
+            exitScreen()
+        }
+        
+    }
+    
+    func exitScreen() {
         view?.dismiss()
     }
     
@@ -83,14 +95,15 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     }
     func formButtonClicked(){}
     
-    func uploadDocument(at index: Int){}
+    func uploadDocument(at index: Int, type: DocumentType){}
     func viewDocument(at index: Int){}
     func removeDocument(at index: Int){}
-    func didPickDocument(url: URL){
-    }
+    func didPickDocument(url: URL){}
+    func saveImage(_ image: UIImage) {}
+    func openCameraClicked() {}
+    func processImages(from images: [UIImage]) {}
+    func didPickDocuments(urls: [URL]) {}
 
-
-        
 }
 
 class AddDocumentFormPresenter: FormFieldPresenter {
@@ -194,9 +207,50 @@ class AddDocumentFormPresenter: FormFieldPresenter {
             return nil
         }
     }
+    override func saveImage(_ image: UIImage) {
+        
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return  }
+        
+        let fileName = UUID().uuidString + ".jpg"
+        
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(fileName)
+        
+        do {
+            try data.write(to: tempURL)
+            print("Temp saved at:", tempURL)
+            didPickDocument(url: tempURL)
+        } catch {
+            print("Error saving temp image:", error)
+            return
+        }
+
+    }
     
-    override func uploadDocument(at index: Int) {
-        router.openDocumentPicker()
+    func saveFile(pdfData: Data) {
+        let name = UUID().uuidString + ".pdf"
+        
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(name)
+        
+        do {
+            try pdfData.write(to: tempURL)
+            print("Temp saved at:", tempURL)
+            didPickDocument(url: tempURL)
+        } catch {
+            print("Error saving temp image:", error)
+            return
+        }
+    }
+    
+    override func uploadDocument(at index: Int, type: DocumentType) {
+        switch type {
+        case .pdf:
+            router.openDocumentPicker(type: type)
+        case .image:
+            router.openGallery()
+        }
+        
     }
     
     override func viewDocument(at index: Int) {
@@ -217,6 +271,21 @@ class AddDocumentFormPresenter: FormFieldPresenter {
         view?.reloadField(at: index)
     }
     
+    override func didPickDocuments(urls: [URL]) {
+        let merger = PDFMergerService()
+        do {
+            let data = try merger.mergePDFs(from: urls)
+            saveFile(pdfData: data)
+        } catch {
+            view?.showError(error.localizedDescription)
+        }
+    }
+    
+    override func openCameraClicked(){
+        router.openDocumentScanner()
+        //view?.openScanner()
+    }
+    
     override func selectClicked(at index: Int ) {
         let field = field(at: index)
         let options = DefaultDocument.getList()
@@ -233,6 +302,7 @@ class AddDocumentFormPresenter: FormFieldPresenter {
         view?.reloadData()
     }
     
+    
     override func saveClicked() {
         if validateFields() {
             let document = buildDocument()
@@ -245,5 +315,35 @@ class AddDocumentFormPresenter: FormFieldPresenter {
             }
             view?.dismiss()
         }
+    }
+    
+    override func processImages(from images: [UIImage]) {
+        guard !images.isEmpty else {
+            return
+        }
+        view?.showLoading()
+        DocumentOCRService().process(images: images) { [weak self] result in
+            
+            guard let self = self else {return}
+            print("updation starts")
+            switch result {
+            case .success(let model):
+                self.updateValue(model.detectedType.rawValue, at: 0)
+                self.buildFields()
+                self.view?.reloadData()
+                self.updateValue(model.documentNumber, at: 1)
+                
+                if let date = model.expiryDate {
+                    updateValue(date, at: 2)
+                }
+                self.saveFile(pdfData: model.pdfData)
+                self.view?.stopLoading()
+                view?.reloadData()
+                view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+        
     }
 }

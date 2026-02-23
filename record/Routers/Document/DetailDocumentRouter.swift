@@ -33,7 +33,7 @@ class DetailDocumentRouter: DetailDocumentRouterProtocol {
         vc.onEdit = onEdit
         let navVc = UINavigationController(rootViewController: vc)
         vc.hidesBottomBarWhenPushed = true
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
     }
     

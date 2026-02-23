@@ -23,6 +23,9 @@ class ListPasswordPresenter: ListPasswordProtocol {
     var filteredRecords: [Password] = []
     var visibleRecords: [Password] = []
     var isSearching = false
+    var isEmpty: Bool {
+        return currentPassword().isEmpty
+    }
     
     var uiTimer: Timer?
     var autoExitTimer: Timer?
@@ -106,6 +109,7 @@ extension ListPasswordPresenter {
 extension ListPasswordPresenter {
     func exitClicked() {
         view?.showExitPrompt(expired: false)
+        startAutoExitTimer()
     }
     
     func configureSession() {

@@ -23,7 +23,7 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
             vc.onEdit = onAdd
         }
         let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
 
     }

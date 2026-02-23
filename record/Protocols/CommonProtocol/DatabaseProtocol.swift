@@ -15,6 +15,7 @@ protocol DatabaseProtocol {
     func updateInto(data: Persistable)
     func delete(table name: String, id: Int)
     func updateNotes(table name: String, id: Int, text: String?, date : Date)
+    func fetchDistinctValues(table name: String, column col: String) -> [String]
 }
 
 protocol DocumentDatabaseProtocol: DatabaseProtocol {
@@ -43,7 +44,6 @@ protocol MedicalDatabaseProtocol: DatabaseProtocol {
 
 
 protocol MedicalItemDatabaseProtocol: DatabaseProtocol {
-    func createTable()
     func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem]
     func fetchActiveMedicalItem(_ medicalId: Int, date: Date) -> [MedicalItem]
     func updateEndDate(medicalItemId: Int, date: Date)
@@ -78,6 +78,5 @@ protocol LoginDatebaseProtocol: DatabaseProtocol {
 
 protocol MedicalIntakeLogDatabase: DatabaseProtocol {
     var database: VTDatabase {get}
-    func createLogTable()
     func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog]
 }

@@ -23,7 +23,7 @@ class TabBarController: UITabBarController {
         let password = UITab(title: "PassWord", image: UIImage(systemName: IconName.password), identifier: "post"){ tab in
             return UINavigationController(rootViewController: MasterPasswordAssembler.make())
         }
-        let medical = UITab(title: "Medical", image: UIImage(systemName: IconName.medical), identifier: "medical") {_ in 
+        let medical = UITab(title: "Health", image: UIImage(systemName: IconName.medical), identifier: "Health") {_ in 
             return UINavigationController(rootViewController: ListMedicalAssembler.make())
         }
         

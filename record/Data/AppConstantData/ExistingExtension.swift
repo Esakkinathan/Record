@@ -100,3 +100,106 @@ extension Date {
         return calendar.date(byAdding: .second, value: -1, to: startOfNextDay)!
     }
 }
+
+extension UITableView {
+    
+    func setEmptyView(image: String, title: String, subtitle: String) {
+        let emptyView = EmptyStateView(
+            image: UIImage(systemName: image),
+            title: title,
+            subtitle: subtitle
+        )
+        
+        emptyView.frame = self.bounds
+        self.backgroundView = emptyView
+        self.separatorStyle = .none
+        emptyView.alpha = 0
+        UIView.animate(withDuration: 0.3) {
+            emptyView.alpha = 1
+        }
+        
+    }
+    func setHeaderEmptyView(image: String, title: String, subtitle: String) {
+        let emptyView = EmptyHeaderView(
+            image: UIImage(systemName: image),
+            title: title,
+            subtitle: subtitle
+        )
+        
+        emptyView.frame = self.bounds
+        self.tableHeaderView = emptyView
+        self.separatorStyle = .none
+        emptyView.alpha = 0
+        UIView.animate(withDuration: 0.3) {
+            emptyView.alpha = 1
+        }
+        
+    }
+    
+    func setEmptyFoooterView(image: String, title: String, subtitle: String) {
+        let emptyView = EmptyFooterView(
+            image: UIImage(systemName: image),
+            title: title,
+            subtitle: subtitle
+        )
+        
+        backgroundView = nil
+        tableFooterView = emptyView
+        separatorStyle = .none
+        
+//        emptyView.alpha = 0
+//        UIView.animate(withDuration: 0.3) {
+//            emptyView.alpha = 1
+//        }
+
+    }
+    func restoreFooter() {
+        separatorStyle = .singleLine
+        tableFooterView = nil // Clear footer
+        
+
+    }
+    func restoreView() {
+        self.backgroundView = nil
+        self.tableHeaderView = nil
+        self.separatorStyle = .singleLine
+    }
+}
+extension UICollectionView {
+    
+    func setEmptyView(image: String, title: String, subtitle: String) {
+        let emptyView = EmptyStateView(
+            image: UIImage(systemName: image),
+            title: title,
+            subtitle: subtitle
+        )
+        
+        emptyView.frame = self.bounds
+        self.backgroundView = emptyView
+        //self.separatorStyle = .none
+        emptyView.alpha = 0
+        UIView.animate(withDuration: 0.5) {
+            emptyView.alpha = 1
+        }
+    }
+    func setEmptyHeaderView(image: String, title: String, subtitle: String) {
+        let emptyView = EmptyHeaderView(
+            image: UIImage(systemName: image),
+            title: title,
+            subtitle: subtitle
+        )
+        
+        emptyView.frame = self.bounds
+        self.backgroundView = emptyView
+        //self.separatorStyle = .none
+        emptyView.alpha = 0
+        UIView.animate(withDuration: 0.5) {
+            emptyView.alpha = 1
+        }
+    }
+    
+    func restoreView() {
+        self.backgroundView = nil
+        //self.separatorStyle = .singleLine
+    }
+}

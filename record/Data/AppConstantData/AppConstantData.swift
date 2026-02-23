@@ -107,6 +107,8 @@ enum IconName {
     
     static let folder = "folder"
     
+    static let photoAdd = "photo.badge.plus"
+    
     static let medical = "medical.thermometer"
     
     static let password = "key.shield"

@@ -19,7 +19,7 @@ class DetailPasswordRouter: DetailPasswordRouterProtocol {
         vc.onEdit = onEdit
         
         let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
         
     }

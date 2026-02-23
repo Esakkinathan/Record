@@ -18,7 +18,7 @@ class ListMedicalRouter: ListMedicalRouterProtocol {
         let vc = AddMedicalAssembler.make(mode: mode)
         vc.onAdd = onAdd
         let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
     }
     func openDetailMedicalVC(medical: Medical, onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?, Int) -> Void) {

@@ -12,6 +12,7 @@ protocol SettingsPresenterProtocol {
     func selectAccent(_ accent: AppAccent)
     func selectTheme(_ theme: AppTheme)
     func toggleFaceId(_ isOn: Bool)
+    func openSettings()
 
 }
 

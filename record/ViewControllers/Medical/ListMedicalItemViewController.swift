@@ -30,11 +30,15 @@ class ListMedicalItemViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
-        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
 
     }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewDidLoad()
+    }
+
     
     func setUpNavigationBar() {
         title = presenter.title
@@ -199,6 +203,13 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
 extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
     func reloadData() {
         tableView.reloadData()
+        if presenter.isEmpty {
+            tableView.setEmptyView(image: "tray.full", title: "No \(presenter.title)s", subtitle: "Tap + on top to create your first \(presenter.title).")
+                
+        } else {
+            tableView.restoreView()
+        }
+
     }
         
 }

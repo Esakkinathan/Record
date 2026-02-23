@@ -35,16 +35,16 @@ class FormPasswordField: FormTextField {
         textField.isSecureTextEntry = true
         textField.rightView = rightContainer
         textField.rightViewMode = .always
-        
+        textField.textContentType = .newPassword
         NSLayoutConstraint.activate([
             eyeButton.centerYAnchor.constraint(equalTo: rightContainer.centerYAnchor),
             eyeButton.leadingAnchor.constraint(equalTo: rightContainer.leadingAnchor, constant: 8),
             eyeButton.trailingAnchor.constraint(equalTo: rightContainer.trailingAnchor, constant: -12),
             eyeButton.widthAnchor.constraint(equalToConstant: 25),
-            eyeButton.heightAnchor.constraint(equalToConstant: 25),
+            eyeButton.heightAnchor.constraint(equalToConstant: 20),
             
             rightContainer.widthAnchor.constraint(equalToConstant: 45),
-            rightContainer.heightAnchor.constraint(equalToConstant: 25)
+            rightContainer.heightAnchor.constraint(equalToConstant: 20)
         ])
 
     }

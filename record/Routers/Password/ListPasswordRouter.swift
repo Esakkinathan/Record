@@ -19,7 +19,7 @@ class ListPasswordRouter: ListPasswordRouterProtocol {
         let vc = AddPasswordAssembler.make(mode: mode)
         vc.onAdd = onAdd
         let navVc = UINavigationController(rootViewController: vc)
-        navVc.modalPresentationStyle = .formSheet
+        navVc.modalPresentationStyle = .pageSheet
         viewController?.presentVC(navVc)
     }
     

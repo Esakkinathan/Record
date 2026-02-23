@@ -128,7 +128,7 @@ final class FormDateField: FormFieldCell {
             datePicker.alpha = 1.0
         } else {
             selectedDate = nil
-            datePicker.date = Date()
+            //datePicker.date = Date()
             datePicker.alpha = 0.4
         }
     }

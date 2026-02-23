@@ -24,6 +24,7 @@ protocol ListMedicalItemPresenterProtocol {
     func itemToggledAt(_ index: Int, value: Bool)
     func medicalItemViewModel(at index: Int) -> MedicalItemCellViewModel
     func updateEndDate(at index: Int)
+    var isEmpty: Bool { get }
 }
 
 protocol ListMedicalItemViewDelegate: AnyObject {

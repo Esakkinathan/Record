@@ -23,6 +23,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         applyAccent()
         setUpNavigation()
         window?.makeKeyAndVisible()
+        if isLocked == false {
+            showMainInterface()
+            return
+        }
+        showLockScreen()
+
 
     }
 
@@ -36,11 +42,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
-        if isLocked == false {
-            showMainInterface()
-            return
-        }
-        showLockScreen()
+//        if isLocked == false {
+//            showMainInterface()
+//            return
+//        }
+//        showLockScreen()
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
@@ -112,10 +118,35 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func applyAccent() {
         let accent: AppAccent = SettingsManager.shared.accent
+
         UINavigationBar.appearance().tintColor = accent.color
         UITabBar.appearance().tintColor = accent.color
         window?.tintColor = accent.color
 
+        updateVisibleControllers(with: accent.color)
+        setUpNavigation()
+    }
+    private func updateVisibleControllers(with color: UIColor) {
+        guard let window = window,
+              let root = window.rootViewController else { return }
+
+        updateController(root, color: color)
+    }
+
+    private func updateController(_ vc: UIViewController, color: UIColor) {
+        vc.view.tintColor = color
+        
+        if let nav = vc as? UINavigationController {
+            nav.navigationBar.tintColor = color
+            nav.viewControllers.forEach { updateController($0, color: color) }
+        }
+
+        if let tab = vc as? UITabBarController {
+            tab.tabBar.tintColor = color
+            tab.viewControllers?.forEach { updateController($0, color: color) }
+        }
+
+        vc.children.forEach { updateController($0, color: color) }
     }
 
 }

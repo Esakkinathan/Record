@@ -7,19 +7,33 @@
 
 import UIKit
 
+enum DocumentType {
+    case pdf
+    case image
+}
+
 class FormFileUpload: FormFieldCell {
 
     static let identifier = "FormFileUpload"
     
     
-    let documentImage = UIImageView(image: UIImage(systemName: "arrow.up.document.fill"))
+    let documentImage: UIImageView = {
+        let view = UIImageView(image: UIImage(systemName: "arrow.up.document.fill"))
+        view.tintColor = AppColor.fileUploadColor
+        view.contentMode = .scaleAspectFit
+        view.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        view.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        return view
+    }()
     
     let addLabel: UILabel = {
         let label = UILabel()
         label.labelSetUp()
-        label.text = DocumentConstantData.addDocument
         label.textColor = .label
-        label.font = AppFont.small
+        label.font = AppFont.verysmall
+        label.text = "Upload PDF or Image"
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
     
@@ -43,7 +57,7 @@ class FormFileUpload: FormFieldCell {
         iv.setAsEmptyDocument()
         iv.layer.cornerRadius = 10
         iv.isUserInteractionEnabled = false
-        iv.tintColor = AppColor.primaryColor
+        iv.tintColor = AppColor.emptyDocumentColor
         return iv
     }()
     
@@ -63,7 +77,8 @@ class FormFileUpload: FormFieldCell {
         return btn
     }()
     
-    var onUploadDocument: (() -> Void)?
+    var onUploadDocument: ((DocumentType) -> Void)?
+    var onOpenCamera: (() -> Void)?
     var onRemoveDocument: (() -> Void)?
     var onViewDocument: (() -> Void)?
     
@@ -90,12 +105,7 @@ class FormFileUpload: FormFieldCell {
         uploadView.insertArrangedSubview(documentImage, at: 0)
         uploadView.insertArrangedSubview(addLabel, at: 1)
                 
-        addLabel.text = "Upload PDF or Image"
         
-        addLabel.textColor = AppColor.fileUploadColor
-        
-        documentImage.tintColor = AppColor.fileUploadColor
-        documentImage.contentMode = .scaleAspectFit
                 
         let previewSize: CGFloat = 110
         NSLayoutConstraint.activate([
@@ -110,9 +120,6 @@ class FormFileUpload: FormFieldCell {
             uploadButton.topAnchor.constraint(equalTo: uploadView.topAnchor),
             uploadButton.bottomAnchor.constraint(equalTo: uploadView.bottomAnchor),
             
-//            documentImage.widthAnchor.constraint(equalTo: uploadView.widthAnchor, multiplier: 0.2),
-//            documentImage.heightAnchor.constraint(equalTo: uploadView.heightAnchor, multiplier: 0.2),
-
             fileImagePreview.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
             fileImagePreview.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
             fileImagePreview.widthAnchor.constraint(equalToConstant: previewSize),
@@ -132,25 +139,30 @@ class FormFileUpload: FormFieldCell {
     
     private func updateMenus() {
         
-        let pickAction = UIAction(title: "Choose from Files", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
-            self?.onUploadDocument?()
+        let pickPdfAction = UIAction(title: "Upload Pdf", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+            self?.onUploadDocument?(.pdf)
         }
-        
-        uploadButton.menu = UIMenu(title: "", children: [pickAction])
+        let pickImageAction = UIAction(title: "Upload Images", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+            self?.onUploadDocument?(.image)
+        }
+        let cameraAction = UIAction(title: "Take Picture", image: UIImage(systemName: IconName.photoAdd)) { [weak self] _ in
+            self?.onOpenCamera?()
+        }
+        let uploadMenu = UIMenu(title: "Upload", children: [pickPdfAction, pickImageAction, cameraAction])
+        uploadButton.menu = uploadMenu
 
         let viewAction = UIAction(title: "View", image: UIImage(systemName: IconName.eye)) { [weak self] _ in
             self?.onViewDocument?()
         }
         
-        let replaceAction = UIAction(title: "Replace", image: UIImage(systemName: IconName.replace)) { [weak self] _ in
-            self?.onUploadDocument?()
-        }
         
         let removeAction = UIAction(title: "Remove", image: UIImage(systemName: IconName.trash), attributes: .destructive) { [weak self] _ in
             self?.onRemoveDocument?()
         }
-        
-        previewButton.menu = UIMenu(title: "", children: [viewAction, replaceAction, removeAction])
+        let replace = UIMenu(title: "Upload", options: .singleSelection,children: [pickPdfAction, pickImageAction,cameraAction])
+
+         
+        previewButton.menu = UIMenu(title: "", children: [viewAction, replace, removeAction])
     }
     
     func setDocuments(hasDocument: Bool, fileUrl: String? = nil) {

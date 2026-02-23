@@ -14,22 +14,8 @@ class PasswordRepository: PasswordRepositoryProtocol {
     var db: PasswordDatabaseProtocol = DatabaseAdapter.shared
     
     init() {
-        createTable()
     }
     
-    func createTable() {
-        let colums: [String: TableColumnType] = [
-            Password.idC: .int,
-            Password.titleC: .string,
-            Password.usernameC: .string,
-            Password.passwordC: .string,
-            Password.notesC: .text,
-            Password.createdAtC: .date,
-            Password.lastModifiedC: .date,
-            Password.isFavoriteC: .bool
-        ]
-        db.create(table: Password.databaseTableName, columnDefinitions: colums, primaryKey: [Document.idC], uniqueKeys:[[Password.idC,Password.titleC]])
-    }
 
     func fetchAll() -> [Password] {
         return db.fetchPasswords()

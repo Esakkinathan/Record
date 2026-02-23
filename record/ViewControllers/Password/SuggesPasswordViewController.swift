@@ -41,15 +41,11 @@ struct PasswordGenerator {
 
     var onApply: ((String) -> Void)?
 
-    let passwordLabel: UILabel = {
-        let label = UILabel()
-        label.font = AppFont.heading3
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        label.layer.borderWidth = 1
-        label.layer.cornerRadius = 8
-        label.layer.borderColor = UIColor.systemGray4.cgColor
-        label.backgroundColor = .secondarySystemBackground
+    let passwordLabel: CopyTextLabel = {
+        let label = CopyTextLabel()
+        label.textLabel.font = AppFont.heading3
+        label.textLabel.textAlignment = .center
+        label.textLabel.numberOfLines = 0
         label.text = "—"
         return label
     }()
@@ -88,8 +84,11 @@ struct PasswordGenerator {
     private let numbersSwitch = UISwitch()
     private let symbolsSwitch = UISwitch()
 
-    private let copyButton = AppButton(type: .system)
-    private let regenerateButton = AppButton(type: .system)
+     private let regenerateButton: AppButton = {
+         let button = AppButton(type: .system)
+         button.setTitle("Generate", for: .normal)
+         return button
+     }()
 
     private var currentPassword: String = ""
     var lengthLabeText: String {
@@ -130,28 +129,33 @@ struct PasswordGenerator {
                 optionRow(title: "Include Letters", toggle: lettersSwitch),
                 optionRow(title: "Include Numbers", toggle: numbersSwitch),
                 optionRow(title: "Include Symbols", toggle: symbolsSwitch),
-                buttonRow()
+                regenerateButton
             ])
             stack.axis = .vertical
-            stack.spacing = 16
+            stack.spacing = PaddingSize.cellSpacing
             return stack
         }()
         
-        copyButton.setTitle("Copy", for: .normal)
-        regenerateButton.setTitle("Generate", for: .normal)
-        
-        copyButton.addTarget(self, action: #selector(copyButtonClicked), for: .touchUpInside)
+//        copyButton.setTitle("Copy", for: .normal)
+//        regenerateButton.setTitle("Generate", for: .normal)
+//        
+//        copyButton.addTarget(self, action: #selector(copyButtonClicked), for: .touchUpInside)
         regenerateButton.addTarget(self, action: #selector(regenerateButtonClicked), for: .touchUpInside)
-        
+        regenerateButton.setContentHuggingPriority(.required, for: .horizontal)
         view.add(stackView)
-        
+        view.add(regenerateButton)
         updatePassword()
         
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
             stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
-            passwordLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
+            passwordLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+            regenerateButton.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: PaddingSize.cellSpacing),
+            regenerateButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            regenerateButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.75),
+            regenerateButton.heightAnchor.constraint(equalToConstant: 40),
+
         ])
 
     }
@@ -204,9 +208,9 @@ struct PasswordGenerator {
     
     func buttonRow() -> UIView {
         regenerateButton.setContentHuggingPriority(.required, for: .horizontal)
-        copyButton.setContentHuggingPriority(.required, for: .horizontal)
+//        copyButton.setContentHuggingPriority(.required, for: .horizontal)
 
-        let stack = UIStackView(arrangedSubviews: [regenerateButton, copyButton])
+        let stack = UIStackView(arrangedSubviews: [regenerateButton])
         stack.axis = .horizontal
         stack.spacing = 20
         stack.distribution = .fillEqually

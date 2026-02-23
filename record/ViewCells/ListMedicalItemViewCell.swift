@@ -412,8 +412,9 @@ class ImageTextView: UIView {
     func configure(text: String ) {
         label.text = text
     }
-    func configure(image: String) {
+    func configure(image: String, _ tint: UIColor) {
         imageView.image = UIImage(systemName: image)
+        imageView.tintColor = tint
     }
 }
 class ListMedicalItemViewCell: UITableViewCell {
@@ -421,34 +422,40 @@ class ListMedicalItemViewCell: UITableViewCell {
         let label = ImageTextView()
         label.label.font = AppFont.heading3
         label.label.textColor = .label
-        label.configure(image: IconName.medicalName)
+        label.configure(image: IconName.medicalName, .systemBlue)
         return label
     }()
     let label2: ImageTextView = {
         let label = ImageTextView()
         label.label.font = AppFont.body
-        label.label.textColor = .systemGray
-        label.configure(image: IconName.instruction)
+        label.label.textColor = .secondaryLabel
+        label.configure(image: IconName.instruction, .systemOrange)
         return label
     }()
     let label3: ImageTextView = {
         let label = ImageTextView()
         label.label.font = AppFont.small
-        label.label.textColor = .systemGray2
-        label.configure(image: IconName.dosage)
+        label.label.textColor = .secondaryLabel
+        label.configure(image: IconName.dosage, .systemGreen)
         return label
     }()
     
     let markLabel: UILabel = {
        let label = UILabel()
         label.text = "Mark As Taken"
-        label.textAlignment = .right
+        label.textAlignment = .center
         label.font = AppFont.caption
         return label
     }()
     
     let toggle = UISwitch()
     
+    let toggleContainer: UIView = {
+       let view = UIView()
+        view.backgroundColor = .secondarySystemBackground
+        view.layer.cornerRadius = PaddingSize.cornerRadius
+        return view
+    }()
     var onToggleChanged: ((Bool) -> Void)?
     
     static let identifier = "ListMedicalItemViewCell"
@@ -463,18 +470,43 @@ class ListMedicalItemViewCell: UITableViewCell {
     }
     
     func setUpContentView() {
+        let bottomLine: UIView = {
+            let view = UIView()
+            view.backgroundColor = .lightGray
+            view.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            view.translatesAutoresizingMaskIntoConstraints = false
+            return view
+        }()
+
         let stack: UIStackView = {
             let stack = UIStackView(arrangedSubviews: [label1, label2, label3])
             stack.axis = .vertical
             stack.spacing = PaddingSize.content
+            stack.layer.cornerRadius = PaddingSize.cornerRadius
+            stack.backgroundColor = .secondarySystemBackground
+            stack.layoutMargins = UIEdgeInsets(top: PaddingSize.content, left: PaddingSize.content, bottom: PaddingSize.content, right: PaddingSize.content)
+            stack.isLayoutMarginsRelativeArrangement = true
             return stack
         }()
         
         //toggle.isOn = false
         selectionStyle = .none
         contentView.add(stack)
-        contentView.add(toggle)
-        contentView.add(markLabel)
+        toggleContainer.add(toggle)
+        
+        contentView.add(toggleContainer)
+        toggleContainer.add(markLabel)
+        
+        NSLayoutConstraint.activate([
+            
+            markLabel.topAnchor.constraint(equalTo: toggleContainer.topAnchor, constant: PaddingSize.content),
+            markLabel.leadingAnchor.constraint(equalTo: toggleContainer.leadingAnchor, constant: PaddingSize.content),
+            markLabel.trailingAnchor.constraint(equalTo: toggleContainer.trailingAnchor, constant: -PaddingSize.content),
+            toggle.topAnchor.constraint(equalTo: markLabel.bottomAnchor, constant: PaddingSize.content),
+            toggle.bottomAnchor.constraint(equalTo: toggleContainer.bottomAnchor, constant: -PaddingSize.content),
+            toggle.leadingAnchor.constraint(equalTo: toggleContainer.leadingAnchor, constant: PaddingSize.content),
+            toggle.trailingAnchor.constraint(equalTo: toggleContainer.trailingAnchor, constant: -PaddingSize.content)
+        ])
         
         toggle.addTarget(self, action: #selector(toggleChanged), for: .valueChanged)
         
@@ -483,13 +515,11 @@ class ListMedicalItemViewCell: UITableViewCell {
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content),
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width * 3),
             
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: toggle.leadingAnchor, constant: -PaddingSize.width),
+            stack.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -PaddingSize.width),
             
-            markLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 2),
-            markLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
             
-            toggle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 3),
-            toggle.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            toggleContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 3),
+            toggleContainer.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
         ])
     }
     
@@ -503,6 +533,8 @@ class ListMedicalItemViewCell: UITableViewCell {
         label3.configure(text: text3)
         markLabel.isHidden = !canShow
         toggle.isHidden = !canShow
+        toggleContainer.isHidden = !canShow
+        markLabel.text = state ? "Taken" : "Mark as taken"
         toggle.setOn(state, animated: false)
     }
     override func prepareForReuse() {

@@ -71,7 +71,7 @@ enum DefaultDocument: String, CaseIterable {
     case adhar = "Adhar Card"
     case pan = "Pan Card"
     case voterId = "Voter Id Card"
-    case passport = "PassPort"
+    case passport = "Passport"
     case drivingLicense = "Driving License"
     case rationCard = "Ration Card"
     case birthCertificate = "Birth Certificate"

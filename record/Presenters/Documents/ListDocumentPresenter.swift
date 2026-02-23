@@ -23,6 +23,9 @@ class ListDocumentPresenter: ListDocumentPresenterProtocol {
     var documentList: [Document] = []
     var filteredDocuments: [Document] = []
     var isSearching = false
+    var isEmpty: Bool {
+        currentDocuments().isEmpty
+    }
     var currentSort: DocumentSortOption
     var visibleDocuments: [Document] = []
     

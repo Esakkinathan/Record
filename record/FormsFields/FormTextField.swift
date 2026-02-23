@@ -7,6 +7,12 @@
 
 import UIKit
 
+protocol FormTextFieldDelegate: AnyObject {
+    func didValueChanged(text: String) -> String?
+    func onReturn(text: String?) -> String?
+    func showErrorOnLengthExceeds(_ msg: String)
+}
+
 class FormTextField: FormFieldCell {
     
     static let identifier = "FormTextField"
@@ -16,6 +22,8 @@ class FormTextField: FormFieldCell {
     var enteredText: String {
         return textField.text ?? ""
     }
+    weak var delegate: FormTextFieldDelegate?
+    
     let countLabel: UILabel = {
         let label = UILabel()
         label.font = AppFont.small
@@ -28,6 +36,7 @@ class FormTextField: FormFieldCell {
     var maxCount = 30
     var onReturn: ((String) -> String?)?
     var onValueChange: ((String) -> String?)?
+    var showErrorOnLengthExceeds: ((String) -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -82,6 +91,7 @@ class FormTextField: FormFieldCell {
             if let newPosition = textField.position(from: textField.beginningOfDocument, offset: maxCount) {
                 textField.selectedTextRange = textField.textRange(from: newPosition, to: newPosition)
                 }
+            showErrorOnLengthExceeds?("Enter maximum of \(maxCount) characters")
         }
         countLabel.text = "\(textField.text?.count ?? 0)/\(maxCount)"
         

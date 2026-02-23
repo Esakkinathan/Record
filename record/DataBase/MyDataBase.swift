@@ -37,6 +37,114 @@ class DatabaseAdapter: DatabaseProtocol {
         databaseName = DatabaseAdapter.getPath()
 
         registerCollation()
+        createTable()
+    }
+    
+    func dropTable(table name: String) {
+        let sql = "DROP TABLE \(name) ;"
+        do {
+            try database.write { db in
+                try db.execute(sql)
+            }
+
+        } catch {
+            print(error)
+        }
+
+    }
+    func createTable() {
+//        dropTable(table: Document.databaseTableName)
+//        dropTable(table: Password.databaseTableName)
+//        dropTable(table: Medical.databaseTableName)
+//        dropTable(table: MedicalItem.databaseTableName)
+//        dropTable(table: MedicalIntakeLog.databaseTableName)
+        
+        let docuementColumns: [String: TableColumnType] = [
+            Document.idC: .int,
+            Document.nameC: .string,
+            Document.numberC: .string,
+            Document.createdAtC: .date,
+            Document.expiryDateC: .date,
+            Document.fileC: .blob,
+            Document.notesC: .text,
+            Document.lastModifiedC: .date
+        ]
+        create(table: Document.databaseTableName, columnDefinitions: docuementColumns, primaryKey: [Document.idC], uniqueKeys:[[Document.idC,Document.numberC]])
+        
+        let passwordColumns: [String: TableColumnType] = [
+            Password.idC: .int,
+            Password.titleC: .string,
+            Password.usernameC: .string,
+            Password.passwordC: .string,
+            Password.notesC: .text,
+            Password.createdAtC: .date,
+            Password.lastModifiedC: .date,
+            Password.isFavoriteC: .bool
+        ]
+        create(table: Password.databaseTableName, columnDefinitions: passwordColumns, primaryKey: [Document.idC], uniqueKeys:[[Password.idC,Password.titleC]])
+        
+        let medicalColumns: [String: TableColumnType] = [
+            Medical.idC: .int,
+            Medical.titleC: .string,
+            Medical.typeC: .string,
+            Medical.durationC: .int,
+            Medical.durationTypeC: .string,
+            Medical.hospitalC: .string,
+            Medical.doctorC: .string,
+            Medical.dateC: .date,
+            Medical.createdAtC: .date,
+            Medical.lastModifiedC: .date,
+            Medical.notesC: .text,
+            Medical.receiptC: .blob,
+            
+        ]
+        
+        create(table: Medical.databaseTableName, columnDefinitions: medicalColumns, primaryKey: [Medical.idC])
+        let medicalItemSql = """
+                CREATE TABLE IF NOT EXISTS \(MedicalItem.databaseTableName) (
+                \(MedicalItem.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(MedicalItem.medicalC) INTEGER NOT NULL,
+                \(MedicalItem.kindC) TEXT NOT NULL,
+                \(MedicalItem.nameC) TEXT NOT NULL,
+                \(MedicalItem.instructionC) TEXT NOT NULL,
+                \(MedicalItem.dosageC) TEXT NOT NULL,
+                \(MedicalItem.startDateC) TEXT NOT NULL,
+                \(MedicalItem.endDateC) TEXT NOT NULL,
+                \(MedicalItem.sheduleC) TEXT NOT NULL,
+
+                FOREIGN KEY (\(MedicalItem.medicalC))
+                REFERENCES \(Medical.databaseTableName)(\(Medical.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
+        let medicalLogSql = """
+                CREATE TABLE IF NOT EXISTS \(MedicalIntakeLog.databaseTableName) (
+                \(MedicalIntakeLog.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(MedicalIntakeLog.medicalItemIdC) INTEGER NOT NULL,
+                \(MedicalIntakeLog.dateC) TEXT NOT NULL,
+                \(MedicalIntakeLog.scheduleC) TEXT NOT NULL,
+                \(MedicalIntakeLog.takenC) INTEGER NOT NULL,
+            
+                FOREIGN KEY (\(MedicalIntakeLog.medicalItemIdC))
+                REFERENCES \(MedicalItem.databaseTableName)(\(MedicalItem.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
+
+        do {
+            try database.writeInTransaction { db in
+                try db.execute(medicalItemSql)
+                try db.execute(medicalLogSql)
+                
+                return .commit
+            }
+
+        } catch {
+            print(error)
+        }
+
     }
     
     func registerCollation() {
@@ -162,6 +270,22 @@ class DatabaseAdapter: DatabaseProtocol {
         } catch {
             print(error)
         }
+    }
+    
+    func fetchDistinctValues(table name: String, column col: String) -> [String] {
+        var data: [String] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT \(col) FROM \(name)  WHERE \(col) IS NOT NULL ; ")
+                for row in rows {
+                    let value: String = row[col]
+                    data.append(value)
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return data
     }
 }
 
@@ -358,46 +482,6 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
     }
     
     
-    func createTable() {
-//        do {
-//            try database.writeInTransaction { db in
-//                let sql = "DROP TABLE \(MedicalItem.databaseTableName);"
-//                try db.execute(sql)
-//                return .commit
-//            }
-//        } catch {
-//            print(error)
-//        }
-
-        let sql = """
-                CREATE TABLE IF NOT EXISTS \(MedicalItem.databaseTableName) (
-                \(MedicalItem.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
-                \(MedicalItem.medicalC) INTEGER NOT NULL,
-                \(MedicalItem.kindC) TEXT NOT NULL,
-                \(MedicalItem.nameC) TEXT NOT NULL,
-                \(MedicalItem.instructionC) TEXT NOT NULL,
-                \(MedicalItem.dosageC) TEXT NOT NULL,
-                \(MedicalItem.startDateC) TEXT NOT NULL,
-                \(MedicalItem.endDateC) TEXT NOT NULL,
-                \(MedicalItem.sheduleC) TEXT NOT NULL,
-
-                FOREIGN KEY (\(MedicalItem.medicalC))
-                REFERENCES \(Medical.databaseTableName)(\(Medical.idC))
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
-                );
-            """
-        do {
-            try database.writeInTransaction { db in
-                try db.execute(sql)
-                return .commit
-            }
-
-        } catch {
-            print(error)
-        }
-    }
-
     func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem] {
         var medicalItems: [MedicalItem] = []
         do {
@@ -436,6 +520,113 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
 
     }
 
+}
+
+extension DatabaseAdapter: MedicalIntakeLogDatabase {
+    func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog] {
+        var logs: [MedicalIntakeLog] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? AND \(MedicalIntakeLog.dateC) = ? ",parameters: [medicalId, date])
+                
+                for row in rows {
+                    let id: Int = row[MedicalIntakeLog.idC]
+                    let medicalItemId: Int = row[MedicalIntakeLog.medicalItemIdC]
+                    let date: Date = row[MedicalIntakeLog.dateC]
+                    let schedule: String = row[MedicalIntakeLog.scheduleC]
+                    let medicalSchedule: MedicalSchedule = MedicalSchedule(rawValue: schedule) ?? .morning
+                    let taken: Bool = row[MedicalIntakeLog.takenC]
+                    
+                    logs.append(MedicalIntakeLog(id: id, medicalItemId: medicalItemId, date: date, schedule: medicalSchedule, taken: taken))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return logs
+
+    }
+ 
+}
+
+
+extension DatabaseAdapter: UserDatebaseProtocol {
+    func updatePassword(userId: Int, newHash: String) {
+        do {
+            try database.writeInTransaction { db in
+                let sql = "UPDATE \(User.databaseTableName) SET password = ? WHERE id = ?"
+                try db.execute(sql, [newHash, userId])
+                return .commit
+            }
+        } catch {
+            print(error)
+        }
+
+    }
+    func getUserByEmail(_ email: String) -> User? {
+        var user: User?
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(User.databaseTableName) WHERE \(User.emailC) = ? ",parameters: [email])
+                
+                for row in rows {
+                    let id: Int = row[User.idC]
+                    let email: String = row[User.emailC]
+                    let name: String = row[User.nameC]
+                    let password: String = row[User.passwordC]
+                    user = User(id: id, email: email, name: name, password: password)
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return user
+
+        
+    }
+    func getUserById(_ id: Int) -> User? {
+        var user: User?
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(User.databaseTableName) WHERE \(User.idC) = ? ",parameters: [id])
+                
+                for row in rows {
+                    let id: Int = row[User.idC]
+                    let email: String = row[User.emailC]
+                    let name: String = row[User.nameC]
+                    let password: String = row[User.passwordC]
+                    user = User(id: id, email: email, name: name, password: password)
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return user
+
+        
+    }
+}
+
+extension DatabaseAdapter: LoginDatebaseProtocol {
+    
+    func getLoginSession() -> LoginSession? {
+        var session: LoginSession?
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(LoginSession.databaseTableName)")
+                
+                for row in rows {
+                    let id: Int = row[LoginSession.userIdC]
+                    let date: Date = row[LoginSession.lastLoginC]
+                    session = LoginSession(userId: id, lastLogin: date)
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return session
+
+    }
 }
 
 
@@ -589,136 +780,4 @@ extension DatabaseAdapter: BillDatabaseProtocol {
 
     }
     
-}
-
-extension DatabaseAdapter: UserDatebaseProtocol {
-    func updatePassword(userId: Int, newHash: String) {
-        do {
-            try database.writeInTransaction { db in
-                let sql = "UPDATE \(User.databaseTableName) SET password = ? WHERE id = ?"
-                try db.execute(sql, [newHash, userId])
-                return .commit
-            }
-        } catch {
-            print(error)
-        }
-
-    }
-    func getUserByEmail(_ email: String) -> User? {
-        var user: User?
-        do {
-            try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(User.databaseTableName) WHERE \(User.emailC) = ? ",parameters: [email])
-                
-                for row in rows {
-                    let id: Int = row[User.idC]
-                    let email: String = row[User.emailC]
-                    let name: String = row[User.nameC]
-                    let password: String = row[User.passwordC]
-                    user = User(id: id, email: email, name: name, password: password)
-                }
-            }
-        } catch {
-            print(error)
-        }
-        return user
-
-        
-    }
-    func getUserById(_ id: Int) -> User? {
-        var user: User?
-        do {
-            try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(User.databaseTableName) WHERE \(User.idC) = ? ",parameters: [id])
-                
-                for row in rows {
-                    let id: Int = row[User.idC]
-                    let email: String = row[User.emailC]
-                    let name: String = row[User.nameC]
-                    let password: String = row[User.passwordC]
-                    user = User(id: id, email: email, name: name, password: password)
-                }
-            }
-        } catch {
-            print(error)
-        }
-        return user
-
-        
-    }
-}
-
-extension DatabaseAdapter: LoginDatebaseProtocol {
-    
-    func getLoginSession() -> LoginSession? {
-        var session: LoginSession?
-        do {
-            try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(LoginSession.databaseTableName)")
-                
-                for row in rows {
-                    let id: Int = row[LoginSession.userIdC]
-                    let date: Date = row[LoginSession.lastLoginC]
-                    session = LoginSession(userId: id, lastLogin: date)
-                }
-            }
-        } catch {
-            print(error)
-        }
-        return session
-
-    }
-}
-
-extension DatabaseAdapter: MedicalIntakeLogDatabase {
-    func createLogTable() {
-        let sql = """
-                CREATE TABLE IF NOT EXISTS \(MedicalIntakeLog.databaseTableName) (
-                \(MedicalIntakeLog.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
-                \(MedicalIntakeLog.medicalItemIdC) INTEGER NOT NULL,
-                \(MedicalIntakeLog.dateC) TEXT NOT NULL,
-                \(MedicalIntakeLog.scheduleC) TEXT NOT NULL,
-                \(MedicalIntakeLog.takenC) INTEGER NOT NULL,
-            
-                FOREIGN KEY (\(MedicalIntakeLog.medicalItemIdC))
-                REFERENCES \(MedicalItem.databaseTableName)(\(MedicalItem.idC))
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
-                );
-            """
-        do {
-            try database.writeInTransaction { db in
-                try db.execute(sql)
-                return .commit
-            }
-
-        } catch {
-            print(error)
-        }
-
-    }
-    func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog] {
-        var logs: [MedicalIntakeLog] = []
-        do {
-            try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? AND \(MedicalIntakeLog.dateC) = ? ",parameters: [medicalId, date])
-                
-                for row in rows {
-                    let id: Int = row[MedicalIntakeLog.idC]
-                    let medicalItemId: Int = row[MedicalIntakeLog.medicalItemIdC]
-                    let date: Date = row[MedicalIntakeLog.dateC]
-                    let schedule: String = row[MedicalIntakeLog.scheduleC]
-                    let medicalSchedule: MedicalSchedule = MedicalSchedule(rawValue: schedule) ?? .morning
-                    let taken: Bool = row[MedicalIntakeLog.takenC]
-                    
-                    logs.append(MedicalIntakeLog(id: id, medicalItemId: medicalItemId, date: date, schedule: medicalSchedule, taken: taken))
-                }
-            }
-        } catch {
-            print(error)
-        }
-        return logs
-
-    }
- 
 }

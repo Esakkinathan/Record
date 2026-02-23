@@ -34,15 +34,15 @@ class ButtonTableViewCell: UITableViewCell {
         NSLayoutConstraint.activate([
             //button.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: FormSpacing.width),
             //button.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -FormSpacing.width),
-            button.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            button.topAnchor.constraint(equalTo: contentView.topAnchor, constant: FormSpacing.height),
+            button.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -FormSpacing.height),
             button.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            button.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.5)
+            button.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.75),
+            button.heightAnchor.constraint(equalToConstant: 40),
         ])
         
     }
     @objc func buttonClicked() {
         onButtonClicked?()
     }
-    
-
 }

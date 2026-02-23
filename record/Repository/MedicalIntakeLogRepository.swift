@@ -11,29 +11,6 @@ class MedicalIntakeLogRepository: MedicalIntakeLogRepositoryProtocol {
     var db: MedicalIntakeLogDatabase = DatabaseAdapter.shared
     
     init() {
-        createTable()
-    }
-    func createTable() {
-//        do {
-//            try db.database.writeInTransaction { db in
-//                let sql = "DROP TABLE \(MedicalIntakeLog.databaseTableName);"
-//                try db.execute(sql)
-//                return .commit
-//            }
-//        } catch {
-//            print(error)
-//        }
-        db.createLogTable()
-//        let columns: [String: TableColumnType] = [
-//            MedicalIntakeLog.idC: .int,
-//            MedicalIntakeLog.medicalItemIdC: .int,
-//            MedicalIntakeLog.dateC: .date,
-//            MedicalIntakeLog.scheduleC: .string,
-//            MedicalIntakeLog.takenC: .bool,
-//            
-//        ]
-//        db.create(table: MedicalIntakeLog.databaseTableName, columnDefinitions: columns, primaryKey: [MedicalIntakeLog.idC])
-
     }
     
     func add(log: MedicalIntakeLog) {

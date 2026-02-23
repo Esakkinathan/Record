@@ -114,11 +114,16 @@ protocol FormFieldPresenterProtocol {
     func selectClicked(at index: Int)
     func formButtonClicked()
     
-    func uploadDocument(at index: Int)
+    func uploadDocument(at index: Int, type: DocumentType)
     func viewDocument(at index: Int)
     func removeDocument(at index: Int)
     func didPickDocument(url: URL)
-
+    func didPickDocuments(urls: [URL])
+    func saveImage(_ image: UIImage)
+    func openCameraClicked()
+    func processImages(from images: [UIImage])
+    func exitScreen()
+    //func recognizeText(from image: UIImage)
 }
 
     
@@ -131,5 +136,9 @@ protocol FormFieldViewDelegate: AnyObject {
     func reloadField(at index: Int)
     func dismiss()
     func configureToOpenDocument(previewUrl: URL)
+    func showLoading()
+    func stopLoading()
+    func showExitAlert()
+    func showToastVc(message: String, type: ToastType)
     //var previewurl: URL? {get}
 }

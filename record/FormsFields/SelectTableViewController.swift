@@ -10,33 +10,34 @@ import UIKit
 class SelectionViewController: UIViewController {
     
     private let tableView = UITableView(frame: .zero, style: .grouped)
-    private let options: [String]
-    var selectedOption: String
     var onValueSelected: ((String) -> Void)?
-    var addExtra: Bool
-    init(options: [String], selectedOption: String, addExtra: Bool) {
-        self.options = options
-        self.selectedOption = selectedOption
-        self.addExtra = addExtra
-        super.init(nibName: nil, bundle: nil)
-    }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    var presenter: SelectionPresenterProtocol!
     
+    let searchController = UISearchController(searchResultsController: nil)
+    let notFoundView = NotFoundView()
+        
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
     }
+    
     func setUpNavigationBar() {
-        if addExtra {
+        if presenter.addExtra {
             navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addOption))
         }
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search"
+        searchController.searchBar.searchBarStyle = .minimal
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
     }
+    
     func setUpContents() {
-        title = "Select Option"
+        title = presenter.title
         view.backgroundColor = AppColor.background
         
         tableView.dataSource = self
@@ -93,22 +94,28 @@ class SelectionViewController: UIViewController {
     }
     
     @objc func addOption() {
-        showAddOptionAlert()
+        presenter.clickedAddOption(text: "")
     }
     
 }
 
+extension SelectionViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let text = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) else {return}
+        presenter.search(text: text)
+    }
 
-extension SelectionViewController: UITableViewDataSource, UITableViewDelegate {
+}
+extension SelectionViewController: UITableViewDataSource, UITableViewDelegate, SearchViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return options.count
+        presenter.numberOfFields()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "optionCell", for: indexPath)
-        let option = options[indexPath.row]
+        let option = presenter.field(at: indexPath.row)
         cell.textLabel?.text = option
-        cell.accessoryType = (option == selectedOption) ? .checkmark : .none
+        cell.accessoryType = (option == presenter.selectedOption) ? .checkmark : .none
         return cell
     }
     func selectedData(text: String) {
@@ -117,15 +124,26 @@ extension SelectionViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let selected = options[indexPath.row]
-        if selected != selectedOption {
-            selectedOption = selected
-            tableView.reloadData()
-            selectedData(text: selected)
-        }
+        presenter.didSelectRow(at: indexPath.row)
+    }
+    func dismiss() {
         navigationController?.popViewController(animated: true)
-        
+    }
+    func reloadData() {
+        tableView.reloadData()
+        if presenter.isEmpty {
+            let searchText = searchController.searchBar.text ?? ""
+            notFoundView.configure(searchText: searchText)
+            notFoundView.onTap = { [weak self] in
+                self?.presenter.clickedAddOption(text: searchText)
+                }
+            tableView.backgroundView = notFoundView
+            tableView.separatorStyle = .none
+
+        } else {
+            tableView.backgroundView = nil
+            tableView.separatorStyle = .singleLine
+        }
     }
 
 }

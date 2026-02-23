@@ -20,7 +20,8 @@ protocol DetailMedicalPresenterProtocol {
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
     func viewDidLoad()
-    
+    func viewDocument()
+
     func didSelectRowAt(indexPath: IndexPath)
     
 
@@ -30,14 +31,17 @@ protocol DetailMedicalViewDelegate: AnyObject {
     func updateMedicalNotes(text: String?, id: Int)
     func updateMedicalRecord(_ medical: Persistable)
     func reloadSection(at section: Int)
+    func configureToOpenDocument(previewUrl: URL)
 }
 
 protocol DetailMedicalRouterProtocol {
+    func openDocumentViewer(filePath: String)
     func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Persistable) -> Void))
     func openListMedicalItemVC(kind: MedicalKind, medical: Medical)
 }
 
 enum DetailMedicalRow {
+    case image(path: String)
     case info(DetailMedicalTextSectionRow)
     case notes(text: String?, isEditable: Bool)
     case medicalItem(MedicalKind)

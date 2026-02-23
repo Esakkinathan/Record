@@ -57,7 +57,7 @@ extension SettingsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0: return 2   // Theme + Color
-        case 1: return 1   // Face ID
+        case 1: return 2   // Face ID
         default: return 0
         }
     }
@@ -68,7 +68,7 @@ extension SettingsViewController: UITableViewDataSource {
     ) -> String? {
         switch section {
         case 0: return "Appearance"
-        case 1: return "Security"
+        case 1: return "System"
         default: return nil
         }
     }
@@ -94,12 +94,13 @@ extension SettingsViewController: UITableViewDataSource {
         if indexPath.section == 0 && indexPath.row == 1 {
             let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
             cell.configure(selected: presenter.currentAccent) { [weak self] accent in
+                self?.navigationController?.navigationBar.backgroundColor = accent.color
                 self?.presenter.selectAccent(accent)
             }
             return cell
         }
         
-        if indexPath.section == 1 {
+        if indexPath.section == 1 && indexPath.row == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
             cell.configure(
                 title: "Face ID",
@@ -107,6 +108,12 @@ extension SettingsViewController: UITableViewDataSource {
             ) { [weak self] isOn in
                 self?.presenter.toggleFaceId(isOn)
             }
+            return cell
+        }
+        if indexPath.section == 1 && indexPath.row == 1 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "notificationCell") ?? UITableViewCell(style: .default, reuseIdentifier: "notificationCell")
+            cell.textLabel?.text = "Click to enable/ disable notification"
+            cell.accessoryType = .disclosureIndicator
             return cell
         }
         
@@ -117,8 +124,9 @@ extension SettingsViewController: UITableViewDataSource {
 extension SettingsViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard indexPath.section == 0 && indexPath.row == 0 else { return }
+        if indexPath.section == 1 && indexPath.row == 1 {
+            presenter.openSettings()
+        }
         
-        print("Open theme selection screen")
     }
 }

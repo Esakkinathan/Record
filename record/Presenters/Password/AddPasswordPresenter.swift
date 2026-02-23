@@ -27,7 +27,7 @@ class AddPasswordPresenter: FormFieldPresenter {
         let existing = existing()
         fields = [
             FormField(label: "Title", type: .text, validators: [.required,.maxLength(30)], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next),
-            FormField(label: "Username", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Username",value: existing?.username, returnType: .next, keyboardMode: .default),
+            FormField(label: "Username", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Username",value: existing?.username, returnType: .next, keyboardMode: .emailAddress),
             FormField(label: "Password", type: .password, validators: [.required, .minLength(4), .maxLength(20)], gotoNextField: false, placeholder: "Enter Password", value: existing?.password,returnType: .done),
             FormField(label: "Suggest Password", type: .button, validators: [], gotoNextField: false),
         ]

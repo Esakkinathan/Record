@@ -96,7 +96,7 @@ extension UIViewController {
         
         NSLayoutConstraint.activate([
             toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            toast.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -12),
             toast.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.9)
         ])
         

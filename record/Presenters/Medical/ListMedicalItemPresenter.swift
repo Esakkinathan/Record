@@ -16,7 +16,11 @@ struct MedicalItemCellViewModel {
 }
 
 class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
-        
+    
+    var isEmpty: Bool {
+        visibleItems.isEmpty
+    }
+    
     weak var view: ListMedicalItemViewDelegate?
     
     let router: ListMedicalItemRouterProtocol
@@ -80,6 +84,7 @@ class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
         loadMedicalItems()
         loadLogs()
         buildVisibleItems()
+        view?.reloadData()
     }
 }
 

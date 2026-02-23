@@ -13,19 +13,20 @@ class ListDocumentViewController: CustomSearchBarController {
         layout.minimumLineSpacing = PaddingSize.cellSpacing
         layout.minimumInteritemSpacing = PaddingSize.cellSpacing
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.contentInsetAdjustmentBehavior = .automatic
-        view.keyboardDismissMode = .onDrag
+        //view.contentInsetAdjustmentBehavior = .automatic
         view.backgroundColor = AppColor.background
         return view
     }()
-    
+    override var searchScrollingView: UIScrollView? {
+        return collectionView
+    }
+
     var presenter: ListDocumentPresenterProtocol!
     
     let sortView = SortHeaderView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
         
@@ -51,6 +52,10 @@ class ListDocumentViewController: CustomSearchBarController {
         navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
         
     }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewDidLoad()
+    }
     
     
     func setUpContents() {
@@ -65,23 +70,20 @@ class ListDocumentViewController: CustomSearchBarController {
         collectionView.register(ListDocumentViewCell.self, forCellWithReuseIdentifier: ListDocumentViewCell.identifier)
         
         NSLayoutConstraint.activate([
-            sortView.topAnchor.constraint(equalTo: view.topAnchor,constant: PaddingSize.height),
-            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.content),
+            sortView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
+            sortView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
+            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.content),
             
             
             collectionView.topAnchor.constraint(equalTo: sortView.bottomAnchor,constant: PaddingSize.height),
             collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, ),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
+            collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
             
         ])
     }
     @objc func openSearch() {
         showSearch()
-    }
-    override func searchScrollingView() -> UIScrollView? {
-        collectionView
     }
 
     override func performSearch(text: String?) {
@@ -320,6 +322,16 @@ extension ListDocumentViewController: DocumentNavigationDelegate {
 extension ListDocumentViewController: ListDocumentViewDelegate {
     func reloadData() {
         collectionView.reloadData()
+        if presenter.isEmpty {
+            if !presenter.isSearching {
+                collectionView.setEmptyView(image: "document.badge.ellipsis", title: "No Documents", subtitle: "Tap + on top to create your first document.")
+
+            } else {
+                collectionView.setEmptyHeaderView(image: "text.page.badge.magnifyingglass", title: "No Matching Documents Found", subtitle: "Search with document name and number")
+            }
+        } else {
+            collectionView.restoreView()
+        }
     }
     func refreshSortMenu() {
         buildSortMenu()

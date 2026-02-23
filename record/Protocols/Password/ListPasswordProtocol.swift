@@ -22,6 +22,10 @@ protocol ListPasswordProtocol {
     func didSelectedFavourite()
     func search(text: String?)
     func deletePassword(index: Int)
+    var isEmpty: Bool { get }
+    var isSearching: Bool { get }
+    func stopAutoExitTimer()
+
 }
 
 protocol ListPasswordViewDelegate: AnyObject {
