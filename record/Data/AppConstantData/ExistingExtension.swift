@@ -13,6 +13,12 @@ extension Date {
         //formatter.locale = Locale(identifier: "en_US_POSIX")
         return formatter.string(from: self)
     }
+    func reminderFormatted() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("dd MM yyyy jm")
+        return formatter.string(from: self)
+    }
 }
 
 extension UIView {
@@ -46,8 +52,8 @@ extension UIView {
 
 extension UILabel {
     func labelSetUp() {
-        self.numberOfLines = 0
-        self.lineBreakMode = .byWordWrapping
+        self.numberOfLines = 1
+        self.lineBreakMode = .byTruncatingTail
         self.textColor = .label
     }
 }
@@ -68,6 +74,8 @@ extension UIImageView {
 
 
 extension UIViewController {
+    
+
     func hideKeyboardWhenTappedAround() {
         let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tap.cancelsTouchesInView = true

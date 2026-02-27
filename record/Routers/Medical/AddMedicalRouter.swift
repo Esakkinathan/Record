@@ -7,6 +7,7 @@
 internal import UniformTypeIdentifiers
 import QuickLook
 import UIKit
+import PhotosUI
 
 class AddMedicalRouter: AddMedicalRouterProtocol {
     weak var viewController: DocumentNavigationDelegate?
@@ -14,6 +15,36 @@ class AddMedicalRouter: AddMedicalRouterProtocol {
     init(viewController: DocumentNavigationDelegate? = nil) {
         self.viewController = viewController
     }
+    func openGallery() {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = 10
+        
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = viewController as? PHPickerViewControllerDelegate
+        viewController?.presentVC(picker)
+    }
+    func openDocumentPicker(type: DocumentType) {
+        let picker: UIDocumentPickerViewController
+        switch type {
+        case .pdf:
+            picker = UIDocumentPickerViewController(
+                forOpeningContentTypes: [.pdf],
+                asCopy: true
+            )
+        case .image:
+            picker = UIDocumentPickerViewController(
+                forOpeningContentTypes: [.image],
+                asCopy: true
+            )
+        }
+        
+        picker.allowsMultipleSelection = true
+        picker.delegate = viewController as? UIDocumentPickerDelegate
+        viewController?.presentVC(picker)
+        picker.showToast(message: "Max 10 files are allowed", type: .info)
+    }
+
     func openCamera() {
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
             print("Camera not available")
@@ -46,7 +77,4 @@ class AddMedicalRouter: AddMedicalRouterProtocol {
         preview.dataSource = viewController as? QLPreviewControllerDataSource
         viewController?.push(preview)
     }
-
-
-
 }

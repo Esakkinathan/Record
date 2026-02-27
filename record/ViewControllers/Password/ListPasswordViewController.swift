@@ -12,6 +12,7 @@ class ListPasswordViewController: KeyboardNotificationViewController {
     let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.rowHeight = UITableView.automaticDimension
+        tableView.contentInsetAdjustmentBehavior = .automatic
         return tableView
         
     }()
@@ -30,7 +31,7 @@ class ListPasswordViewController: KeyboardNotificationViewController {
     let sortView: SortHeaderView = {
         let view = SortHeaderView()
         view.button.configuration?.title = "Options"
-        view.timerLabel.isHidden = false
+        view.setTimerViewHidden(false)
         view.button.configuration?.image = nil
         return view
     }()
@@ -61,7 +62,7 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         spacer.width = 12
 
         navigationItem.rightBarButtonItem = addButton
-        
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(exitClicked))
         
         searchController.searchResultsUpdater = self
@@ -70,8 +71,9 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         searchController.searchBar.searchBarStyle = .minimal
         //searchController.searchBar.backgroundImage = UIImage()
         navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
+        navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
+        
 
     }
         
@@ -86,13 +88,13 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         
         NSLayoutConstraint.activate([
             sortView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
-            sortView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width * 2 ),
-            sortView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.content),
+            sortView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width * 2 ),
+            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.content),
 
             tableView.topAnchor.constraint(equalTo: sortView.bottomAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
 
     }
@@ -177,10 +179,13 @@ extension ListPasswordViewController {
 
         
         sortView.configure(text: current.field.rawValue)
-        sortView.button.menu = UIMenu(
-            title: "Options",
-            children: [filterMenu, sortMenu]
-        )
+//        DispatchQueue.main.async { [weak self] in
+            sortView.button.menu = UIMenu(
+                title: "Options",
+                children: [filterMenu, sortMenu]
+            )
+
+//        }
     }
     
 
@@ -236,8 +241,11 @@ extension ListPasswordViewController: ListPasswordViewDelegate {
     
     func reloadData() {
         tableView.reloadData()
-        if presenter.isEmpty {
-            if !presenter.isSearching {
+        let isEmpty = presenter.isEmpty
+        let isSearching = presenter.isSearching
+        sortView.isHidden = isSearching && isEmpty
+        if isEmpty {
+            if !isSearching {
                 tableView.setEmptyView(image: "key.slash", title: "No Passwords", subtitle: "Tap + on top to create your first password.")
 
             } else {
@@ -283,7 +291,7 @@ extension ListPasswordViewController: ListPasswordViewDelegate {
 
         let title = expired ? "Session Expired" : "Exit Passwords?"
         var message = expired ? "Do you want to stay for another \(AppConstantData.passwordSession / 60) minutes?" :  "Are you sure want to exit?"
-        message += " Auto Exit in \(AppConstantData.autoExitTime) secoonds"
+        message += " Auto Exit in \(AppConstantData.autoExitTime) seconds"
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         

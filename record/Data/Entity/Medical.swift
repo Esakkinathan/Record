@@ -72,6 +72,7 @@ class Medical: Persistable {
         container[Medical.dateC] = date
         container[Medical.createdAtC] = createdAt
         container[Medical.lastModifiedC] = lastModified
+        container[Medical.receiptC] = receipt
         container[Medical.notesC] = notes
     }
     
@@ -184,11 +185,11 @@ enum MedicalSortStore {
 }
 
 
-enum MedicalKind: String, CaseIterable {
+enum MedicalKind: String, CaseIterable, Hashable {
     case tablet = "Tablet"
     case syrup = "Syrup"
     case injection = "Injection"
-    case topical = "Paste"
+    case topical = "Cream"
     
     var image: String {
         switch self {

@@ -6,9 +6,6 @@
 //
 
 import UIKit
-
-
-
 class ListDocumentViewCell: UICollectionViewCell {
     
     static let identifier = "listDocumentTableViewCell"
@@ -167,19 +164,23 @@ class ListDocumentViewCell: UICollectionViewCell {
     }
     func configure(document: Document) {
         nameLabel.text = document.name
-        copyLabel.setText(document.number)  
+        copyLabel.setText(document.number)
         dateLabel.text = document.createdAt.toString()
-        
-        if let file = document.file {
-            shareButton.isHidden = false
-            DocumentThumbnailProvider.generate(for: file) { [weak self] image in
-                if let img = image {
-                    self?.filePreview.image = img
-                }
-            }
+        shareButton.isHidden = document.file == nil
+        if document.isRestricted {
+            filePreview.image = UIImage(systemName: IconName.documentLock)
+            copyLabel.isHidden = true
+            
         } else {
-            filePreview.image = DocumentConstantData.docImage
-            shareButton.isHidden = true
+            if let file = document.file {
+                DocumentThumbnailProvider.generate(for: file) { [weak self] image in
+                    if let img = image {
+                        self?.filePreview.image = img
+                    }
+                }
+            } else {
+                filePreview.image = DocumentConstantData.docImage
+            }
         }
     }
     
@@ -189,6 +190,8 @@ class ListDocumentViewCell: UICollectionViewCell {
         nameLabel.text = ""
         dateLabel.text = ""
         copyLabel.setText("")
+        copyLabel.isHidden = false
+        shareButton.isHidden = false
     }
     
 }

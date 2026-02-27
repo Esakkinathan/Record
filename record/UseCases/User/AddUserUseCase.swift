@@ -17,7 +17,7 @@ class AddUserUseCase: AddUserUseCaseProtocol {
     func execute(user: User) {
         let password = user.password
         let hashPassword = HashManager.hash(for: password)
-        user.password = hashPassword
+        //user.password = hashPassword
         repository.add(user: user)
     }
 }

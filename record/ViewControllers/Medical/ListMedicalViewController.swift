@@ -10,7 +10,6 @@ class ListMedicalViewController: CustomSearchBarController {
     
     let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .insetGrouped)
-        view.translatesAutoresizingMaskIntoConstraints = false
         view.contentInsetAdjustmentBehavior = .automatic
         view.rowHeight = UITableView.automaticDimension
         view.estimatedRowHeight = 100
@@ -29,7 +28,8 @@ class ListMedicalViewController: CustomSearchBarController {
     var presenter: ListMedicalPresenterProtocol!
 
     let identifier = "ListMedicalTabelViewCell"
-    
+    var searchButton: UIBarButtonItem!
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
@@ -62,7 +62,7 @@ class ListMedicalViewController: CustomSearchBarController {
         
         spacer.width = 12
         
-        let searchButton = UIBarButtonItem(
+        searchButton = UIBarButtonItem(
             barButtonSystemItem: .search,
             target: self,
             action: #selector(openSearch)
@@ -70,6 +70,7 @@ class ListMedicalViewController: CustomSearchBarController {
 
 
         navigationController?.navigationBar.isTranslucent = false
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
     }
     
@@ -88,8 +89,8 @@ class ListMedicalViewController: CustomSearchBarController {
                         
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
     
@@ -152,6 +153,16 @@ class ListMedicalViewController: CustomSearchBarController {
     override func performSearch(text: String?) {
         presenter.search(text: text)
     }
+    override func searchDidShow() {
+        print("i am getting executing")
+        searchButton.isEnabled = false
+    }
+    override func searchDidHide() {
+        print("i am not getting executing")
+
+        searchButton.isEnabled = true
+    }
+
 }
 
 extension ListMedicalViewController: UITableViewDataSource {
@@ -201,14 +212,17 @@ extension ListMedicalViewController: UITableViewDelegate {
 extension ListMedicalViewController: ListMedicalViewDelegate {
     func reloadData() {
         tableView.reloadData()
-        if presenter.isEmpty {
+        let isEmpty = presenter.isEmpty
+        let isSearching = presenter.isSearching
+        tableView.tableHeaderView?.isHidden = isSearching && isEmpty
+        if isEmpty {
 //            tableView.tableHeaderView?.isHidden = true
 //            tableView.tableHeaderView?.frame.size.height = 0
-            if !presenter.isSearching {
+            if !isSearching {
                 tableView.setEmptyFoooterView(image: "tray.full", title: "No Health Records", subtitle: "Tap + on top to create your first Record.")
 
             } else {
-                tableView.setEmptyFoooterView(image: "tray.full", title: "No Matching Health Record Found", subtitle: "Search with title, hospital and doctor name")
+                tableView.setEmptyView(image: "tray.full", title: "No Matching Health Record Found", subtitle: "Search with title, hospital and doctor name")
             }
         } else {
 //            tableView.tableHeaderView?.isHidden = false
@@ -259,7 +273,7 @@ extension ListMedicalViewController {
         }
 
         let created = UIAction(
-            title: "Created At",
+            title: "Recorded At",
             subtitle: subtitle(
                 field: .createdAt,
                 asc: "Newest to Oldest",

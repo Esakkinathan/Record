@@ -44,6 +44,7 @@ class ListMedicalItemViewController: UIViewController {
         title = presenter.title
         navigationController?.navigationBar.isTranslucent = false
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        navigationItem.largeTitleDisplayMode = .never
     }
     
     
@@ -77,8 +78,8 @@ class ListMedicalItemViewController: UIViewController {
             
             tableView.topAnchor.constraint(equalTo: categorySelector.bottomAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
 
@@ -149,7 +150,15 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     
     
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        presenter.canEdit
+        let value = presenter.canEdit
+        if !value {
+            showToast(message: "Only Edit At All Category Section", type: .info)
+        }
+        return value
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        presenter.didSelectRow(at: indexPath.row)
     }
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -201,6 +210,10 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
 
 
 extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func reloadData() {
         tableView.reloadData()
         if presenter.isEmpty {
@@ -211,6 +224,7 @@ extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
         }
 
     }
+    
         
 }
 

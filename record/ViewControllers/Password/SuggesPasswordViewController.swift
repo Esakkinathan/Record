@@ -102,7 +102,7 @@ struct PasswordGenerator {
     }
      func setUpNavigationBar() {
          title = "Suggest Password"
-         
+         navigationItem.largeTitleDisplayMode = .never
          navigationItem.leftBarButtonItem = UIBarButtonItem(title: AppConstantData.cancel, style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
          navigationItem .rightBarButtonItem = UIBarButtonItem(title: AppConstantData.apply, style: AppConstantData.buttonStyle, target: self, action: #selector(applyButtonClicked))
      }
@@ -148,8 +148,8 @@ struct PasswordGenerator {
         
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            stackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
+            stackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
             passwordLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
             regenerateButton.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: PaddingSize.cellSpacing),
             regenerateButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),

@@ -26,7 +26,8 @@ protocol AddMedicalViewDelegate: AnyObject {
 }
 */
 protocol AddMedicalRouterProtocol {
-    func openDocumentPicker()
+    func openGallery()
+    func openDocumentPicker(type: DocumentType)
     func openDocumentViewer(filePath: String)
     func openCamera()
     func openSelectVC(options: [String], selected: String, addExtra: Bool, onSelect: @escaping (String) -> Void )

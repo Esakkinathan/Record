@@ -31,4 +31,8 @@ class MedicalIntakeLogRepository: MedicalIntakeLogRepositoryProtocol {
     func fetch(medicalId: Int,date: Date) -> [MedicalIntakeLog] {
         return db.fetchLog(medicalId: medicalId, date: date)
     }
+    func fetch(medicalId: Int) -> [MedicalIntakeLog] {
+        return db.fetchLog(medicalId: medicalId)
+    }
+
 }

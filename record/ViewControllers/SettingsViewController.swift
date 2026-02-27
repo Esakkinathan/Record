@@ -19,9 +19,9 @@ class SettingsViewController: UIViewController {
     }
     
     func setUpContents() {
+        navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .systemBackground
         
-        tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -30,7 +30,7 @@ class SettingsViewController: UIViewController {
         tableView.register(SwitchCell.self, forCellReuseIdentifier: SwitchCell.identifier)
         tableView.register(ThemeSegmentCell.self, forCellReuseIdentifier: ThemeSegmentCell.identifier)
 
-        view.addSubview(tableView)
+        view.add(tableView)
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -56,7 +56,7 @@ extension SettingsViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
-        case 0: return 2   // Theme + Color
+        case 0: return 1   // Theme + Color
         case 1: return 2   // Face ID
         default: return 0
         }
@@ -91,14 +91,14 @@ extension SettingsViewController: UITableViewDataSource {
             return cell
         }
 
-        if indexPath.section == 0 && indexPath.row == 1 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
-            cell.configure(selected: presenter.currentAccent) { [weak self] accent in
-                self?.navigationController?.navigationBar.backgroundColor = accent.color
-                self?.presenter.selectAccent(accent)
-            }
-            return cell
-        }
+//        if indexPath.section == 0 && indexPath.row == 1 {
+//            let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
+//            cell.configure(selected: presenter.currentAccent) { [weak self] accent in
+//                self?.navigationController?.navigationBar.backgroundColor = accent.color
+//                self?.presenter.selectAccent(accent)
+//            }
+//            return cell
+//        }
         
         if indexPath.section == 1 && indexPath.row == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
@@ -112,7 +112,9 @@ extension SettingsViewController: UITableViewDataSource {
         }
         if indexPath.section == 1 && indexPath.row == 1 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "notificationCell") ?? UITableViewCell(style: .default, reuseIdentifier: "notificationCell")
-            cell.textLabel?.text = "Click to enable/ disable notification"
+            cell.textLabel?.text = "Edit app system Settings"
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.lineBreakMode = .byWordWrapping
             cell.accessoryType = .disclosureIndicator
             return cell
         }

@@ -150,23 +150,24 @@ class EmptyHeaderView: EmptyStateView {
 }
 final class NotFoundView: UIView {
 
-    private let iconView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(systemName: "plus.circle")
-        iv.tintColor = .systemBlue
-        iv.contentMode = .scaleAspectFit
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        return iv
+    let button: AppButton = {
+        let button = AppButton()
+        var config = UIButton.Configuration.borderedTinted()
+        config.image = UIImage(systemName: "plus.circle")
+        config.title = "Tap to add"
+        button.configuration = config
+        return button
     }()
     
     private let label: UILabel = {
         let label = UILabel()
-        label.font = AppFont.body
-        label.textColor = .secondaryLabel
+        label.font = AppFont.heading2
+        label.text = "No Search Result Found"
+        label.textColor = .label
         label.numberOfLines = 1
-        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
+    
     
     var onTap: (() -> Void)?
 
@@ -182,29 +183,23 @@ final class NotFoundView: UIView {
     private func setupUI() {
         backgroundColor = .clear
         
-        let stack = UIStackView(arrangedSubviews: [iconView, label])
-        stack.axis = .horizontal
-        stack.spacing = 8
+        let stack = UIStackView(arrangedSubviews: [label, button])
+        stack.axis = .vertical
+        stack.spacing = PaddingSize.cellSpacing
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         addSubview(stack)
         
+        
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: centerXAnchor),
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 80),
-            iconView.widthAnchor.constraint(equalToConstant: 18),
-            iconView.heightAnchor.constraint(equalToConstant: 18)
+            button.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.5)
         ])
+        button.addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+    }
         
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
-        addGestureRecognizer(tap)
-    }
-    
-    func configure(searchText: String) {
-        label.text = "\"\(searchText)\" not found — Tap to add"
-    }
-    
     @objc private func handleTap() {
         onTap?()
     }

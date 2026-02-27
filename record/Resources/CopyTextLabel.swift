@@ -177,7 +177,7 @@ class CopyTextLabel: UIView {
     let textLabel: UILabel = {
         let label = UILabel()
         label.font = AppFont.verysmall
-        label.numberOfLines = 0
+        label.numberOfLines = 1
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
@@ -194,7 +194,7 @@ class CopyTextLabel: UIView {
 
     private let checkIconView: UIImageView = {
         let iv = UIImageView()
-        iv.image = UIImage(systemName: "checkmark")
+        iv.image = UIImage(systemName: "checkmark.circle.fill")
         iv.contentMode = .scaleAspectFit
         iv.tintColor = .systemGreen
         iv.clipsToBounds = true

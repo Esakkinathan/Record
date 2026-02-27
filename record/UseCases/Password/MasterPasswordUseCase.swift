@@ -13,7 +13,7 @@ class MasterPasswordUseCase {
     }
     func add(_ password: String) {
         let data = HashManager.hash(for: password)
-        repository.insertInto(password: data)
+        //repository.insertInto(password: data)
     }
     func fetch() -> String? {
         repository.fetchPassword()

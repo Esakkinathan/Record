@@ -22,6 +22,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
     var onUpdateNotes: ((String?,Int) -> Void)?
     var onEdit: ((Persistable) -> Void)?
     var previewUrl: URL?
+    private var loadingOverlay: LoadingOverlayView?
 
     override var keyboardScrollableView: UIScrollView? {
         return tableView
@@ -45,6 +46,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         title = presenter.title
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editMedicalClicked))
         navigationItem.backButtonDisplayMode = .minimal
+        navigationItem.largeTitleDisplayMode = .never
     }
     
     @objc func editMedicalClicked() {
@@ -63,12 +65,14 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         tableView.register(EditNoteTableHeaderView.self, forHeaderFooterViewReuseIdentifier: EditNoteTableHeaderView.identifier)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: DetailMedicalViewController.cellIdentifier)
         tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
+        tableView.register(ButtonTableViewCell.self, forCellReuseIdentifier: ButtonTableViewCell.identifier)
+        tableView.register(DonutChartCell.self, forCellReuseIdentifier: DonutChartCell.identifier)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
 
@@ -137,9 +141,21 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
             
             cell = newCell
         case .info(let section):
-            let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
-            newCell.configure(title: section.title, text: section.value)
-            cell = newCell
+            if section.title == "button" {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: ButtonTableViewCell.identifier, for: indexPath) as! ButtonTableViewCell
+                newCell.configure(title: section.value)
+                newCell.onButtonClicked = { [weak self] in
+                    self?.presenter.exportDocumentClicked()
+                }
+                newCell.backgroundColor = .secondarySystemBackground
+                cell = newCell
+
+            } else {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
+                newCell.configure(title: section.title, text: section.value)
+                cell = newCell
+
+            }
             
         case .notes(let text, let isEditable):
             let newCell = tableView.dequeueReusableCell(withIdentifier: TextViewTableViewCell.identifier, for: indexPath) as! TextViewTableViewCell
@@ -154,7 +170,10 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
             newCell.textLabel?.text = medicalKind.rawValue
             newCell.imageView?.image = UIImage(systemName: medicalKind.image)
             newCell.accessoryType = .disclosureIndicator
-            //newCell.selectionStyle = .none
+            cell = newCell
+        case .dashBoard(let segments):
+            let newCell = tableView.dequeueReusableCell(withIdentifier: DonutChartCell.identifier, for: indexPath) as! DonutChartCell
+            newCell.configure(segments: segments)
             cell = newCell
         }
         return cell
@@ -218,6 +237,30 @@ extension DetailMedicalViewController: QLPreviewControllerDataSource {
 }
 
 extension DetailMedicalViewController: DetailMedicalViewDelegate {
+    func showAlertToIncludeNotes(completion: @escaping (Bool) -> Void) {
+        let alert = UIAlertController(title: "Notes?", message: "Do you want to include notes?", preferredStyle: .alert)
+        
+        let yesAction = UIAlertAction(title: "Yes", style: .default) { _ in
+            completion(true)
+        }
+        
+        let noAction = UIAlertAction(title: "No", style: .cancel) { _ in
+            completion(false)
+        }
+        
+        let cancel = UIAlertAction(title: "Cancel", style: .destructive) { [weak self] _ in
+            alert.dismiss(animated: true)
+            self?.stopLoading()
+        }
+        
+        alert.addAction(yesAction)
+        alert.addAction(noAction)
+        alert.addAction(cancel)
+
+        present(alert, animated: true)
+
+    }
+    
     func updateMedicalNotes(text: String?, id: Int) {
         onUpdateNotes?(text,id)
     }
@@ -229,6 +272,28 @@ extension DetailMedicalViewController: DetailMedicalViewDelegate {
     func updateMedicalRecord(_ medical: Persistable) {
         onEdit?(medical)
     }
+    func showLoading() {
+        
+        let overlay = LoadingOverlayView()
+        view.add(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        loadingOverlay = overlay
+
+    }
+    
+    func stopLoading() {
+        loadingOverlay?.removeFromSuperview()
+        loadingOverlay = nil
+
+    }
+
     
     func reloadSection(at section: Int) {
 //        let rowCount = tableView.numberOfRows(inSection: section)

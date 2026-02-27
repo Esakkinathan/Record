@@ -24,14 +24,17 @@ protocol ListMedicalItemPresenterProtocol {
     func itemToggledAt(_ index: Int, value: Bool)
     func medicalItemViewModel(at index: Int) -> MedicalItemCellViewModel
     func updateEndDate(at index: Int)
+    func didSelectRow(at index: Int)
     var isEmpty: Bool { get }
 }
 
 protocol ListMedicalItemViewDelegate: AnyObject {
+    func showToastVC(message: String, type: ToastType)
     func reloadData()
 }
 
 protocol ListMedicalItemRouterProtocol {
+    func openDetailMedicalItemVc(medicalItem: MedicalItem)
     func openAddMedicalItemVC(mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind, startDate: Date,onAdd: @escaping (Persistable) -> Void)
 
 }

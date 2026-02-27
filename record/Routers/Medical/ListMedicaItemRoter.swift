@@ -8,6 +8,7 @@ import UIKit
 import VTDB
 
 class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
+    
     weak var viewController: DocumentNavigationDelegate?
     
     init(viewController: DocumentNavigationDelegate? = nil) {
@@ -27,6 +28,11 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
         viewController?.presentVC(navVc)
 
     }
+    func openDetailMedicalItemVc(medicalItem: MedicalItem) {
+        let vc = DetailMedicalItemAssembler.make(medicalItem: medicalItem)
+        viewController?.push(vc)
+    }
+
     
 
 }

@@ -146,7 +146,8 @@ extension ListMedicalItemPresenter {
     
     func updateEndDate(at index: Int) {
         let medicalItem = medicalItem(at: index)
-        updateUseCase.execute(medicalItemId: medicalItem.id, date: selectedDate.start)
+        updateUseCase.execute(medicalItemId: medicalItem.id, date: selectedDate.end)
+        reloadItems()
     }
     
     func editMedicalItem(at index: Int) {
@@ -243,6 +244,16 @@ extension ListMedicalItemPresenter {
         loadLogs()
         buildVisibleItems()
         view?.reloadData()
+    }
+    
+    func didSelectRow(at index: Int) {
+        let value = canEdit
+        if value {
+            let medicalItem = medicalItem(at: index)
+            router.openDetailMedicalItemVc(medicalItem: medicalItem)
+        } else {
+            view?.showToastVC(message: "Clickable at All Category Page", type: .info)
+        }
     }
 
 }

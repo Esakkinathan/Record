@@ -59,11 +59,11 @@ enum AppConstantData {
     
     static let morningRemainder: Int = 8
     
-    static let afternoonRemainder: Int = 14
+    static let afternoonRemainder: Int = 12
     
-    static let eveningRemainder: Int = 19
+    static let eveningRemainder: Int = 17
     
-    static let nightRemainder: Int = 20
+    static let nightRemainder: Int = 19
     
 }
 
@@ -126,6 +126,12 @@ enum IconName {
     static let instruction = "list.bullet.clipboard.fill"
     
     static let dosage = "drop.fill"
+    
+    static let lock = "lock"
+    
+    static let documentLock = "lock.document.fill"
+    
+    static let unlock = "lock.open"
 }
 
 

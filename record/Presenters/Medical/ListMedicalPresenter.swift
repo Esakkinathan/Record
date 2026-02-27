@@ -88,8 +88,8 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
                 
             case .createdAt:
                 return self.currentSort.direction == .ascending
-                ? lhs.createdAt > rhs.createdAt
-                : lhs.createdAt < rhs.createdAt
+                ? lhs.date > rhs.date
+                : lhs.date < rhs.date
                 
             case .updatedAt:
                 return self.currentSort.direction == .ascending

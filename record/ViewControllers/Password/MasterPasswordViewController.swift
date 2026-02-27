@@ -30,6 +30,7 @@ class MasterPasswordViewController: UIViewController {
     }
 
     private func setUpContens() {
+        navigationItem.largeTitleDisplayMode = .never
         title = "Password Manager"
         view.backgroundColor = .systemBackground
         

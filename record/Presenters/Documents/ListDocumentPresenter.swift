@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreGraphics
+import UIKit
 
 class ListDocumentPresenter: ListDocumentPresenterProtocol {
         
@@ -19,7 +20,7 @@ class ListDocumentPresenter: ListDocumentPresenterProtocol {
     let deleteUseCase: DeleteDocumentUseCase
     let fetchUseCase: FetchDocumentsUseCase
     let updateNotesUseCase: UpdateDocumentNotesUseCase
-    
+    let toggleRestrictedUseCase: ToggleRestrictedUseCase
     var documentList: [Document] = []
     var filteredDocuments: [Document] = []
     var isSearching = false
@@ -36,7 +37,8 @@ class ListDocumentPresenter: ListDocumentPresenterProtocol {
          updateUseCase: UpdateDocumentUseCase,
          deleteUseCase: DeleteDocumentUseCase,
          fetchUseCase: FetchDocumentsUseCase,
-         updateNotesUseCase: UpdateDocumentNotesUseCase  ) {
+         updateNotesUseCase: UpdateDocumentNotesUseCase,
+         toggleRestrictedUseCase: ToggleRestrictedUseCase) {
         
         self.view = view
         self.router = router
@@ -45,6 +47,7 @@ class ListDocumentPresenter: ListDocumentPresenterProtocol {
         self.deleteUseCase = deleteUseCase
         self.fetchUseCase = fetchUseCase
         self.updateNotesUseCase = updateNotesUseCase
+        self.toggleRestrictedUseCase = toggleRestrictedUseCase
         currentSort = DocumentSortStore.load()
         
     }
@@ -78,10 +81,13 @@ extension ListDocumentPresenter {
     func deleteDocument(at index: Int) {
         let document = currentDocuments()[index]
         deleteUseCase.execute(id: document.id)
+        NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 1)
+        NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 2)
+        NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 3)
+
         loadDocuments()
     }
     
-        
     func loadDocuments() {
         documentList = fetchUseCase.execute()
         applySort()
@@ -91,8 +97,13 @@ extension ListDocumentPresenter {
         updateNotesUseCase.execute(text: text,id: id)
         loadDocuments()
     }
-
-
+    
+    func toggleRestricterd(_ document: Document) {
+        document.toggleFavorite()
+        toggleRestrictedUseCase.execute(document)
+        view?.reloadData()
+    }
+    
 }
 
 
@@ -134,15 +145,35 @@ extension ListDocumentPresenter {
         router.openShareDocumentVC(filePath: path)
     }
 
-    
-    func didSelectedRow(at index: Int) {
-        let document = document(at: index)
+    func openDetailDocumentScreen(_ document: Document) {
         router.openDetailDocumentVC(document: document,onUpdate: { [weak self] updatedDoc in
             self?.updateDocument(updatedDoc as! Document)
         }, onUpdateNotes: { [weak self] text, id in
             self?.updateNotes(text: text, id: id)
             }
         )
+    }
+    
+    func didSelectedRow(at index: Int) {
+        let document = currentDocuments()[index]
+        if document.isRestricted {
+            DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
+                self?.openDetailDocumentScreen(document)
+            },onFailure: { [weak self] error in
+                switch error {
+                case .permissionDenied:
+                    self?.view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+                case .notAvailable:
+                    self?.view?.showToastVC(message: "No lock screen set up on this device", type: .error)
+                default:
+                    self?.view?.showToastVC(message: "Authentication failed", type: .error)
+                }
+
+            })
+        } else {
+            openDetailDocumentScreen(document)
+        }
+
     }
     
     
@@ -248,9 +279,9 @@ extension ListDocumentPresenter {
         let lockedURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(lockedFileName)
 
-        if FileManager.default.fileExists(atPath: lockedURL.path) {
-            return lockedURL
-        }
+//        if FileManager.default.fileExists(atPath: lockedURL.path) {
+//            return lockedURL
+//        }
 
         guard let sourcePDF = CGPDFDocument(sourceURL as CFURL) else {
             return nil
@@ -295,6 +326,44 @@ extension ListDocumentPresenter {
             }
         }
         return doc
+    }
+    
+    func toggleClicked(at index: Int) {
+        let document = currentDocuments()[index]
+        DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
+            self?.toggleRestricterd(document)
+        },onFailure: { [weak self] error in
+            switch error {
+            case .permissionDenied:
+                self?.view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+            case .notAvailable:
+                self?.view?.showToastVC(message: "No lock screen set up on this device", type: .error)
+            default:
+                self?.view?.showToastVC(message: "Authentication failed", type: .error)
+            }
+
+        })
+        
+    }
+    func shareButtonClicked(_ indexPath: IndexPath) {
+        if document(at: indexPath.row).isRestricted {
+            DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
+                self?.view?.showAlertOnShare(indexPath)
+            },onFailure: { [weak self] error in
+                switch error {
+                case .permissionDenied:
+                    self?.view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+                case .notAvailable:
+                    self?.view?.showToastVC(message: "No lock screen set up on this device", type: .error)
+                default:
+                    self?.view?.showToastVC(message: "Authentication failed", type: .error)
+                }
+
+            })
+
+        } else {
+            view?.showAlertOnShare(indexPath)
+        }
     }
 
 }

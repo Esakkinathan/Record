@@ -31,7 +31,13 @@ class DetailMedicalRouter: DetailMedicalRouterProtocol {
         let vc = ListMedicalItemAssembler.make(kind: kind, medical: medical)
         viewController?.push(vc)
     }
-
+    
+    func sharePdf(url: URL) {
+        let activityVc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        activityVc.modalPresentationStyle = .pageSheet
+        viewController?.presentVC(activityVc)
+    }
+    
     func openDocumentViewer(filePath: String) {
         let preview = QLPreviewController()
         preview.dataSource = viewController as? QLPreviewControllerDataSource

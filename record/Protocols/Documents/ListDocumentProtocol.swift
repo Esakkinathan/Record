@@ -22,8 +22,10 @@ protocol ListDocumentPresenterProtocol {
     func viewDidLoad()
     func shareDocumentWithLock(at index: Int, password: String)
     func validatePassword(_ password1: String, _ password2: String, at index: Int)
+    func toggleClicked(at index: Int)
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
+    func shareButtonClicked(_ indexPath: IndexPath)
 }
 
 protocol DocumentNavigationDelegate: AnyObject {
@@ -34,6 +36,7 @@ protocol ListDocumentViewDelegate: AnyObject {
     func showToastVC(message: String, type: ToastType)
     func reloadData()
     func refreshSortMenu()
+    func showAlertOnShare(_ indexPath: IndexPath)
 }
 
 protocol ListDocumentRouterProtocol {

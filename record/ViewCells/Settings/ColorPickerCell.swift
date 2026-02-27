@@ -40,7 +40,6 @@ final class ColorPickerCell: UITableViewCell {
         
         contentView.addSubview(container)
         
-        // Make title hug left
         titleLabel.setContentHuggingPriority(.required, for: .horizontal)
         
         NSLayoutConstraint.activate([

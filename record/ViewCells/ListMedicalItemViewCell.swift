@@ -515,7 +515,7 @@ class ListMedicalItemViewCell: UITableViewCell {
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content),
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width * 3),
             
-            stack.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -PaddingSize.width),
+            stack.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -PaddingSize.width*2),
             
             
             toggleContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 3),

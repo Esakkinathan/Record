@@ -8,9 +8,8 @@ import CryptoKit
 import Foundation
 
 class HashManager {
-    static func hash(for input: String) -> String {
-        let data = Data(input.utf8)
-        let hash = SHA256.hash(data: data)
-        return hash.map { String(format: "%02x", $0) }.joined()
-    }
-}
+    static func hash(for pin: String) -> Data {
+        let pinData = Data(pin.utf8)
+        let hash = SHA256.hash(data: pinData)
+        return Data(hash) // ✅ 32 raw bytes
+    }}

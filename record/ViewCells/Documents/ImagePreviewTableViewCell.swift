@@ -65,7 +65,7 @@ class NoImagePreview: UIView {
         add(imageView)
         add(label1)
         add(label2)
-        add(button)
+        //add(button)
         let topSpacer = UIView()
         let bottomSpacer = UIView()
         
@@ -75,7 +75,7 @@ class NoImagePreview: UIView {
         NSLayoutConstraint.activate([
 
             topSpacer.topAnchor.constraint(equalTo: topAnchor),
-            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.1),
+            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2),
 
             imageView.topAnchor.constraint(equalTo: topSpacer.bottomAnchor),
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -88,14 +88,14 @@ class NoImagePreview: UIView {
             label2.topAnchor.constraint(equalTo: label1.bottomAnchor, constant: PaddingSize.height),
             label2.centerXAnchor.constraint(equalTo: centerXAnchor),
 
-            button.topAnchor.constraint(equalTo: label2.bottomAnchor, constant: PaddingSize.height),
-            button.centerXAnchor.constraint(equalTo: centerXAnchor),
-            button.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.7),
-            button.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2),
+//            button.topAnchor.constraint(equalTo: label2.bottomAnchor, constant: PaddingSize.height),
+//            button.centerXAnchor.constraint(equalTo: centerXAnchor),
+//            button.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.7),
+//            button.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2),
 
-            bottomSpacer.topAnchor.constraint(equalTo: button.bottomAnchor),
+            bottomSpacer.topAnchor.constraint(equalTo: label2.bottomAnchor),
             bottomSpacer.bottomAnchor.constraint(equalTo: bottomAnchor),
-            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.1)
+            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2)
         ])
     }
 }
@@ -159,7 +159,7 @@ class ImagePreviewTableViewCell: UITableViewCell {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageClicked))
         imagePreview.addGestureRecognizer(tapGesture)
         
-        uploadView.button.addTarget(self, action: #selector(uploadButtonClicked), for: .touchUpInside)
+        //uploadView.button.addTarget(self, action: #selector(uploadButtonClicked), for: .touchUpInside)
         
         uploadView.clipsToBounds = true
         uploadView.isHidden = true
@@ -178,7 +178,7 @@ class ImagePreviewTableViewCell: UITableViewCell {
     }
     
     @objc func uploadButtonClicked() {
-        onUploadButtonClicked?()
+        //onUploadButtonClicked?()
     }
     
     @objc func imageClicked() {

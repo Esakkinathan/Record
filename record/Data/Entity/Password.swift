@@ -19,6 +19,7 @@ class Password: Persistable {
     static let createdAtC = "createdAt"
     static let lastModifiedC = "lastModified"
     static let isFavoriteC = "isFavorite"
+    static let lastCopiedDateC = "lastCopiedDate"
 
     
     let id: Int
@@ -29,8 +30,9 @@ class Password: Persistable {
     let createdAt: Date
     var lastModified: Date
     var isFavorite: Bool
+    var lastCopiedDate: Date?
     
-    init(id: Int, title: String, username: String, password: String, notes: String? = nil, createdAt: Date = Date(), lastModified: Date = Date(), isFavorite: Bool = false) {
+    init(id: Int, title: String, username: String, password: String, notes: String? = nil, createdAt: Date = Date(), lastModified: Date = Date(), isFavorite: Bool = false, lastCopiedDate: Date? = nil) {
         self.id = id
         self.title = title
         self.username = username
@@ -39,6 +41,7 @@ class Password: Persistable {
         self.createdAt = createdAt
         self.lastModified = lastModified
         self.isFavorite = isFavorite
+        self.lastCopiedDate = lastCopiedDate
     }
     
     func toggleFavorite() {
@@ -53,6 +56,10 @@ class Password: Persistable {
 
     }
     
+    func updateLastCopiedDate(date: Date) {
+        lastCopiedDate = date
+    }
+    
     func updateNotes(text: String?) {
         notes = text
     }
@@ -65,6 +72,7 @@ class Password: Persistable {
         container[Password.createdAtC] = createdAt
         container[Password.lastModifiedC] = lastModified
         container[Password.isFavoriteC] = isFavorite
+        container[Password.lastCopiedDateC] = lastCopiedDate
     }
     
     static var databaseTableName: String {

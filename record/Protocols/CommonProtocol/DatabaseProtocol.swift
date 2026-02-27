@@ -19,13 +19,13 @@ protocol DatabaseProtocol {
 }
 
 protocol DocumentDatabaseProtocol: DatabaseProtocol {
-    var database: VTDatabase {get}
+    func toggle(table name: String, column: String,id: Int, value: Bool,lastModified: Date)
     func fetchDocuments() -> [Document]
     
 }
 
 protocol PasswordDatabaseProtocol: DatabaseProtocol {
-    func toggle(table name: String, id: Int, value: Bool, lastModified: Date)
+    func toggle(table name: String, column: String,id: Int, value: Bool,lastModified: Date)
     func fetchPasswords() -> [Password]
     
 }
@@ -79,4 +79,5 @@ protocol LoginDatebaseProtocol: DatabaseProtocol {
 protocol MedicalIntakeLogDatabase: DatabaseProtocol {
     var database: VTDatabase {get}
     func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog]
+    func fetchLog(medicalId: Int) -> [MedicalIntakeLog]
 }

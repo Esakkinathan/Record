@@ -16,6 +16,7 @@ protocol DocumentRepositoryProtocol {
     func delete(id: Int)
     func fetchAll() -> [Document]
     func updateNotes(text: String?, id: Int)
+    func toggleRestricted(_ document: Document) 
 }
 
 protocol PasswordRepositoryProtocol {
@@ -95,4 +96,5 @@ protocol MedicalIntakeLogRepositoryProtocol {
     func add(log: MedicalIntakeLog)
     func update(log: MedicalIntakeLog)
     func fetch(medicalId: Int,date: Date) -> [MedicalIntakeLog]
+    func fetch(medicalId: Int) -> [MedicalIntakeLog]
 }

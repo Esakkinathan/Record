@@ -134,7 +134,6 @@ class AddMedicalPresenter: FormFieldPresenter {
         router.openCamera()
     }
     
-    
     func saveFile(pdfData: Data) {
         let name = UUID().uuidString + ".pdf"
         
@@ -189,24 +188,29 @@ class AddMedicalPresenter: FormFieldPresenter {
         let field = field(at: index)
         var options: [String] = []
         var selected: String = ""
+        var addExtra: Bool = false
         if field.type == .select {
             if index == 0 {
                 options = MedicalType.getList()
                 selected = field.value as? String ?? MedicalType.defaultValue.rawValue
             } else {
                 options += [AppConstantData.none]
-                let value = field.value as? String
-                if let value, value != AppConstantData.none {
-                    options += [value]
+                addExtra = true
+                switch mode {
+                case .add:
+                    let value = field.value as? String
+                    if let value, value != AppConstantData.none {
+                        options += [value]
+                    }
+                case .edit(_):
+                    print("")
                 }
                 if index == 2 {
                     options +=  hospitals
                    selected = field.value as? String ?? AppConstantData.none
-
                } else if index == 3 {
                    options += doctors
                    selected = field.value as? String ?? AppConstantData.none
-
                }
 
             }
@@ -217,7 +221,7 @@ class AddMedicalPresenter: FormFieldPresenter {
             selected = nextField.value as? String ?? DurationType.day.rawValue
             options = DurationType.getList()
         }
-        router.openSelectVC(options: options, selected: selected, addExtra: false) { [weak self] value in
+        router.openSelectVC(options: options, selected: selected, addExtra: addExtra) { [weak self] value in
             self?.didSelectOption(at: index,value)
         }
 
@@ -233,7 +237,12 @@ class AddMedicalPresenter: FormFieldPresenter {
         view?.reloadField(at: index, )
     }
     override func uploadDocument(at index: Int, type: DocumentType) {
-        router.openDocumentPicker()
+        switch type {
+        case .pdf:
+            router.openDocumentPicker(type: type)
+        case .image:
+            router.openGallery()
+        }
     }
     
     override func viewDocument(at index: Int) {

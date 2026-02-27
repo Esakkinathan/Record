@@ -12,7 +12,10 @@ class CustomSearchBarController: UIViewController {
     func performSearch(text: String?) { }
 
     private var didSetupSearchBar = false
-
+    
+    func searchDidShow() { }
+    func searchDidHide() { }
+    
     private let bottomSearchBar: UISearchBar = {
         let sb = UISearchBar()
         sb.placeholder = "Search"
@@ -20,6 +23,12 @@ class CustomSearchBarController: UIViewController {
         sb.alpha = 0
         return sb
     }()
+    
+//    let searchButton = UIBarButtonItem(
+//        barButtonSystemItem: .search,
+//        target: self,
+//        action: #selector(openSearch)
+//    )
 
     private var bottomConstraint: NSLayoutConstraint!
     private var isSearchVisible = false
@@ -28,6 +37,7 @@ class CustomSearchBarController: UIViewController {
         super.viewDidLoad()
         observeKeyboard()
     }
+    let maxCount = 30
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -68,13 +78,13 @@ class CustomSearchBarController: UIViewController {
         isSearchVisible = true
 
         bottomConstraint.constant = -8
-
         UIView.animate(withDuration: 0.25) {
             self.bottomSearchBar.alpha = 1
             self.view.layoutIfNeeded()
         }
-
+        searchDidShow()
         bottomSearchBar.becomeFirstResponder()
+        
 //        view.layoutIfNeeded()
 //        updateScrollInsets()
     }
@@ -82,13 +92,13 @@ class CustomSearchBarController: UIViewController {
     func hideSearch() {
         guard isSearchVisible else { return }
         isSearchVisible = false
-
+        
         performSearch(text: nil)
         bottomSearchBar.text = nil
         bottomSearchBar.resignFirstResponder()
 
         bottomConstraint.constant = 60
-
+        searchDidHide()
         UIView.animate(withDuration: 0.25) {
             self.bottomSearchBar.alpha = 0
             self.view.layoutIfNeeded()
@@ -109,6 +119,16 @@ extension CustomSearchBarController: UISearchBarDelegate {
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        let text = searchBar.text
+        guard let searchText = text else {
+            performSearch(text: nil)
+            return
+        }
+        if searchText.count > maxCount {
+            let endIndex = searchText.index(searchText.startIndex, offsetBy: maxCount, limitedBy: searchText.endIndex) ?? searchText.endIndex
+            searchBar.text = String(searchText[..<endIndex])
+            showToast(message: "Enter maximum of \(maxCount) characters", type: .warning)
+        }
         performSearch(text: searchText.isEmpty ? nil : searchText)
     }
 }

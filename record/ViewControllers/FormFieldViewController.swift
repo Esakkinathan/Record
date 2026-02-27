@@ -113,7 +113,7 @@ class FormFieldViewController: KeyboardNotificationViewController {
 
     func setUpNavigationBar() {
         title = presenter.title
-        
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.cancel), style: AppConstantData.buttonStyle, target: self, action: #selector(cancelClicked))
         navigationItem .rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: IconName.checkmark), style: AppConstantData.buttonStyle, target: self, action: #selector(saveClicked))
     }
@@ -245,6 +245,23 @@ extension FormFieldViewController: UITableViewDataSource {
 }
 
 extension FormFieldViewController: FormFieldViewDelegate {
+    
+    func showYesNoAlert(completion: @escaping (Bool) -> Void) {
+        let alert = UIAlertController(title: "Scan", message: "Do you want to scan and automatically fetch data?", preferredStyle: .alert)
+        
+        let yesAction = UIAlertAction(title: "Yes", style: .default) { _ in
+            completion(true)
+        }
+        
+        let noAction = UIAlertAction(title: "No", style: .cancel) { _ in
+            completion(false)
+        }
+        
+        alert.addAction(yesAction)
+        alert.addAction(noAction)
+        
+        present(alert, animated: true)
+    }
 
     
     func showError(_ message: String?) {

@@ -52,7 +52,15 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
         view?.reloadData()
     }
 
-    
+    func updateLastCopiedDate() {
+        let date = Date()
+        password.updateLastCopiedDate(date: date)
+        view?.updatePassword(password)
+        buildSection()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            self?.view?.reloadData()
+        }
+    }
     
     func numberOfSection() -> Int {
         return sections.count
@@ -68,9 +76,11 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
         let infoRows: [DetailPasswordRow] = [
             .info(.init(title: "Title", value: password.title, type: .text)),
             .info(.init(title: "Username", value: password.username, type: .copyLabel)),
-            .info(.init(title: "Password", value: password.password, type: .copyLabel)),
-            .info(.init(title: "Created At", value: password.createdAt.toString(), type: .text))
+            .info(.init(title: "Password", value: password.password, date: password.lastCopiedDate,type: .passwordLabel)),
+            .info(.init(title: "Created At", value: password.createdAt.toString(), type: .text)),
+            .info(.init(title: "Last modified", value: password.lastModified.reminderFormatted(), type: .text))
         ]
+        print(password.lastCopiedDate?.reminderFormatted() ?? "nothing found")
         
         sections.append(.init(title: "Info", rows: infoRows ))
             

@@ -27,6 +27,4 @@ class ListMedicalRouter: ListMedicalRouterProtocol {
         vc.onUpdateNotes = onUpdateNotes
         viewController?.push(vc)
     }
-
-    
 }

@@ -17,7 +17,8 @@ class Document: Persistable {
     static let fileC = "file"
     static let notesC = "notes"
     static let lastModifiedC = "lastModified"
-    
+    static let isRestrictedC = "isRestricted"
+
     let id: Int
     var name: String
     var number: String
@@ -26,8 +27,8 @@ class Document: Persistable {
     var file: String?
     var notes: String?
     var lastModified: Date
-    
-    init(id: Int, name: String, number: String, createdAt: Date = Date(), expiryDate: Date? = nil, file: String? = nil, notes: String? = nil, lastModified: Date = Date()) {
+    var isRestricted: Bool
+    init(id: Int, name: String, number: String, createdAt: Date = Date(), expiryDate: Date? = nil, file: String? = nil, notes: String? = nil, lastModified: Date = Date(), isRestricted:  Bool = false) {
         self.id = id
         self.name = name
         self.number = number
@@ -36,6 +37,7 @@ class Document: Persistable {
         self.file = file
         self.notes = notes
         self.lastModified = lastModified
+        self.isRestricted = isRestricted
     }
     
     func update(name: String, number: String,expiryDate: Date? = nil, file: String? = nil) {
@@ -45,6 +47,10 @@ class Document: Persistable {
         self.file = file
         self.lastModified = Date()
     }
+    func toggleFavorite() {
+        isRestricted = !isRestricted
+    }
+
     
     func updateNotes(text: String?) {
         notes = text
@@ -60,8 +66,10 @@ class Document: Persistable {
         container[Document.lastModifiedC] = lastModified
         container[Document.fileC] = file
         container[Document.notesC] = notes
+        container[Document.isRestrictedC] = isRestricted
         
     }
+    
     public static var databaseTableName: String {
         return "Documents"
     }
@@ -121,16 +129,16 @@ enum DefaultDocument: String, CaseIterable {
         case .drivingLicense:
             rules += [.alphanumeric,.minLength(10),.maxValue(16)]
         case .vehicleRegistrationCertificate:
-            rules += [.alphanumeric,.minLength(8),.maxLength(10)]
+            rules += [.alphanumeric,.minLength(8),.maxLength(14), ]
         default:
-            rules += [.minLength(4), .maxLength(20),.allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/"), message: "Invalid Character Found")]
+            rules += [.minLength(4), .maxLength(20), .allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/ "), message: "Invalid Character Found")]
         }
         return rules
     }
     var hasExpiryDate: Bool {
         let has: Bool
         switch self {
-        case .passport, .drivingLicense, .incomeCertificate:
+        case .passport, .drivingLicense, .incomeCertificate, .custom:
             has = true
         default:
             has = false

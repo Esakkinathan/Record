@@ -133,7 +133,7 @@ extension SelectionViewController: UITableViewDataSource, UITableViewDelegate, S
         tableView.reloadData()
         if presenter.isEmpty {
             let searchText = searchController.searchBar.text ?? ""
-            notFoundView.configure(searchText: searchText)
+            //notFoundView.configure(searchText: searchText)
             notFoundView.onTap = { [weak self] in
                 self?.presenter.clickedAddOption(text: searchText)
                 }

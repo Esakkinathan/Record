@@ -140,5 +140,6 @@ protocol FormFieldViewDelegate: AnyObject {
     func stopLoading()
     func showExitAlert()
     func showToastVc(message: String, type: ToastType)
+    func showYesNoAlert(completion: @escaping (Bool) -> Void)
     //var previewurl: URL? {get}
 }

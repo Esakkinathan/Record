@@ -21,23 +21,31 @@ protocol DetailMedicalPresenterProtocol {
     var isNotesEditing: Bool {get}
     func viewDidLoad()
     func viewDocument()
-
+    func exportDocumentClicked()
     func didSelectRowAt(indexPath: IndexPath)
     
 
 }
 protocol DetailMedicalViewDelegate: AnyObject {
+    func showLoading()
+    func stopLoading()
     func reloadData()
     func updateMedicalNotes(text: String?, id: Int)
     func updateMedicalRecord(_ medical: Persistable)
     func reloadSection(at section: Int)
     func configureToOpenDocument(previewUrl: URL)
-}
+    func showAlertToIncludeNotes(completion: @escaping (Bool) -> Void)}
 
 protocol DetailMedicalRouterProtocol {
+    func sharePdf(url: URL)
     func openDocumentViewer(filePath: String)
     func openEditMedicalVC(mode: MedicalFormMode, onEdit: @escaping ((Persistable) -> Void))
     func openListMedicalItemVC(kind: MedicalKind, medical: Medical)
+}
+struct ChartSegment {
+    let label: String
+    let value: Int
+    let color: UIColor
 }
 
 enum DetailMedicalRow {
@@ -45,6 +53,7 @@ enum DetailMedicalRow {
     case info(DetailMedicalTextSectionRow)
     case notes(text: String?, isEditable: Bool)
     case medicalItem(MedicalKind)
+    case dashBoard([ChartSegment])
 }
 
 struct DetailMedicalSection {

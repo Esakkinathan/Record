@@ -16,6 +16,7 @@ protocol DetailPasswordPresenterProtocol {
     func getTitle(for section: Int) -> String?
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
+    func updateLastCopiedDate()
 
 }
 
@@ -42,10 +43,12 @@ struct DetailPasswordSection {
 enum DetailPasswordTextSection: CaseIterable {
     case text
     case copyLabel
+    case passwordLabel
 }
 
 struct DetailPasswordTextSectionRow {
     var title: String
     var value: String
+    var date: Date?
     var type: DetailPasswordTextSection
 }

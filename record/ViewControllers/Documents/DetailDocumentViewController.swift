@@ -11,7 +11,7 @@ import VTDB
 
 
 class DetailDocumentViewController: KeyboardNotificationViewController {
-    
+    let remainderCell = "RemainderCell"
     var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.separatorStyle = .singleLine
@@ -37,6 +37,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
         tableView.backgroundColor = AppColor.background
+        presenter.viewDidLoad()
         setUpContent()
         setUpNavigationBar()
         hideKeyboardWhenTappedAround()
@@ -45,6 +46,7 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
     
     func setUpNavigationBar() {
         title = presenter.title
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editDocument))
         navigationItem.backButtonDisplayMode = .minimal
     }
@@ -58,14 +60,16 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
         tableView.register(FormCopyLabel.self, forCellReuseIdentifier: FormCopyLabel.identifier)
+        tableView.register(RemainderTableViewCell.self, forCellReuseIdentifier: RemainderTableViewCell.identifier)
         tableView.register(TextViewTableViewCell.self, forCellReuseIdentifier: TextViewTableViewCell.identifier)
         tableView.register(EditNoteTableHeaderView.self, forHeaderFooterViewReuseIdentifier: EditNoteTableHeaderView.identifier)
+        tableView.register(AddRemainderHeaderView.self, forHeaderFooterViewReuseIdentifier: AddRemainderHeaderView.identifier)
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
         
     }
@@ -89,9 +93,9 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let field = presenter.section(at: indexPath)
+        let field = presenter.getRow(at: indexPath)
         switch field {
-        case .info:
+        case .info, .remainder:
             return UITableView.automaticDimension
         default:
             return 300
@@ -99,8 +103,7 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let field = presenter.section(at: IndexPath(row: 0, section: section))
-        
+        let field = presenter.getRow(at: IndexPath(row: 0, section: section))
         switch field {
         case .notes(_, let isEditable):
             let header = tableView.dequeueReusableHeaderFooterView(
@@ -116,15 +119,22 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
                 self?.presenter.toggleNotesEditing(isEditing)
             }
             return header
+        case .remainder(let count,_):
+            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: AddRemainderHeaderView.identifier) as! AddRemainderHeaderView
+            header.configure(count: count,title: "Remainder",expiryDate: presenter.expiryDate)
+            header.handleOffsetSelection = { [weak self] offset, expiryDate in
+                self?.presenter.handleOffsetSelection(offset: offset, date: expiryDate)
+            }
+            
+            return header
+
         default:
             return nil
-        }
+        } 
     }
-
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let field = presenter.section(at: indexPath)
-        
+        let field = presenter.getRow(at: indexPath)
         var cell: UITableViewCell
         
         switch  field {
@@ -161,11 +171,37 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
                 self?.presenter.updateNotes(text: text)
             }
             cell = newCell
+        case .remainder(let count,let data):
+            if let remainder = data {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: RemainderTableViewCell.identifier, for: indexPath) as! RemainderTableViewCell
+                newCell.configure(count: count, remainder: remainder)
+                cell = newCell
+            } else {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: remainderCell) ?? UITableViewCell(style: .subtitle, reuseIdentifier: remainderCell)
+                newCell.backgroundColor = .secondarySystemBackground
+                newCell.textLabel?.text = "No Remainders"
+                newCell.detailTextLabel?.text = "Click + to add"
+                cell = newCell
+            }
         }
         return cell
     }
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        presenter.canEditAt(indexPath)
+    }
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
+            self?.presenter.deleteRemainder(index: indexPath.row)
+            completion(true)
+        }
+        
+        deleteAction.image = UIImage(systemName: IconName.trash)
+        let swipeAction = UISwipeActionsConfiguration(actions: [deleteAction])
+        swipeAction.performsFirstActionWithFullSwipe = true
+        return swipeAction
 
-    
+    }
+
 }
 extension DetailDocumentViewController: UIDocumentPickerDelegate {
 
@@ -195,6 +231,78 @@ extension DetailDocumentViewController: QLPreviewControllerDataSource {
 }
 
 extension DetailDocumentViewController: DetailDocumentViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
+    func showAlertOnAddRemainder() {
+                
+        let picker = UIDatePicker()
+        picker.datePickerMode = .dateAndTime
+        picker.preferredDatePickerStyle = .compact
+        picker.minimumDate = Date()
+        picker.date = Date()
+        picker.maximumDate = presenter.expiryDate
+        let alert = UIAlertController(
+            title: "Select Date",
+            message: "\n\n",
+            preferredStyle: .alert
+        )
+
+        alert.view.addSubview(picker)
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 50)
+        ])
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            self?.presenter.addRemainder(date: picker.date, )
+        })
+        present(alert, animated: true)
+    }
+    func showTimePicker(baseDate: Date) {
+        
+        let picker = UIDatePicker()
+        picker.datePickerMode = .time
+        picker.preferredDatePickerStyle = .compact
+        
+        let alert = UIAlertController(
+            title: "Select Time",
+            message: "\n\n",
+            preferredStyle: .alert
+        )
+        
+        alert.view.addSubview(picker)
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 50)
+        ])
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            
+            let calendar = Calendar.current
+            
+            let timeComponents = calendar.dateComponents([.hour, .minute], from: picker.date)
+            
+            var finalComponents = calendar.dateComponents([.year, .month, .day], from: baseDate)
+            finalComponents.hour = timeComponents.hour
+            finalComponents.minute = timeComponents.minute
+            
+            if let finalDate = calendar.date(from: finalComponents) {
+                self?.presenter.addRemainder(date: finalDate)
+            }
+        })
+        
+        present(alert, animated: true)
+    }
+
+    
     
     func reloadData() {
         title = presenter.title
@@ -220,189 +328,3 @@ extension DetailDocumentViewController: DocumentNavigationDelegate {
 }
 
 
-//        let vc = AddDocumentViewController()
-//        vc.configure(document.type, action: .edit, document: document)
-//        vc.onEdit = { [weak self] document in
-//            guard let self = self else { return }
-//            self.document = document
-//            self.collectionView.reloadData()
-//            self.onEdit?(document)
-//        }
-//        let navVc = UINavigationController(rootViewController: vc)
-//        navVc.modalPresentationStyle = .formSheet
-//
-//        present(navVc, animated: true)
-
-/*
-    func getUpCompositionalLayout() -> UICollectionViewCompositionalLayout {
-        let layout = UICollectionViewCompositionalLayout { [weak self] (section, _) in
-            guard let self = self else { return nil }
-            switch section {
-            case 0:
-                return self.createImagePreviewSection()
-            case 1:
-                return self.createDetailListSection()
-            case 2:
-                return self.createNotesSection()
-            default:
-                return nil
-            }
-        }
-        return layout
-    }
-
-    func createImagePreviewSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .absolute(250))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets.bottom = 30
-        section.boundarySupplementaryItems = [
-                NSCollectionLayoutBoundarySupplementaryItem(
-                    layoutSize: NSCollectionLayoutSize(
-                        widthDimension: .fractionalWidth(1),
-                        heightDimension: .estimated(44)
-                    ),
-                    elementKind: UICollectionView.elementKindSectionHeader,
-                    alignment: .top
-                )
-            ]
-        return section
-
-    }
-    
-    func createDetailListSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(60))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(60))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets.bottom = 30
-        section.boundarySupplementaryItems = [
-                NSCollectionLayoutBoundarySupplementaryItem(
-                    layoutSize: NSCollectionLayoutSize(
-                        widthDimension: .fractionalWidth(1),
-                        heightDimension: .estimated(44)
-                    ),
-                    elementKind: UICollectionView.elementKindSectionHeader,
-                    alignment: .top
-                )
-            ]
-        return section
-    }
-
-    func createNotesSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .absolute(400))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets.bottom = 30
-        section.boundarySupplementaryItems = [
-                NSCollectionLayoutBoundarySupplementaryItem(
-                    layoutSize: NSCollectionLayoutSize(
-                        widthDimension: .fractionalWidth(1),
-                        heightDimension: .estimated(44)
-                    ),
-                    elementKind: UICollectionView.elementKindSectionHeader,
-                    alignment: .top
-                )
-            ]
-        return section
-
-    }
-    
-    @objc func editDocument() {
-        presenter.editButtonClicked()
-    }
-
-}
-
-extension DetailDocumentViewController: UICollectionViewDataSource, UICollectionViewDelegate {
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        presenter.numberOfSection()
-    }
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        presenter.numberOfSectionRows(at: section)
-    }
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        var reusableView: UICollectionReusableView
-        let section = DetailDocumentSection.allCases[indexPath.section]
-        switch section {
-            
-        case .notes:
-            
-            let newResusbaleView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: EditNoteCollectionView.identifier, for: indexPath) as! EditNoteCollectionView
-            newResusbaleView.configure(text: section.rawValue)
-            newResusbaleView.onEditButtonClicked = { [weak self] value in
-                guard let self = self else { return }
-                if !value {
-                    self.presenter.updateNotes(text: self.getNotesText(indexPath))
-                }
-                self.setTextViewEditable(value,indexPath: indexPath)
-            }
-            
-            reusableView = newResusbaleView
-            
-        default:
-            
-            let newResusbaleView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SectionHeaderCollectionView.identifier, for: indexPath) as! SectionHeaderCollectionView
-            newResusbaleView.configure(text: section.rawValue)
-            reusableView = newResusbaleView
-            
-        }
-        return reusableView
-    }
-
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        var cell: UICollectionViewCell
-        let section = DetailDocumentSection.allCases[indexPath.section]
-        
-        switch section {
-        case .image:
-            let newCell = collectionView.dequeueReusableCell(withReuseIdentifier: FileImagePreviewCollectionViewCell.identifier, for: indexPath) as! FileImagePreviewCollectionViewCell
-            
-            let filePath = presenter.getImagePath()
-            newCell.configure(with: filePath)
-            newCell.onShow = { [weak self] in
-                guard let self = self, let path = presenter.getImagePath() else {return}
-                    self.previewUrl = URL(fileURLWithPath: path)
-                    presenter.viewDocument()
-                }
-            cell = newCell
-            
-        case .text:
-            let field = presenter.textRowData(at: indexPath.row)
-            
-            let newCell = collectionView.dequeueReusableCell(withReuseIdentifier: LabelViewCollectionViewCell.identifier, for: indexPath) as! LabelViewCollectionViewCell
-            newCell.configure(text: "\(field.title) \(field.value)")
-            cell = newCell
-            
-        case .notes:
-           let newCell = collectionView.dequeueReusableCell(withReuseIdentifier: TextViewCollectionCell.identifier, for: indexPath) as! TextViewCollectionCell
-            newCell.configure(text: presenter.getNotes())
-            cell  = newCell
-        }
-        return cell
-    }
-    
-    func getNotesCell(_ indexPath: IndexPath) -> TextViewCollectionCell {
-        return collectionView.cellForItem(at: indexPath) as! TextViewCollectionCell
-    }
-    
-    func getNotesText(_ indexPath: IndexPath) -> String? {
-        let text = getNotesCell(indexPath).enteredText
-        return text
-    }
-    
-    func setTextViewEditable(_ value: Bool, indexPath: IndexPath) {
-        let cell = getNotesCell(indexPath)
-        cell.modifyEditing(value)
-    }
-}
-
-*/

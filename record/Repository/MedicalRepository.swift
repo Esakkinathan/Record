@@ -6,38 +6,44 @@
 //
 
 import VTDB
+import Foundation
+import Foundation
+
+extension Date {
+    /// Generates a random Date between two specified dates.
+    /// - Parameters:
+    ///   - start: The earliest possible date.
+    ///   - end: The latest possible date.
+    /// - Returns: A random Date within the start and end range.
+    static func randomBetween(start: Date, end: Date) -> Date {
+        let startInterval = start.timeIntervalSince1970
+        let endInterval = end.timeIntervalSince1970
+
+        // Ensure the start date is before the end date
+        guard startInterval <= endInterval else {
+            return randomBetween(start: end, end: start)
+        }
+
+        // Generate a random time interval between the start and end intervals
+        let randomInterval = TimeInterval.random(in: startInterval...endInterval)
+
+        // Create a new Date using the random interval
+        return Date(timeIntervalSince1970: randomInterval)
+    }
+}
+
 class MedicalRepository: MedicalRepositoryProtocol {
     var db: MedicalDatabaseProtocol = DatabaseAdapter.shared
+    
     init() {
-        createTable()
-    }
-
-    func createTable() {
-//        do {
-//            try db.database.writeInTransaction { db in
-//                let sql = "DROP TABLE \(Medical.databaseTableName);"
-//                try db.execute(sql)
-//                return .commit
-//            }
-//        } catch {
-//            print(error)
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "yyyy-MM-dd"
+//        let startDate = dateFormatter.date(from: "2026-01-01")!
+//        let endDate = dateFormatter.date(from: "2026-02-26")!
+//        
+//        for _ in 0...100 {
+//            add(medical: Medical(id: 1, title: PasswordGenerator.generate(options: .init(length: Int.random(in: 1...30) , includeLetters: true, includeNumbers: false, includeSymbols: false)), type: MedicalType.allCases[Int.random(in: 0..<4)], duration: Int.random(in: 1...30), durationType: DurationType.allCases[Int.random(in: 0..<3)], date: Date.randomBetween(start: startDate, end: endDate)))
 //        }
-        let colums: [String: TableColumnType] = [
-            Medical.idC: .int,
-            Medical.titleC: .string,
-            Medical.typeC: .string,
-            Medical.durationC: .int,
-            Medical.durationTypeC: .string,
-            Medical.hospitalC: .string,
-            Medical.doctorC: .string,
-            Medical.dateC: .date,
-            Medical.createdAtC: .date,
-            Medical.lastModifiedC: .date,
-            Medical.notesC: .text,
-            Medical.receiptC: .blob,
-            
-        ]
-        db.create(table: Medical.databaseTableName, columnDefinitions: colums, primaryKey: [Medical.idC])
     }
     
     func add(medical: Medical) {

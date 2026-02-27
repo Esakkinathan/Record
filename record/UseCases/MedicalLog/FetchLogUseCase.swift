@@ -21,4 +21,7 @@ class FetchLogUseCase: FetchLogUseCaseProtocol {
     func execute(medicalId: Int, date: Date) -> [MedicalIntakeLog] {
         return repository.fetch(medicalId: medicalId, date: date)
     }
+    func execute(medicalId: Int) -> [MedicalIntakeLog] {
+        return repository.fetch(medicalId: medicalId)
+    }
 }

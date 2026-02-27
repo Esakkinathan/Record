@@ -22,6 +22,8 @@ enum ListDocumentAssembler {
         let fetchUseCase = FetchDocumentsUseCase(repository: repo)
         let deleteUseCase = DeleteDocumentUseCase(repository: repo)
         let updateNotesUseCase = UpdateDocumentNotesUseCase(repository: repo)
+        let toggleUseCase = ToggleRestrictedUseCase(repository: repo)
+        
         let presenter = ListDocumentPresenter(
             view: vc,
             router: router,
@@ -29,7 +31,8 @@ enum ListDocumentAssembler {
             updateUseCase: updateUseCase,
             deleteUseCase: deleteUseCase,
             fetchUseCase: fetchUseCase,
-            updateNotesUseCase: updateNotesUseCase
+            updateNotesUseCase: updateNotesUseCase,
+            toggleRestrictedUseCase: toggleUseCase
         )
         vc.presenter = presenter
         return vc

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import PDFKit
 
 class DetailMedicalPresenter: DetailMedicalPresenterProtocol {
     
@@ -32,14 +33,14 @@ extension DetailMedicalPresenter {
     
     func viewDidLoad() {
         //loadMedicalItems()
+        
         buildSection()
     }
     
     func buildSection() {
         sections = []
-        if let receipt = medical.receipt {
-            sections.append(.init(title: "Reciept Preview", rows: [.image(path: receipt)]))
-        }
+        let dashboardData: [MedicalKind:[MedicalItem]] = PdfExportUseCase().fetchData(medical: medical)
+        
         var infoRows: [DetailMedicalRow] = [
             .info(.init(title: "Title", value: medical.title)),
             .info(.init(title: "Type", value: medical.type.rawValue)),
@@ -52,14 +53,39 @@ extension DetailMedicalPresenter {
         }
         infoRows.append(.info(.init(title: "Diagoned at", value: medical.date.toString())))
         infoRows.append(.info(.init(title: "Duration", value: medical.durationText)))
+        infoRows.append(.info(.init(title: "Created At", value: medical.createdAt.toString())))
+        infoRows.append(.info(.init(title: "Last modified", value: medical.lastModified.reminderFormatted())))
+        infoRows.append(.info(.init(title: "button", value: "Export As Pdf")))
+        
+        var chartSegment: [ChartSegment] = []
+        
+        let colors: [UIColor] = [
+            UIColor(red: 0.42, green: 0.39, blue: 1.00, alpha: 1),
+            UIColor(red: 0.26, green: 0.78, blue: 0.68, alpha: 1),
+            UIColor(red: 0.97, green: 0.60, blue: 0.12, alpha: 1),
+            UIColor(red: 0.93, green: 0.04, blue: 0.47, alpha: 1),
+        ]
+        
+        var colorIndex = 0
+        for (data,value) in dashboardData {
+            chartSegment.append(.init(label: data.rawValue, value: value.count, color: colors[colorIndex]))
+            colorIndex += 1
+        }
+        let chartRow: [DetailMedicalRow] = [.dashBoard(chartSegment)]
         
         var itemRow: [DetailMedicalRow] = []
+        
         for kind in MedicalKind.allCases {
             itemRow.append(.medicalItem(kind))
         }
+        
+        if let receipt = medical.receipt {
+            sections.append(.init(title: "Reciept Preview", rows: [.image(path: receipt)]))
+        }
         sections.append(.init(title: "Info", rows: infoRows))
-        sections.append(.init(title: "Notes", rows: [.notes(text: medical.notes, isEditable: isNotesEditing)]))
+        sections.append(.init(title: "Medicines", rows: chartRow))
         sections.append(.init(title: "Medical Items", rows: itemRow))
+        sections.append(.init(title: "Notes", rows: [.notes(text: medical.notes, isEditable: isNotesEditing)]))
     }
 
 }
@@ -136,9 +162,8 @@ extension DetailMedicalPresenter {
 extension DetailMedicalPresenter {
     
     func didSelectRowAt(indexPath: IndexPath) {
-        let index = sections.endIndex - 1
-        print(index)
-        if index == indexPath.section {
+        let section = sections[indexPath.section]
+        if section.title == "Medical Items" {
             let kind = MedicalKind.allCases[indexPath.row]
             
             router.openListMedicalItemVC(kind: kind, medical: medical)
@@ -151,5 +176,29 @@ extension DetailMedicalPresenter {
         }
         
     }
+    func exportDocumentClicked() {
+        view?.showLoading()
+        view?.showAlertToIncludeNotes() { [weak self] value in
+            guard let self = self else { return }
+            let pdfData = PdfExportUseCase().generateMedicalPDF(medical: medical, includeNotes: value)
+            let mergedPdf = PDFDocument(data: pdfData)
+            if let receipt = medical.receipt {
+                if let receiptPdf = PDFDocument(url: URL(filePath: receipt)) {
+                    for i in 0..<receiptPdf.pageCount {
+                        if let page = receiptPdf.page(at: i) {
+                            mergedPdf?.insert(page, at: i)
+                        }
+                    }
+                }
+            }
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(medical.title)_\(medical.date.toString(format: "dd_MM_yyyy")).pdf")
+            
+            try? mergedPdf?.dataRepresentation()?.write(to: tempURL)
+            self.view?.stopLoading()
+            self.router.sharePdf(url: tempURL)
+        }
+
+    }
+
 }
 

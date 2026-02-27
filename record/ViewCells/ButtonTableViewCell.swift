@@ -30,6 +30,7 @@ class ButtonTableViewCell: UITableViewCell {
     func setUpContentView() {
                 
         contentView.add(button)
+        selectionStyle = .none
         button.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
         NSLayoutConstraint.activate([
             //button.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: FormSpacing.width),

@@ -53,7 +53,10 @@ class ListPasswordCell: UITableViewCell {
     func setUpContentView() {
         selectionStyle = .none
         contentView.add(button)
-        button.addTarget(self, action: #selector(favouriteClicked), for: .touchUpInside)
+        backgroundColor = .secondarySystemBackground
+        textLabel?.labelSetUp()
+        detailTextLabel?.labelSetUp()
+
         NSLayoutConstraint.activate([
             button.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width*3),
             button.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),

@@ -79,6 +79,16 @@ class SortHeaderView: UIView {
     func setTimer(text: NSMutableAttributedString) {
         timerLabel.textLabel.attributedText = text
     }
+    func setTimerViewHidden(_ hidden: Bool) {
+        UIView.transition(
+            with: timerLabel,
+            duration: 0.25,
+            options: .transitionCrossDissolve,
+            animations: {
+                self.timerLabel.isHidden = hidden
+            }
+        )
+    }
     func configure(text: String, iconName: String? = nil) {
         textLabel.text = text
         if let icon = iconName {

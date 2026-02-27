@@ -14,6 +14,7 @@ class ListDocumentViewController: CustomSearchBarController {
         layout.minimumInteritemSpacing = PaddingSize.cellSpacing
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         //view.contentInsetAdjustmentBehavior = .automatic
+        view.contentInsetAdjustmentBehavior = .automatic
         view.backgroundColor = AppColor.background
         return view
     }()
@@ -24,7 +25,8 @@ class ListDocumentViewController: CustomSearchBarController {
     var presenter: ListDocumentPresenterProtocol!
     
     let sortView = SortHeaderView()
-    
+    var searchButton: UIBarButtonItem!
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavigationBar()
@@ -35,18 +37,21 @@ class ListDocumentViewController: CustomSearchBarController {
     func setUpNavigationBar() {
         title = DocumentConstantData.document
         navigationController?.navigationBar.isTranslucent = false
-        let searchButton = UIBarButtonItem(
+        navigationItem.largeTitleDisplayMode = .never
+        
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        searchButton =  UIBarButtonItem(
             barButtonSystemItem: .search,
             target: self,
             action: #selector(openSearch)
         )
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
-        
         let spacer = UIBarButtonItem(
             barButtonSystemItem: .fixedSpace,
             target: nil,
             action: nil
         )
+        
+
         spacer.width = 12
         
         navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
@@ -82,12 +87,20 @@ class ListDocumentViewController: CustomSearchBarController {
             
         ])
     }
-    @objc func openSearch() {
-        showSearch()
-    }
 
     override func performSearch(text: String?) {
         presenter.search(text: text)
+    }
+
+    @objc func openSearch() {
+        showSearch()
+    }
+    
+    override func searchDidShow() {
+        searchButton.isEnabled = false
+    }
+    override func searchDidHide() {
+        searchButton.isEnabled = true
     }
 
 
@@ -185,7 +198,7 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ListDocumentViewCell.identifier, for: indexPath) as! ListDocumentViewCell
         cell.configure(document: document)
         cell.onShareButtonClicked = { [weak self] in
-            self?.shareButtonClicked(indexPath)
+            self?.presenter.shareButtonClicked(indexPath)
         }
         return cell
     }
@@ -203,22 +216,28 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
     func collectionView(_ collectionView: UICollectionView,
                         contextMenuConfigurationForItemAt indexPath: IndexPath,
                         point: CGPoint) -> UIContextMenuConfiguration? {
-            
+        let document = presenter.document(at: indexPath.row)
+        let title = document.isRestricted ? "UnLock" : "Lock"
+        let image = document.isRestricted ? IconName.unlock : IconName.lock
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            
+            let restrictAction = UIAction(title: title,
+                                          image: UIImage(systemName: image)) { [weak self] _ in
+                self?.presenter.toggleClicked(at: indexPath.row)
+            }
+
             let delete = UIAction(title: AppConstantData.delete,
                                   image: UIImage(systemName: IconName.trash),
                                   attributes: .destructive) { [weak self] _ in
                 self?.presenter.deleteDocument(at: indexPath.row)
             }
             
-            return UIMenu(title: "", children: [delete])
+            return UIMenu(title: "", children: [restrictAction,delete])
         }
     }
 
     
 
-    @objc func shareButtonClicked(_ indexPath: IndexPath) {
+    func showAlertOnShare(_ indexPath: IndexPath) {
         
         let alert = UIAlertController(
             title: "Share Document",
@@ -295,7 +314,6 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
                 return
             }
             
-            // All validation passed
             self.presenter.shareDocumentWithLock(at: index, password: password)
         })
         present(alert, animated: true)
@@ -320,10 +338,14 @@ extension ListDocumentViewController: DocumentNavigationDelegate {
     }
 }
 extension ListDocumentViewController: ListDocumentViewDelegate {
+    
     func reloadData() {
         collectionView.reloadData()
-        if presenter.isEmpty {
-            if !presenter.isSearching {
+        let isSearching = presenter.isSearching
+        let isEmpty = presenter.isEmpty
+        sortView.isHidden = isSearching && isEmpty
+        if isEmpty {
+            if !isSearching {
                 collectionView.setEmptyView(image: "document.badge.ellipsis", title: "No Documents", subtitle: "Tap + on top to create your first document.")
 
             } else {
@@ -342,107 +364,3 @@ extension ListDocumentViewController: ListDocumentViewDelegate {
 }
 
 
-/*
-extension ListDocumentViewController: UITableViewDataSource {
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return presenter.numberOfRows()
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let document = presenter.document(at: indexPath.row)
-        let cell = tableView.dequeueReusableCell(withIdentifier: ListDocumentTableViewCell.identifier, for: indexPath) as! ListDocumentTableViewCell
-        cell.configure(document: document)
-        cell.onShareButtonClicked = { [weak self] in
-            self?.shareButtonClicked(indexPath)
-            //self?.presenter.shareDocument(at: indexPath.row)
-        }
-
-        return cell
-    }
-    
-    @objc func shareButtonClicked(_ indexPath: IndexPath) {
-        
-        let alert = UIAlertController(
-            title: "Share Document",
-            message: "How would you like to share?",
-            preferredStyle: .actionSheet
-        )
-
-        alert.addAction(UIAlertAction(title: "Without Lock", style: .default) { [weak self]_ in
-            self?.presenter.shareDocument(at: indexPath.row)
-        })
-
-        alert.addAction(UIAlertAction(title: "With Lock", style: .default) { [weak self] _ in
-            self?.askForPasswordAndShare(at: indexPath.row)
-        })
-
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
-        present(alert, animated: true)
-
-    }
-    
-    func askForPasswordAndShare(at index: Int) {
-        let alert = UIAlertController(
-            title: "Set Password",
-            message: "Enter a password to protect the document",
-            preferredStyle: .alert
-        )
-
-        alert.addTextField {
-            $0.placeholder = "Password"
-            $0.isSecureTextEntry = true
-        }
-
-        alert.addTextField {
-            $0.placeholder = "Confirm Password"
-            $0.isSecureTextEntry = true
-        }
-
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
-        alert.addAction(UIAlertAction(title: "Share", style: .default) { [weak self]_ in
-            let password = alert.textFields?[0].text ?? ""
-            let confirm = alert.textFields?[1].text ?? ""
-
-            guard !password.isEmpty, password == confirm else {
-                return
-            }
-
-            self?.presenter.shareDocumentWithLock(at: index, password: password)
-        })
-
-        present(alert, animated: true)
-
-    }
-    
-}
-
-extension ListDocumentViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        presenter.didSelectedRow(at: indexPath.row)
-    }
-    
-    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
-            self?.presenter.deleteDocument(at: indexPath.row)
-            completion(true)
-        }
-        
-        deleteAction.image = UIImage(systemName: IconName.trash)
-        let swipeAction = UISwipeActionsConfiguration(actions: [deleteAction])
-        swipeAction.performsFirstActionWithFullSwipe = true
-        return swipeAction
-    }
-
-}
- */

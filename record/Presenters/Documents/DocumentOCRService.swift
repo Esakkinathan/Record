@@ -6,6 +6,7 @@
 //
 import UIKit
 import Vision
+import PDFKit
 
 
 struct ExtractedDocumentModel {
@@ -23,21 +24,19 @@ final class DocumentOCRService {
         images: [UIImage],
         completion: @escaping (Result<ExtractedDocumentModel, Error>) -> Void
     ) {
-        print("OCR process started")
-
+        
         let limitedImages = Array(images.prefix(10))
         print("limited images:", limitedImages.count)
-
+        
         extractText(from: limitedImages) { text in
-            print("text extraction completed")
-
+            
             let detectedType = self.detect(from: text)
             print("detected type:", detectedType)
-
+            
             let number = self.extractNumber(from: text, type: detectedType)
-            let expiry = self.extractExpiry(from: text, type: detectedType)
+            let expiry = self.extractMaxDate(from: text, type: detectedType)
             let pdfData = self.generate(from: limitedImages)
-
+            
             let model = ExtractedDocumentModel(
                 detectedType: detectedType,
                 documentNumber: number,
@@ -45,11 +44,100 @@ final class DocumentOCRService {
                 fullText: text,
                 pdfData: pdfData
             )
-
+            
             print("completion about to return")
-
+            
             DispatchQueue.main.async {
                 completion(.success(model))
+            }
+        }
+    }
+    func process(urls: [URL], ) async throws -> ExtractedDocumentModel {
+        var extractedText: String = ""
+        let mergedDocument = PDFDocument()
+        var pageIndex = 0
+
+        for url in urls {
+            guard let pdf = PDFDocument(url: url) else { continue }
+            
+            for index in 0..<pdf.pageCount {
+                guard let page = pdf.page(at: index) else { continue }
+                if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    extractedText += "\n" + text
+                } else {
+                    extractedText += await extractTextFromPDFPage(page: page)
+                }
+                mergedDocument.insert(page, at: pageIndex)
+                pageIndex+=1
+            }
+        }
+        let detectedType = self.detect(from: extractedText)
+        print("detected type:", detectedType)
+        
+        let number = self.extractNumber(from: extractedText, type: detectedType)
+        let expiry = self.extractMaxDate(from: extractedText, type: detectedType)
+        guard let data = mergedDocument.dataRepresentation() else {
+            throw PDFMergeError.failedToGenerateData
+        }
+        
+        let model = ExtractedDocumentModel(
+            detectedType: detectedType,
+            documentNumber: number,
+            expiryDate: expiry,
+            fullText: extractedText,
+            pdfData: data
+        )
+        return model
+    }
+    
+    func extractTextFromPDFPage(page: PDFPage) async -> String {
+        
+        let pageImage = page.thumbnail(of: CGSize(width: 1000, height: 1400), for: .mediaBox)
+        do {
+            let text = try await recognizeText(from: pageImage)
+            return text
+        } catch {
+            print(error)
+        }
+        return ""
+    }
+    
+    func recognizeText(from image: UIImage) async throws -> String {
+        
+        guard let cgImage = image.cgImage else {
+            return ""
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            
+            let request = VNRecognizeTextRequest { request, error in
+                
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                    continuation.resume(returning: "")
+                    return
+                }
+                
+                let recognizedText = observations.compactMap {
+                    $0.topCandidates(1).first?.string
+                }.joined(separator: "\n")
+                
+                continuation.resume(returning: recognizedText)
+            }
+            
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = true
+            
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(throwing: error)
             }
         }
     }
@@ -116,61 +204,23 @@ private extension DocumentOCRService {
         
     }
     func detect(from text: String) -> DefaultDocument {
-        let rules: [DefaultDocument: [String]] = [
-            .adhar: [
-                "aadhaar",
-            ],
-            .pan: [
-                "income tax department",
-                "permanent"
-            ],
-            .voterId: [
-                "voter",
-                "election",
-            ],
-            .passport: [
-                "republic",
-                "passport"
-            ],
-            .drivingLicense: [
-                "driving",
-                "license"
-            ],
-            .rationCard: [
-                "ration",
-                "family card",
-                "civil supplies",
-                
-            ],
-            .birthCertificate: [
-                "birth"
-            ],
-            .deathCertificate: [
-                "death"
-            ],
-            .vehicleRegistrationCertificate: [
-                "registration"
-            ],
-            .incomeCertificate: [
-                "income"
-            ],
-            .marriageCertificate: [
-                "marriage"
-            ],
-            .nativityCertificate: [
-                "nativity"
-            ],
-            .communityCertificate: [
-                "community"
-            ],
-            .disabilityCertificate: [
-                "disability"
-            ],
-            .firstGraduateCertificate: [
-                "first graduate"
-            ]
+        let rules: [(type: DefaultDocument, keywords: [String])] = [
+            (.adhar, ["aadhaar"]),
+            (.pan, ["income tax department", "permanent"]),
+            (.voterId, ["voter", "election", "elector"]),
+            (.passport, ["republic", "passport"]),
+            (.drivingLicense, ["driving", "license"]),
+            (.rationCard, ["ration", "family card", "civil supplies"]),
+            (.birthCertificate, ["birth"]),
+            (.deathCertificate, ["death"]),
+            (.vehicleRegistrationCertificate, ["registration"]),
+            (.incomeCertificate, ["income certificate"]),
+            (.marriageCertificate, ["marriage"]),
+            (.nativityCertificate, ["nativity"]),
+            (.communityCertificate, ["community"]),
+            (.disabilityCertificate, ["disability"]),
+            (.firstGraduateCertificate, ["first graduate"])
         ]
-
         let lower = text.lowercased()
         
         for (document, keywords) in rules {
@@ -205,10 +255,14 @@ private extension DocumentOCRService {
                 value = match("[A-Z][0-9]{7}", in: text.uppercased())
             }
             data = value
-            
+        case .voterId:
+            data = match("[A-Z]{3}\\d{6,10}", in: text.uppercased())
         case .drivingLicense:
-            data = match("[A-Z]{2}\\d{2}[A-Z]\\d{11}", in: text.uppercased())
-            
+            var value = match("[A-Z]{2}\\d{2}[A-Z]\\d{11}", in: text.uppercased())
+            if value == nil {
+                value = match("[A-Z]{2}\\d{2}\\s\\d{11}", in: text.uppercased())
+            }
+            data = value
         default:
             data = match("[A-Z0-9]{6,20}", in: text.uppercased())
         }
@@ -216,68 +270,90 @@ private extension DocumentOCRService {
         return data
     }
     
-    func extractExpiry(
-        from text: String,
-        type: DefaultDocument
-    ) -> Date? {
-        
-        let lines = text.components(separatedBy: .newlines)
-        
-        switch type {
+//    func extractExpiry(
+//        from text: String,
+//        type: DefaultDocument
+//    ) -> Date? {
+//        
+////        let lines = text.components(separatedBy: .newlines)
+//        
+//        switch type {
+//            
+//        case .passport:
+//            return extractMaxDate(
+//                afterKeywords: ["date of expiry"],
+//                in: lines
+//            )
+//            
+//        case .drivingLicense:
+//            return extractMaxDate(
+//                afterKeywords: ["validity", "valid till", "validity (nt)", "validity (tr)"],
+//                in: lines
+//            )
+//            
+//        case .incomeCertificate:
+//            return extractMaxDate(
+//                afterKeywords: ["valid upto", "expiry"],
+//                in: lines
+//            )
+//            
+//        default:
+//            return nil
+//        }
+//    }
+//    private func extractDate(
+//        afterKeywords keywords: [String],
+//        in lines: [String]
+//    ) -> Date? {
+//        
+//        for (index, line) in lines.enumerated() {
+//            
+//            let lowerLine = line.lowercased()
+//            
+//            if keywords.contains(where: { lowerLine.contains($0) }) {
+//                
+//                if let date = detectDate(in: line) {
+//                    return date
+//                }
+//                
+//                if index + 1 < lines.count,
+//                   let date = detectDate(in: lines[index + 1]) {
+//                    return date
+//                }
+//                
+//                if index + 2 < lines.count,
+//                   let date = detectDate(in: lines[index + 2]) {
+//                    return date
+//                }
+//            }
+//        }
+//        
+//        return nil
+//    }
+    private func extractMaxDate(from text: String, type: DefaultDocument) -> Date? {
+        if type.hasExpiryDate {
             
-        case .passport:
-            return extractDate(
-                afterKeywords: ["date of expiry"],
-                in: lines
-            )
+            let pattern = "\\d{2}[./-]\\d{2}[./-]\\d{4}"
             
-        case .drivingLicense:
-            return extractDate(
-                afterKeywords: ["validity", "valid till", "validity (nt)", "validity (tr)"],
-                in: lines
-            )
+            let regex = try? NSRegularExpression(pattern: pattern)
+            let matches = regex?.matches(in: text, range: NSRange(text.startIndex..., in: text)) ?? []
             
-        case .incomeCertificate:
-            return extractDate(
-                afterKeywords: ["valid upto", "expiry"],
-                in: lines
-            )
+            var dates: [Date] = []
             
-        default:
-            return nil
-        }
-    }
-    private func extractDate(
-        afterKeywords keywords: [String],
-        in lines: [String]
-    ) -> Date? {
-        
-        for (index, line) in lines.enumerated() {
-            
-            let lowerLine = line.lowercased()
-            
-            if keywords.contains(where: { lowerLine.contains($0) }) {
-                
-                // Check same line first
-                if let date = detectDate(in: line) {
-                    return date
-                }
-                
-                // Then check next 2 lines (OCR sometimes splits text)
-                if index + 1 < lines.count,
-                   let date = detectDate(in: lines[index + 1]) {
-                    return date
-                }
-                
-                if index + 2 < lines.count,
-                   let date = detectDate(in: lines[index + 2]) {
-                    return date
+            for match in matches {
+                if let range = Range(match.range, in: text) {
+                    let dateString = String(text[range])
+                    if let date = convertToDate(dateString) {
+                        dates.append(date)
+                    }
                 }
             }
+            return dates.max()
+        } else {
+            return nil
         }
-        
-        return nil
-    }
+            
+     }
     private func detectDate(in text: String) -> Date? {
         
         let pattern = "\\d{2}[./-]\\d{2}[./-]\\d{4}"

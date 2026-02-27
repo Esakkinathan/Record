@@ -6,12 +6,13 @@
 //
 import VTDB
 import SQLCipher
-
+import UIKit
 
 typealias TableColumnType = Database.ColumnType
 typealias TableColumnName = String
 typealias TableColumnValue = Any?
 typealias ConflictResolution = Database.ConflictResolution
+typealias Container = VTDB.Container
 
 class DatabaseAdapter: DatabaseProtocol {
     static let collatioName = "recordsDB"
@@ -24,9 +25,21 @@ class DatabaseAdapter: DatabaseProtocol {
                 fatalError("Failed to initialize DatabaseAdapter: \(error)")
             }
         }()
+    static func getPath() -> String {
+        let cwd =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path
+        return (cwd as NSString).appendingPathComponent("records.sqlite")
+    }
+
     private init() throws {
         var configuration = Configuration()
         configuration.foreignKeysEnabled = true
+        do {
+            let key = "recordApp"
+            try configuration.setKey(.passphrase(key))
+        } catch {
+            print(error.localizedDescription)
+        }
+        
         configuration.trace = {
             print("q: \($0)") // To trace all queries
         }
@@ -54,10 +67,18 @@ class DatabaseAdapter: DatabaseProtocol {
     }
     func createTable() {
 //        dropTable(table: Document.databaseTableName)
-//        dropTable(table: Password.databaseTableName)
+//       dropTable(table: Password.databaseTableName)
 //        dropTable(table: Medical.databaseTableName)
 //        dropTable(table: MedicalItem.databaseTableName)
 //        dropTable(table: MedicalIntakeLog.databaseTableName)
+//        dropTable(table: Bill.databaseTableName)
+//        dropTable(table: Utility.databaseTableName)
+//        dropTable(table: UtilityAccount.databaseTableName)
+        //let key = "createTable"
+//        let value: Bool = UserDefaults.standard.bool(forKey: key)
+//        guard !value else { return }
+//        
+//        UserDefaults.standard.set(true, forKey: key)
         
         let docuementColumns: [String: TableColumnType] = [
             Document.idC: .int,
@@ -67,8 +88,10 @@ class DatabaseAdapter: DatabaseProtocol {
             Document.expiryDateC: .date,
             Document.fileC: .blob,
             Document.notesC: .text,
-            Document.lastModifiedC: .date
+            Document.lastModifiedC: .date,
+            Document.isRestrictedC: .bool
         ]
+        
         create(table: Document.databaseTableName, columnDefinitions: docuementColumns, primaryKey: [Document.idC], uniqueKeys:[[Document.idC,Document.numberC]])
         
         let passwordColumns: [String: TableColumnType] = [
@@ -79,8 +102,10 @@ class DatabaseAdapter: DatabaseProtocol {
             Password.notesC: .text,
             Password.createdAtC: .date,
             Password.lastModifiedC: .date,
-            Password.isFavoriteC: .bool
+            Password.isFavoriteC: .bool,
+            Password.lastCopiedDateC: .date
         ]
+        
         create(table: Password.databaseTableName, columnDefinitions: passwordColumns, primaryKey: [Document.idC], uniqueKeys:[[Password.idC,Password.titleC]])
         
         let medicalColumns: [String: TableColumnType] = [
@@ -132,12 +157,24 @@ class DatabaseAdapter: DatabaseProtocol {
                 ON UPDATE CASCADE
                 );
             """
+        let remainderSql = """
+                CREATE TABLE IF NOT EXISTS \(Remainder.databaseTableName) (
+                \(Remainder.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(Remainder.documentIdC) INTEGER NOT NULL,
+                \(Remainder.dateC) TEXT NOT NULL,
+            
+                FOREIGN KEY (\(Remainder.documentIdC))
+                REFERENCES \(Document.databaseTableName)(\(Document.idC))
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+                );
+            """
 
         do {
             try database.writeInTransaction { db in
                 try db.execute(medicalItemSql)
                 try db.execute(medicalLogSql)
-                
+                try db.execute(remainderSql)
                 return .commit
             }
 
@@ -159,10 +196,6 @@ class DatabaseAdapter: DatabaseProtocol {
         }
     }
     
-    static func getPath() -> String {
-        let cwd =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path
-        return (cwd as NSString).appendingPathComponent("record.sqlite")
-    }
     
 
     public func create(table name: String, columnDefinitions: [String: TableColumnType], primaryKey: [String]) {
@@ -260,10 +293,10 @@ class DatabaseAdapter: DatabaseProtocol {
             print(error)
         }
     }
-    func toggle(table name: String, id: Int, value: Bool,lastModified: Date) {
+    func toggle(table name: String, column: String,id: Int, value: Bool,lastModified: Date) {
         do {
             try database.writeInTransaction { db in
-                let sql = "UPDATE \(name) SET isFavorite = ?, lastModified = ? WHERE id = ?"
+                let sql = "UPDATE \(name) SET \(column) = ?, lastModified = ? WHERE id = ?"
                 try db.execute(sql, [value,lastModified,id])
                 return .commit
             }
@@ -304,18 +337,59 @@ extension DatabaseAdapter: DocumentDatabaseProtocol {
                     let file: String? = row[Document.fileC]
                     let notes: String? = row[Document.notesC]
                     let lastModified: Date = row[Document.lastModifiedC]
-                    document.append(Document(id: id, name: name, number: number,createdAt: createdAt,expiryDate: expiryDate,file: file,notes: notes,lastModified: lastModified))
+                    let isRestricted: Bool = row[Document.isRestrictedC]
+                    document.append(Document(id: id, name: name, number: number,createdAt: createdAt,expiryDate: expiryDate,file: file,notes: notes,lastModified: lastModified, isRestricted: isRestricted))
                 }
             }
         } catch {
             print(error)
         }
         return document
-        
     }
 }
+protocol RemainderDatabaseProtocol: DatabaseProtocol {
+    func fetchRemainderByDocumentId(_ id: Int) -> [Remainder]
+    func insertandGetRemainderId(table name: String, values: [TableColumnName: TableColumnValue] ) -> Int
+}
 
+extension DatabaseAdapter: RemainderDatabaseProtocol {
+    func fetchRemainderByDocumentId(_ id: Int) -> [Remainder] {
+        var remainders: [Remainder] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Remainder.databaseTableName) WHERE \(Remainder.documentIdC) = ? ; ", parameters: [id])
+                for row in rows {
+                    let id: Int = row[Remainder.idC]
+                    let documentId: Int = row[Remainder.documentIdC]
+                    let date: Date = row[Remainder.dateC]
+                    remainders.append(Remainder(id: id, documentId: documentId, date: date))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return remainders
+        
+    }
+    
+    func insertandGetRemainderId(table name: String, values: [TableColumnName: TableColumnValue] ) -> Int {
+        let dbConflictResolution = dbConflictResolution(.replace)
+        var lastInsertId: Int = 0
+        do {
+            try database.write { db in
+                try db.insert(intoTable: name, values: values, onConflict: dbConflictResolution)
+                
+                lastInsertId = Int(db.lastInsertedRowID)
+                print("lastinsertedId",lastInsertId)
+            }
+        } catch {
+            print(error)
+        }
+        return lastInsertId
 
+    }
+
+}
 extension DatabaseAdapter: PasswordDatabaseProtocol {
     func fetchPasswords() -> [Password] {
         var passwords: [Password] = []
@@ -331,7 +405,8 @@ extension DatabaseAdapter: PasswordDatabaseProtocol {
                     let createdAt: Date = row[Password.createdAtC]
                     let lastModified: Date = row[Password.lastModifiedC]
                     let isFavorite: Bool = row[Password.isFavoriteC]
-                    passwords.append(Password(id: id, title: title, username: username, password: passwordText, notes: notes, createdAt: createdAt, lastModified: lastModified, isFavorite: isFavorite))
+                    let lastCopied: Date? = row[Password.lastCopiedDateC]
+                    passwords.append(Password(id: id, title: title, username: username, password: passwordText, notes: notes, createdAt: createdAt, lastModified: lastModified, isFavorite: isFavorite, lastCopiedDate: lastCopied))
                 }
             }
         } catch {
@@ -507,8 +582,9 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
         }
         return medicalItems
     }
+    
     func updateEndDate(medicalItemId: Int, date: Date) {
-        let sql = "UPDATE \(MedicalItem.databaseTableName) SET \(MedicalItem.endDateC) = ? , \(MedicalItem.idC) = ? WHERE id = ?"
+        let sql = "UPDATE \(MedicalItem.databaseTableName) SET \(MedicalItem.endDateC) = ? WHERE \(MedicalItem.idC) = ?"
         do {
             try database.write { db in
                 try db.execute(sql, [date,medicalItemId])
@@ -528,6 +604,29 @@ extension DatabaseAdapter: MedicalIntakeLogDatabase {
         do {
             try database.read { db in
                 let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? AND \(MedicalIntakeLog.dateC) = ? ",parameters: [medicalId, date])
+                
+                for row in rows {
+                    let id: Int = row[MedicalIntakeLog.idC]
+                    let medicalItemId: Int = row[MedicalIntakeLog.medicalItemIdC]
+                    let date: Date = row[MedicalIntakeLog.dateC]
+                    let schedule: String = row[MedicalIntakeLog.scheduleC]
+                    let medicalSchedule: MedicalSchedule = MedicalSchedule(rawValue: schedule) ?? .morning
+                    let taken: Bool = row[MedicalIntakeLog.takenC]
+                    
+                    logs.append(MedicalIntakeLog(id: id, medicalItemId: medicalItemId, date: date, schedule: medicalSchedule, taken: taken))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return logs
+
+    }
+    func fetchLog(medicalId: Int) -> [MedicalIntakeLog] {
+        var logs: [MedicalIntakeLog] = []
+        do {
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? ; ",parameters: [medicalId])
                 
                 for row in rows {
                     let id: Int = row[MedicalIntakeLog.idC]

@@ -45,6 +45,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
         title = presenter.title
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editPassword))
         navigationItem.backButtonDisplayMode = .minimal
+        navigationItem.largeTitleDisplayMode = .never
     }
     
     @objc func editPassword() {
@@ -60,14 +61,15 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
         
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
         tableView.register(FormCopyLabel.self, forCellReuseIdentifier: FormCopyLabel.identifier)
+        tableView.register(FormPasswordCopyLabel.self, forCellReuseIdentifier: FormPasswordCopyLabel.identifier)
         tableView.register(TextViewTableViewCell.self, forCellReuseIdentifier: TextViewTableViewCell.identifier)
         tableView.register(EditNoteTableHeaderView.self, forHeaderFooterViewReuseIdentifier: EditNoteTableHeaderView.identifier)
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
 }
@@ -132,6 +134,12 @@ extension DetailPasswordViewController: UITableViewDataSource, UITableViewDelega
             case .copyLabel:
                 let newCell = tableView.dequeueReusableCell(withIdentifier: FormCopyLabel.identifier, for: indexPath) as! FormCopyLabel
                 newCell.configure(title: section.title, text: section.value)
+                cell = newCell
+            case .passwordLabel:
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormPasswordCopyLabel.identifier, for: indexPath) as! FormPasswordCopyLabel
+                newCell.configure(title: section.title, text: section.value, date: section.date) { [weak self] in
+                    self?.presenter.updateLastCopiedDate()
+                }
                 cell = newCell
             }
 

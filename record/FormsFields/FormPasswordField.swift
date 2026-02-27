@@ -9,8 +9,8 @@ class FormPasswordField: FormTextField {
     static let myidentifier = "FormPasswordField"
     let eyeButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: IconName.eyeSlash), for: .normal)
-        button.setImage(UIImage(systemName: IconName.eye), for: .selected)
+        button.setImage(UIImage(systemName: IconName.eye), for: .normal)
+        button.setImage(UIImage(systemName: IconName.eyeSlash), for: .selected)
         button.backgroundColor = .clear
         button.clipsToBounds = true
         return button

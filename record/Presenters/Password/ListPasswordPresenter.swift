@@ -48,9 +48,8 @@ class ListPasswordPresenter: ListPasswordProtocol {
     
     
     func toggleFavorite(_ password: Password) {
-        //password.isFavorite.toggle()
+        password.toggleFavorite()
         toggleFavouriteUseCase.execute(password)
-        loadPasswords()
     }
     
     

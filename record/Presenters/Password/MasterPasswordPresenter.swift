@@ -4,9 +4,10 @@
 //
 //  Created by Esakkinathan B on 06/02/26.
 //
+import Foundation
 
 enum PinFlow {
-    case verify(existingPin: String)
+    case verify(existingPin: Data)
     case createFirst
     case createConfirm(firstPin: String)
 }
@@ -20,13 +21,13 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
     private var enteredPin: String = ""
 
     let router: MasterPasswordRouterProtocol
-    var useCase: MasterPasswordUseCase
+    var useCase: KeychainManager
     var flow: PinFlow
-    init(view: MasterPasswordViewDelegate? = nil, router: MasterPasswordRouterProtocol, useCase: MasterPasswordUseCase) {
+    init(view: MasterPasswordViewDelegate? = nil, router: MasterPasswordRouterProtocol) {
         self.view = view
         self.router = router
-        self.useCase = useCase
-        if let savedPin = useCase.fetch(), !savedPin.isEmpty{
+        self.useCase = KeychainManager.shared
+        if let savedPin = useCase.getPassword(), !savedPin.isEmpty{
             self.flow = .verify(existingPin: savedPin)
             view?.showInfo("Enter PIN")
         } else {
@@ -42,11 +43,11 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
         view?.updateDots(count: enteredPin.count)
 
         if enteredPin.count == maxPinLength {
-            handlePin()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                self?.handlePin()
+            }
         }
-
     }
-    
     func didTapDelete() {
         guard !enteredPin.isEmpty else { return }
         enteredPin.removeLast()
@@ -74,7 +75,7 @@ extension MasterPasswordPresenter {
         view?.clearPin()
     }
     
-    func validatePin(_ existingPin: String) {
+    func validatePin(_ existingPin: Data) {
         let hashed = HashManager.hash(for: enteredPin)
         if hashed == existingPin {
             resetPin()
@@ -101,7 +102,7 @@ extension MasterPasswordPresenter {
     
     func confirmPin(_ firstPin: String) {
         if enteredPin == firstPin {
-            useCase.add(enteredPin)
+            useCase.savePassword(enteredPin)
             flow = .verify(existingPin: HashManager.hash(for: enteredPin))
             resetPin()
             view?.showInfo("Enter PIN")
