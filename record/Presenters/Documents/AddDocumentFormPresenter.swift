@@ -19,7 +19,7 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     }
     
     var title: String { "" }
-    
+    var maxFiles: Int  = 5
     func field(at index: Int) -> FormField {
         return fields[index]
     }
@@ -98,22 +98,20 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     func uploadDocument(at index: Int, type: DocumentType){}
     func viewDocument(at index: Int){}
     func removeDocument(at index: Int){}
-    func didPickDocument(url: URL){}
-    func saveImage(_ image: UIImage) {}
     func openCameraClicked() {}
     func processImages(from images: [UIImage]) {}
-    func didPickDocuments(urls: [URL]) {}
-
+    func processFile(urls: [URL]) {}
 }
 
 class AddDocumentFormPresenter: FormFieldPresenter {
     
     var mode: DocumentFormMode
     var router: AddDocumentRouterProtocol
-    
+    let fileManager: AppFileManager
     init(view: FormFieldViewDelegate? = nil, router: AddDocumentRouterProtocol, mode: DocumentFormMode) {
         self.router = router
         self.mode = mode
+        fileManager = AppFileManager()
         super.init(view: view)
     }
     func existing() -> Document? {
@@ -124,47 +122,89 @@ class AddDocumentFormPresenter: FormFieldPresenter {
     }
 
     func buildFields() {
-        let existing = existing()
-        let existingCase: DefaultDocument = DefaultDocument.valueOf(value: existing?.name)
-        if fields.isEmpty {
-            fields = [
-                FormField(label: "Name", type: .select, validators: [.required], gotoNextField: false, value: existing?.name ?? DefaultDocument.defaultValue.rawValue),
-                FormField(label: "Number", type: .text, validators: existingCase.validationRules, gotoNextField: false,  placeholder: "Enter Number", value: existing?.number,returnType: .next)
-            ]
-            if existingCase.hasExpiryDate {
-                fields.append(FormField(label: "Expiry Date", type: .date, validators: existingCase == .custom ? [] : [.required], gotoNextField: false, value: existing?.expiryDate))
-            }
-            fields.append(FormField(label: "Document File", type: .fileUpload, validators: [], gotoNextField: false, value: existing?.file))
-            switch mode {
-            case .add:
-                fields.append(FormField(label: "Notes", type: .textView, validators: [.maxLength(300)], gotoNextField: false,))
-            case .edit(_):
-                print("")
-            }
-
+        
+        
+        let existingDoc = existing()
+        let isInitialBuild = fields.isEmpty
+        
+        let name: String
+        let number: String?
+        let expiryDate: Date?
+        let file: String?
+        let notes: String?
+        
+        if isInitialBuild {
+            name = existingDoc?.name ?? DefaultDocument.defaultValue.rawValue
+            number = existingDoc?.number
+            expiryDate = existingDoc?.expiryDate
+            file = existingDoc?.file
+            notes = nil
         } else {
-            let name = field(of: .select)?.value as? String ?? DefaultDocument.defaultValue.rawValue
-            let documentCase = DefaultDocument.valueOf(value: name)
-            let oldNumber = field(of: .text)?.value as? String ?? ""
-            let expiryDate = field(of: .date)?.value as? Date
-            let file = field(of: .fileUpload)?.value as? String
-            let notes = field(of: .textView)?.value as? String
-            fields = []
-            fields = [
-                FormField(label: "Name", type: .select, validators: [.required], gotoNextField: false, value: name),
-                FormField(label: "Number", type: .text, validators: documentCase.validationRules, gotoNextField: false,  placeholder: "Enter Number", value: oldNumber,returnType: .next)
-            ]
-            if documentCase.hasExpiryDate {
-                fields.append(FormField(label: "Expiry Date", type: .date, validators: documentCase == .custom ? [] : [.required], gotoNextField: false, value: expiryDate))
-            }
-            fields.append(FormField(label: "Document File", type: .fileUpload, validators: [], gotoNextField: false, value: file))
-            switch mode {
-            case .add:
-                fields.append(FormField(label: "Notes", type: .textView, validators: [.maxLength(300)], gotoNextField: false,value: notes))
-            case .edit(_):
-                print("")
-            }
+            name = field(of: .select)?.value as? String ?? DefaultDocument.defaultValue.rawValue
+            number = field(of: .text)?.value as? String
+            expiryDate = field(of: .date)?.value as? Date
+            file = field(of: .fileUpload)?.value as? String
+            notes = field(of: .textView)?.value as? String
         }
+        
+        let documentCase = DefaultDocument.valueOf(value: name)
+        
+        // MARK: - Build Fields Once
+        
+        var newFields: [FormField] = [
+            FormField(
+                label: "Name",
+                type: .select,
+                validators: [.required, .maxLength(30), .alphanumeric],
+                gotoNextField: false,
+                value: name
+            ),
+            FormField(
+                label: "Number",
+                type: .text,
+                validators: documentCase.validationRules,
+                gotoNextField: false,
+                placeholder: "Enter Number",
+                value: number,
+                returnType: .next
+            )
+        ]
+        
+        if documentCase.hasExpiryDate {
+            newFields.append(
+                FormField(
+                    label: "Expiry Date",
+                    type: .date,
+                    validators: documentCase == .custom ? [] : [.required],
+                    gotoNextField: true,
+                    value: expiryDate
+                )
+            )
+        }
+        
+        newFields.append(
+            FormField(
+                label: "Document File",
+                type: .fileUpload,
+                validators: [],
+                gotoNextField: false,
+                value: file
+            )
+        )
+        
+        if case .add = mode {
+            newFields.append(
+                FormField(
+                    label: "Notes",
+                    type: .textView,
+                    validators: [.maxLength(300)],
+                    gotoNextField: false,
+                    value: notes
+                )
+            )
+        }
+        
+        fields = newFields
     }
     
     override var title: String {
@@ -196,67 +236,17 @@ class AddDocumentFormPresenter: FormFieldPresenter {
     
     func saveFileLocally(_ sourceURL: URL, name: String, number: String) -> String? {
 
-        let fileManager = FileManager.default
-        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let govtDocsDir = documentsDir.appendingPathComponent("GovtDocs", isDirectory: true)
-
-        do {
-            if !fileManager.fileExists(atPath: govtDocsDir.path) {
-                try fileManager.createDirectory(at: govtDocsDir,withIntermediateDirectories: true,attributes: nil)
-            }
-
-            let docName = name.replacingOccurrences(of: " ", with: "")
-            let fileName = "\(docName)_\(number).\(sourceURL.pathExtension)"
-            let destinationURL = govtDocsDir.appendingPathComponent(fileName)
-
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
-            }
-
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-
-            return destinationURL.path
-
-        } catch {
-            print("File save failed:", error)
-            return nil
-        }
-    }
-    
-    override func saveImage(_ image: UIImage) {
+        var fileName = name.replacingOccurrences(of: " ", with: "")
+        fileName = "\(name)_\(number)"
+        let path = fileManager.saveFileLocally(sourceURL: sourceURL, directory: .docs, name: fileName)
+        return path
         
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return  }
-        
-        let fileName = UUID().uuidString + ".jpg"
-        
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(fileName)
-        
-        do {
-            try data.write(to: tempURL)
-            print("Temp saved at:", tempURL)
-            didPickDocument(url: tempURL)
-        } catch {
-            print("Error saving temp image:", error)
-            return
-        }
-
     }
     
     func saveFile(pdfData: Data) {
-        let name = UUID().uuidString + ".pdf"
-        
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(name)
-        
-        do {
-            try pdfData.write(to: tempURL)
-            print("Temp saved at:", tempURL)
-            didPickDocument(url: tempURL)
-        } catch {
-            print("Error saving temp image:", error)
-            return
-        }
+        let url = fileManager.saveFile(pdfData: pdfData)
+        guard let url = url else { return }
+        updateFile(url: url)
     }
     
     override func uploadDocument(at index: Int, type: DocumentType) {
@@ -281,88 +271,22 @@ class AddDocumentFormPresenter: FormFieldPresenter {
         view?.reloadField(at: index)
     }
     
-    override func didPickDocument(url: URL) {
+    func updateFile(url: URL) {
         guard let index = fields.firstIndex(where: { $0.type == .fileUpload }) else { return }
         updateValue(url.path, at: index)
         view?.reloadField(at: index)
     }
-    
-    override func didPickDocuments(urls: [URL]) {
-        view?.showLoading()
         
-        view?.showYesNoAlert() { [weak self] value in
-            guard let self = self else { return }
-            if value {
-                Task {
-                    do {
-                        let model = try await DocumentOCRService().process(urls: urls)
-                        self.updateValue(model.detectedType.rawValue, at: 0)
-                        self.buildFields()
-                        self.view?.reloadData()
-                        self.updateValue(model.documentNumber, at: 1)
-                        
-                        if let date = model.expiryDate {
-                            self.updateValue(date, at: 2)
-                        }
-                        self.saveFile(pdfData: model.pdfData)
-                        self.view?.stopLoading()
-                        self.view?.reloadData()
-                        self.view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
-
-                    } catch {
-                        self.view?.stopLoading()
-                        self.view?.showError(error.localizedDescription)
-                    }
-                }
-
-            } else {
-                do {
-                    let pdfData = try PDFMergerService().mergePDFs(from: urls)
-                    self.saveFile(pdfData: pdfData)
-                    self.view?.stopLoading()
-                    self.view?.reloadData()
-                } catch {
-                    self.view?.stopLoading()
-                    self.view?.showError(error.localizedDescription)
-
-                }
-                
-            }
-        }
-//        Task {
-//            do {
-//                let model = try await DocumentOCRService().process(urls: urls)
-//                self.updateValue(model.detectedType.rawValue, at: 0)
-//                self.buildFields()
-//                self.view?.reloadData()
-//                self.updateValue(model.documentNumber, at: 1)
-//                
-//                if let date = model.expiryDate {
-//                    updateValue(date, at: 2)
-//                }
-//                self.saveFile(pdfData: model.pdfData)
-//                self.view?.stopLoading()
-//                view?.reloadData()
-//                view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
-//
-//            } catch {
-//                view?.stopLoading()
-//                view?.showError(error.localizedDescription)
-//            }
-//        }
-    }
-    
     override func openCameraClicked(){
         router.openDocumentScanner()
-        //view?.openScanner()
     }
     
     override func selectClicked(at index: Int ) {
         let field = field(at: index)
         let options = DefaultDocument.getList()
         let selected = field.value as? String ?? DefaultDocument.defaultValue.rawValue
-        
-        router.openSelectVC(options: options, selected: selected, addExtra: true) { [weak self] value in
+        //let validators = field.validators
+        router.openSelectVC(options: options, selected: selected, addExtra: true, validator: field.validators) { [weak self] value in
             self?.didSelectOption(at: index,value)
         }
     }
@@ -388,6 +312,48 @@ class AddDocumentFormPresenter: FormFieldPresenter {
         }
     }
     
+    func updateValues(model: ExtractedDocumentModel) {
+        updateValue(model.detectedType.rawValue, at: 0)
+        buildFields()
+        updateValue(model.documentNumber, at: 1)
+        
+        if let date = model.expiryDate {
+            updateValue(date, at: 2)
+        }
+        saveFile(pdfData: model.pdfData)
+    }
+    
+    override func processFile(urls: [URL]) {
+        view?.showLoading()
+        view?.showYesNoAlert() { [weak self] value in
+            guard let self = self else { return }
+            if value {
+                Task {
+                    do {
+                        let model = try await DocumentOCRService().process(urls: urls)
+                        self.updateValues(model: model)
+                        self.view?.reloadData()
+                        self.view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
+
+                    } catch {
+                        self.view?.showError(error.localizedDescription)
+                    }
+                    self.view?.stopLoading()
+                }
+
+            } else {
+                do {
+                    let pdfData = try PDFMergerService().mergePDFs(from: urls)
+                    self.saveFile(pdfData: pdfData)
+                } catch {
+                    self.view?.showError(error.localizedDescription)
+                }
+                self.view?.stopLoading()
+            }
+        }
+
+    }
+    
     override func processImages(from images: [UIImage]) {
         guard !images.isEmpty else {
             return
@@ -401,32 +367,60 @@ class AddDocumentFormPresenter: FormFieldPresenter {
                     guard let self = self else {return}
                     switch result {
                     case .success(let model):
-                        self.updateValue(model.detectedType.rawValue, at: 0)
-                        self.buildFields()
-                        self.view?.reloadData()
-                        self.updateValue(model.documentNumber, at: 1)
-                        
-                        if let date = model.expiryDate {
-                            updateValue(date, at: 2)
-                        }
-                        self.saveFile(pdfData: model.pdfData)
-                        self.view?.stopLoading()
+                        self.updateValues(model: model)
                         view?.reloadData()
                         view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
                     case .failure(let error):
                         view?.showError(error.localizedDescription)
-                        self.view?.stopLoading()
-
                     }
+                    self.view?.stopLoading()
                 }
-
             } else {
-                let data = DocumentOCRService().generate(from: images)
+                let data = PDFService().generatePDF(from: images)
                 view?.stopLoading()
                 saveFile(pdfData: data)
-                
             }
         }
 
     }
+    
+    //    func didPickDocuments(urls: [URL]) {
+    //        view?.showLoading()
+    //        view?.showYesNoAlert() { [weak self] value in
+    //            guard let self = self else { return }
+    //            if value {
+    //                Task {
+    //                    do {
+    //                        let model = try await DocumentOCRService().process(urls: urls)
+    //                        self.updateValue(model.detectedType.rawValue, at: 0)
+    //                        self.buildFields()
+    //                        self.updateValue(model.documentNumber, at: 1)
+    //
+    //                        if let date = model.expiryDate {
+    //                            self.updateValue(date, at: 2)
+    //                        }
+    //                        self.saveFile(pdfData: model.pdfData)
+    //
+    //                        self.view?.reloadData()
+    //                        self.view?.showToastVc(message: "Kindly verify the values in the field", type: .info)
+    //
+    //                    } catch {
+    //                        self.view?.showError(error.localizedDescription)
+    //                    }
+    //                    self.view?.stopLoading()
+    //                }
+    //
+    //            } else {
+    //                do {
+    //                    let pdfData = try PDFMergerService().mergePDFs(from: urls)
+    //                    self.saveFile(pdfData: pdfData)
+    //                    self.view?.reloadData()
+    //                } catch {
+    //                    self.view?.showError(error.localizedDescription)
+    //                }
+    //                self.view?.stopLoading()
+    //            }
+    //        }
+    //    }
+
 }

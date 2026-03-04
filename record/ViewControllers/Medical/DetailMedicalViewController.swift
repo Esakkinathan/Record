@@ -67,6 +67,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
         tableView.register(ButtonTableViewCell.self, forCellReuseIdentifier: ButtonTableViewCell.identifier)
         tableView.register(DonutChartCell.self, forCellReuseIdentifier: DonutChartCell.identifier)
+        tableView.register(FormToggleLabel.self, forCellReuseIdentifier: FormToggleLabel.identifier)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -150,7 +151,15 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
                 newCell.backgroundColor = .secondarySystemBackground
                 cell = newCell
 
-            } else {
+            } else if section.title == "Status" {
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormToggleLabel.identifier, for: indexPath) as! FormToggleLabel
+                newCell.configure(title: section.title, isRequired: false, status: presenter.status) { [weak self] value in
+                    self?.presenter.setStatus(value: !value)
+                }
+                cell = newCell
+
+            }
+            else {
                 let newCell = tableView.dequeueReusableCell(withIdentifier: FormLabel.identifier, for: indexPath) as! FormLabel
                 newCell.configure(title: section.title, text: section.value)
                 cell = newCell

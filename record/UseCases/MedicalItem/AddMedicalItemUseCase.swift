@@ -5,20 +5,19 @@
 //  Created by Esakkinathan B on 10/02/26.
 //
 
-protocol AddMedicalItemUseCaseProtocol {
-    func execute(medicalItem: MedicalItem, medicalId: Int)
-
+protocol AddMedicineUseCaseProtocol {
+    func execute(medicine: Medicine, medicalId: Int) 
 }
 
-class AddMedicalItemUseCase: AddMedicalItemUseCaseProtocol {
-    private let repository: MedicalItemRepositoryProtocol
+class AddMedicineUseCase: AddMedicineUseCaseProtocol {
+    private let repository: MedicineRepositoryProtocol
     
-    init(repository: MedicalItemRepositoryProtocol) {
+    init(repository: MedicineRepositoryProtocol) {
         self.repository = repository
     }
     
-    func execute(medicalItem: MedicalItem, medicalId: Int) {
-        repository.add(medicalItem: medicalItem, medicalId: medicalId)
+    func execute(medicine: Medicine, medicalId: Int) {
+        repository.add(medicine: medicine, medicalId: medicalId)
         NotificationManager.shared.syncMedicalNotifications()
 
     }

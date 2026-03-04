@@ -10,90 +10,33 @@ struct SectionViewModel {
     let title: String
     let rows: [InfoRowModel]
 }
+struct InfoRowModel {
+    let title: String
+    let summary: String
+    let style: Style
+    
+    enum Style {
+        case normal
+        case success
+        case warning
+        case danger
+    }
+}
 
 struct LogKey: Hashable {
     let medicalItemId: Int
     let schedule: MedicalSchedule
 }
 
-
-class ActiveMedicalItemsUseCase {
-    var itemRepository = MedicalItemRepository()
+/*
+class ActiveMedicineUseCase {
+    var itemRepository = MedicineRepository()
     var logRepository = MedicalIntakeLogRepository()
-    /*
-    func execute(medicals: [Medical]) -> [SectionViewModel] {
-        
-        let today = Calendar.current.startOfDay(for: Date())
-        
-        let medicalItems = medicals.flatMap {
-            itemRepository.activeMedicalItems($0.id, date: today)
-        }
-        print("item count",medicalItems.count)
-        
-        let logs = medicalItems.flatMap {
-            logRepository.fetch(medicalId: $0.id, date: today)
-        }
-        print("logs count",logs.count)
-        let logMap = Dictionary(
-            uniqueKeysWithValues: logs.map {
-                (LogKey(medicalItemId: $0.medicalItemId,
-                        schedule: $0.schedule), $0)
-            }
-        )
-        
-        let medicalMap = Dictionary(
-            uniqueKeysWithValues: medicals.map { ($0.id, $0) }
-        )
-        
-        return MedicalSchedule.allCases.compactMap { schedule in
-            
-            let rows: [InfoRowModel] = medicalItems.compactMap { item in
-                
-                guard item.shedule.contains(schedule),
-                      let medicalTitle = medicalMap[item.medical]?.title
-                else { return nil }
-                
-                let key = LogKey(medicalItemId: item.id, schedule: schedule)
-                
-                let style: InfoRowModel.Style
-                let summary: String
-                
-                if let log = logMap[key] {
-                    if log.taken {
-                        style = .success
-                        summary = "Taken"
-                    } else {
-                        style = .warning
-                        summary = "Pending"
-                    }
-                } else {
-                    style = .danger
-                    summary = "Remaining"
-                }
-                
-                return InfoRowModel(
-                    title: "\(item.name) for \(medicalTitle)",
-                    summary: summary,
-                    style: style
-                )
-            }
-            
-            guard !rows.isEmpty else { return nil }
-            
-            return SectionViewModel(
-                title: "\(schedule.rawValue) (\(rows.count) medicines)",
-                rows: rows
-            )
-        }
-    }
-     */
     func execute() -> SectionViewModel {
 
         let today = Date().start
-        let end = Date().end
 
-        let medicalItems = itemRepository.fetchMedicalItemsByDate(from: today, to: end)
-            
+        let medicalItems = itemRepository.fetchActiveMedicines()
         print("medical item count",medicalItems.count)
         let logs = medicalItems.flatMap {
             logRepository.fetch(medicalId: $0.id, date: today)
@@ -102,7 +45,7 @@ class ActiveMedicalItemsUseCase {
 
         let logMap = Dictionary(
             uniqueKeysWithValues: logs.map {
-                (LogKey(medicalItemId: $0.medicalItemId,
+                (LogKey(medicalItemId: $0.medicineId,
                         schedule: $0.schedule), $0)
             }
         )
@@ -161,3 +104,65 @@ class ActiveMedicalItemsUseCase {
 
 
 }
+*/
+
+class ActiveMedicineUseCase {
+    var itemRepository  = MedicineRepository()
+    var logRepository   = MedicalIntakeLogRepository()
+
+    /// Pass the full list of `Medical` records so we can resolve each medicine → medical title.
+    func execute(medicals: [Medical]) -> DashboardViewModel {
+
+        let today        = Date().start
+        let medicines    = itemRepository.fetchActiveMedicines()
+        let logs         = medicines.flatMap { logRepository.fetch(medicalId: $0.id, date: today) }
+
+        // medical-id → Medical  (fast lookup)
+        print("logs for entirely",logs, logs.count)
+        let medicalMap   = Dictionary(uniqueKeysWithValues: medicals.map { ($0.id, $0) })
+
+        // (medicineId, schedule) → log
+        let logMap       = Dictionary(
+            uniqueKeysWithValues: logs.map {
+                (LogKey(medicalItemId: $0.medicineId, schedule: $0.schedule), $0)
+            }
+        )
+
+        var scheduleRows: [ScheduleRowViewModel] = []
+
+        for schedule in MedicalSchedule.allCases {
+
+            var completed: [MedicineDetail] = []
+            var remaining: [MedicineDetail] = []
+
+            for medicine in medicines {
+                guard medicine.shedule.contains(schedule) else { continue }
+
+                let medicalTitle = medicalMap[medicine.medical]?.title ?? "Unknown"
+                let detail       = MedicineDetail(
+                    medicineName: medicine.name,
+                    medicalTitle: medicalTitle
+                )
+
+                let key = LogKey(medicalItemId: medicine.id, schedule: schedule)
+
+                if let log = logMap[key], log.taken {
+                    completed.append(detail)
+                } else {
+                    remaining.append(detail)
+                }
+            }
+
+            scheduleRows.append(
+                ScheduleRowViewModel(
+                    schedule: schedule,
+                    completed: completed,
+                    remaining: remaining
+                )
+            )
+        }
+
+        return DashboardViewModel(scheduleRows: scheduleRows)
+    }
+}
+

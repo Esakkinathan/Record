@@ -66,11 +66,12 @@ class DatabaseAdapter: DatabaseProtocol {
 
     }
     func createTable() {
-//        dropTable(table: Document.databaseTableName)
-//       dropTable(table: Password.databaseTableName)
+ //       dropTable(table: Document.databaseTableName)
+ //       dropTable(table: "MedicalItem")
+//        dropTable(table: Password.databaseTableName)
 //        dropTable(table: Medical.databaseTableName)
-//        dropTable(table: MedicalItem.databaseTableName)
-//        dropTable(table: MedicalIntakeLog.databaseTableName)
+//        dropTable(table: Medicine.databaseTableName)
+//        dropTable(table: MedicineIntakeLog.databaseTableName)
 //        dropTable(table: Bill.databaseTableName)
 //        dropTable(table: Utility.databaseTableName)
 //        dropTable(table: UtilityAccount.databaseTableName)
@@ -103,7 +104,8 @@ class DatabaseAdapter: DatabaseProtocol {
             Password.createdAtC: .date,
             Password.lastModifiedC: .date,
             Password.isFavoriteC: .bool,
-            Password.lastCopiedDateC: .date
+            Password.lastCopiedDateC: .date,
+            Password.urlC: .blob
         ]
         
         create(table: Password.databaseTableName, columnDefinitions: passwordColumns, primaryKey: [Document.idC], uniqueKeys:[[Password.idC,Password.titleC]])
@@ -112,8 +114,6 @@ class DatabaseAdapter: DatabaseProtocol {
             Medical.idC: .int,
             Medical.titleC: .string,
             Medical.typeC: .string,
-            Medical.durationC: .int,
-            Medical.durationTypeC: .string,
             Medical.hospitalC: .string,
             Medical.doctorC: .string,
             Medical.dateC: .date,
@@ -121,38 +121,42 @@ class DatabaseAdapter: DatabaseProtocol {
             Medical.lastModifiedC: .date,
             Medical.notesC: .text,
             Medical.receiptC: .blob,
+            Medical.endDateC: .date,
+            Medical.statusC: .bool,
             
         ]
         
         create(table: Medical.databaseTableName, columnDefinitions: medicalColumns, primaryKey: [Medical.idC])
+        
         let medicalItemSql = """
-                CREATE TABLE IF NOT EXISTS \(MedicalItem.databaseTableName) (
-                \(MedicalItem.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
-                \(MedicalItem.medicalC) INTEGER NOT NULL,
-                \(MedicalItem.kindC) TEXT NOT NULL,
-                \(MedicalItem.nameC) TEXT NOT NULL,
-                \(MedicalItem.instructionC) TEXT NOT NULL,
-                \(MedicalItem.dosageC) TEXT NOT NULL,
-                \(MedicalItem.startDateC) TEXT NOT NULL,
-                \(MedicalItem.endDateC) TEXT NOT NULL,
-                \(MedicalItem.sheduleC) TEXT NOT NULL,
+                CREATE TABLE IF NOT EXISTS \(Medicine.databaseTableName) (
+                \(Medicine.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(Medicine.medicalC) INTEGER NOT NULL,
+                \(Medicine.kindC) TEXT NOT NULL,
+                \(Medicine.nameC) TEXT NOT NULL,
+                \(Medicine.instructionC) TEXT NOT NULL,
+                \(Medicine.dosageC) TEXT NOT NULL,
+                \(Medicine.startDateC) TEXT NOT NULL,
+                \(Medicine.endDateC) TEXT,
+                \(Medicine.sheduleC) TEXT NOT NULL,
+                \(Medicine.statusC) INTEGER NOT NULL,
 
-                FOREIGN KEY (\(MedicalItem.medicalC))
+                FOREIGN KEY (\(Medicine.medicalC))
                 REFERENCES \(Medical.databaseTableName)(\(Medical.idC))
                 ON DELETE CASCADE
                 ON UPDATE CASCADE
                 );
             """
         let medicalLogSql = """
-                CREATE TABLE IF NOT EXISTS \(MedicalIntakeLog.databaseTableName) (
-                \(MedicalIntakeLog.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
-                \(MedicalIntakeLog.medicalItemIdC) INTEGER NOT NULL,
-                \(MedicalIntakeLog.dateC) TEXT NOT NULL,
-                \(MedicalIntakeLog.scheduleC) TEXT NOT NULL,
-                \(MedicalIntakeLog.takenC) INTEGER NOT NULL,
+                CREATE TABLE IF NOT EXISTS \(MedicineIntakeLog.databaseTableName) (
+                \(MedicineIntakeLog.idC) INTEGER PRIMARY KEY AUTOINCREMENT,
+                \(MedicineIntakeLog.medicineIdC) INTEGER NOT NULL,
+                \(MedicineIntakeLog.dateC) TEXT NOT NULL,
+                \(MedicineIntakeLog.scheduleC) TEXT NOT NULL,
+                \(MedicineIntakeLog.takenC) INTEGER NOT NULL,
             
-                FOREIGN KEY (\(MedicalIntakeLog.medicalItemIdC))
-                REFERENCES \(MedicalItem.databaseTableName)(\(MedicalItem.idC))
+                FOREIGN KEY (\(MedicineIntakeLog.medicineIdC))
+                REFERENCES \(Medicine.databaseTableName)(\(Medicine.idC))
                 ON DELETE CASCADE
                 ON UPDATE CASCADE
                 );
@@ -262,7 +266,7 @@ class DatabaseAdapter: DatabaseProtocol {
     func updateInto(data: Persistable) {
         do {
             try database.writeInTransaction { db in
-                try data.update(db)
+                try data.save(db)
                 return .commit
             }
         } catch {
@@ -406,7 +410,8 @@ extension DatabaseAdapter: PasswordDatabaseProtocol {
                     let lastModified: Date = row[Password.lastModifiedC]
                     let isFavorite: Bool = row[Password.isFavoriteC]
                     let lastCopied: Date? = row[Password.lastCopiedDateC]
-                    passwords.append(Password(id: id, title: title, username: username, password: passwordText, notes: notes, createdAt: createdAt, lastModified: lastModified, isFavorite: isFavorite, lastCopiedDate: lastCopied))
+                    let url: String? = row[Password.urlC]
+                    passwords.append(Password(id: id, title: title, username: username, password: passwordText, notes: notes, createdAt: createdAt, lastModified: lastModified, isFavorite: isFavorite, url: url, lastCopiedDate: lastCopied))
                 }
             }
         } catch {
@@ -454,8 +459,6 @@ extension DatabaseAdapter: MedicalDatabaseProtocol {
                     let id: Int = row[Medical.idC]
                     let title: String = row[Medical.titleC]
                     let type: MedicalType = MedicalType(rawValue: row[Medical.typeC]) ?? .checkup
-                    let duration: Int = row[Medical.durationC]
-                    let durationType: DurationType = DurationType(rawValue: row[Medical.durationTypeC]) ?? .day
                     let hospital: String? = row[Medical.hospitalC]
                     let doctor: String? = row[Medical.doctorC]
                     let date: Date = row[Medical.dateC]
@@ -463,7 +466,9 @@ extension DatabaseAdapter: MedicalDatabaseProtocol {
                     let lastModified: Date = row[Medical.lastModifiedC]
                     let notes: String? = row[Medical.notesC]
                     let receipt: String? = row[Medical.receiptC]
-                    medicals.append(Medical(id: id, title: title, type: type, duration: duration, durationType: durationType,hospital: hospital, doctor: doctor,date: date,createdAt: createdAt, lastModified: lastModified,notes: notes,receipt: receipt))
+                    let endDate: Date? = row[Medical.endDateC]
+                    let status: Bool = row[Medical.statusC]
+                    medicals.append(Medical(id: id, title: title, type: type,hospital: hospital, doctor: doctor,date: date,createdAt: createdAt, lastModified: lastModified,status: status, notes: notes, receipt: receipt, endDate: endDate))
                 }
             }
         } catch {
@@ -471,18 +476,27 @@ extension DatabaseAdapter: MedicalDatabaseProtocol {
         }
         return medicals
     }
-    
-    func fetchMedicalByDate(date: Date) -> [Medical] {
+    func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?) {
+        do {
+            try database.writeInTransaction { db in
+                let sql = "UPDATE \(name) SET \(column) = ?, \(Medical.endDateC) = ? WHERE id = ?"
+                try db.execute(sql, [value,endDate,id])
+                return .commit
+            }
+        } catch {
+            print(error)
+        }
+    }
+
+    func fetchActiveMedical() -> [Medical] {
         var medicals: [Medical] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medical.databaseTableName) WHERE \(Medical.dateC) <= ? ", parameters: [date])
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medical.databaseTableName) WHERE \(Medical.statusC) = ? ",parameters: [true])
                 for row in rows {
                     let id: Int = row[Medical.idC]
                     let title: String = row[Medical.titleC]
                     let type: MedicalType = MedicalType(rawValue: row[Medical.typeC]) ?? .checkup
-                    let duration: Int = row[Medical.durationC]
-                    let durationType: DurationType = DurationType(rawValue: row[Medical.durationTypeC]) ?? .day
                     let hospital: String? = row[Medical.hospitalC]
                     let doctor: String? = row[Medical.doctorC]
                     let date: Date = row[Medical.dateC]
@@ -490,7 +504,9 @@ extension DatabaseAdapter: MedicalDatabaseProtocol {
                     let lastModified: Date = row[Medical.lastModifiedC]
                     let notes: String? = row[Medical.notesC]
                     let receipt: String? = row[Medical.receiptC]
-                    medicals.append(Medical(id: id, title: title, type: type, duration: duration, durationType: durationType,hospital: hospital, doctor: doctor,date: date,createdAt: createdAt, lastModified: lastModified,notes: notes, receipt: receipt))
+                    let endDate: Date? = row[Medical.endDateC]
+                    let status: Bool = row[Medical.statusC]
+                    medicals.append(Medical(id: id, title: title, type: type,hospital: hospital, doctor: doctor,date: date,createdAt: createdAt, lastModified: lastModified,status: status, notes: notes, receipt: receipt, endDate: endDate))
                 }
             }
         } catch {
@@ -501,25 +517,27 @@ extension DatabaseAdapter: MedicalDatabaseProtocol {
     
 }
 
-extension DatabaseAdapter: MedicalItemDatabaseProtocol {
-    func fetchActiveMedicalItem(_ medicalId: Int, date: Date) -> [MedicalItem] {
-        var medicalItems: [MedicalItem] = []
+extension DatabaseAdapter: MedicineDatabaseProtocol {
+    
+    func fetchActiveMedicines(_ medicalId: Int) -> [Medicine] {
+        var medicalItems: [Medicine] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalItem.databaseTableName) WHERE \(MedicalItem.medicalC) = ? AND \(MedicalItem.endDateC) >= ? ;",parameters: [medicalId, date])
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medicine.databaseTableName) WHERE \(Medicine.medicalC) = ? ;",parameters: [medicalId])
                 for row in rows {
-                    let id: Int = row[MedicalItem.idC]
-                    let medical: Int = row[MedicalItem.medicalC]
-                    let kind: MedicalKind = MedicalKind(rawValue: row[MedicalItem.kindC]) ?? MedicalKind.tablet
-                    let name: String = row[MedicalItem.nameC]
-                    let instruction: String = row[MedicalItem.instructionC]
+                    let id: Int = row[Medicine.idC]
+                    let medical: Int = row[Medicine.medicalC]
+                    let kind: MedicalKind = MedicalKind(rawValue: row[Medicine.kindC]) ?? MedicalKind.tablet
+                    let name: String = row[Medicine.nameC]
+                    let instruction: String = row[Medicine.instructionC]
                     let medicalInstruction = MedicalInstruction.valueOf(instruction)
-                    let dosage: String = row[MedicalItem.dosageC]
-                    let startDate: Date = row[MedicalItem.startDateC]
-                    let endDate: Date = row[MedicalItem.endDateC]
-                    let schedule: String = row[MedicalItem.sheduleC]
+                    let dosage: String = row[Medicine.dosageC]
+                    let startDate: Date = row[Medicine.startDateC]
+                    let endDate: Date? = row[Medicine.endDateC]
+                    let schedule: String = row[Medicine.sheduleC]
+                    let status: Bool = row[Medicine.statusC]
                     let medicalShcedule: [MedicalSchedule] = .from(dbValue: schedule)
-                    medicalItems.append(MedicalItem(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate))
+                    medicalItems.append(Medicine(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate, status: status))
                 }
             }
         } catch {
@@ -529,24 +547,25 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
 
     }
     
-    func fetchMedicalItems(from date: Date, to dateTo: Date) -> [MedicalItem] {
-        var medicalItems: [MedicalItem] = []
+    func fetchActiveMedicines() -> [Medicine] {
+        var medicalItems: [Medicine] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalItem.databaseTableName) WHERE  \(MedicalItem.endDateC)  >= ? ;",parameters: [date])
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medicine.databaseTableName) WHERE  \(Medicine.statusC)  = ? ;",parameters: [true])
                 for row in rows {
-                    let id: Int = row[MedicalItem.idC]
-                    let medical: Int = row[MedicalItem.medicalC]
-                    let kind: MedicalKind = MedicalKind(rawValue: row[MedicalItem.kindC]) ?? MedicalKind.tablet
-                    let name: String = row[MedicalItem.nameC]
-                    let instruction: String = row[MedicalItem.instructionC]
+                    let id: Int = row[Medicine.idC]
+                    let medical: Int = row[Medicine.medicalC]
+                    let kind: MedicalKind = MedicalKind(rawValue: row[Medicine.kindC]) ?? MedicalKind.tablet
+                    let name: String = row[Medicine.nameC]
+                    let instruction: String = row[Medicine.instructionC]
                     let medicalInstruction = MedicalInstruction.valueOf(instruction)
-                    let dosage: String = row[MedicalItem.dosageC]
-                    let startDate: Date = row[MedicalItem.startDateC]
-                    let endDate: Date = row[MedicalItem.endDateC]
-                    let schedule: String = row[MedicalItem.sheduleC]
+                    let dosage: String = row[Medicine.dosageC]
+                    let startDate: Date = row[Medicine.startDateC]
+                    let endDate: Date? = row[Medicine.endDateC]
+                    let schedule: String = row[Medicine.sheduleC]
+                    let status: Bool = row[Medicine.statusC]
                     let medicalShcedule: [MedicalSchedule] = .from(dbValue: schedule)
-                    medicalItems.append(MedicalItem(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate))
+                    medicalItems.append(Medicine(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate, status: status))
                 }
             }
         } catch {
@@ -557,24 +576,25 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
     }
     
     
-    func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem] {
-        var medicalItems: [MedicalItem] = []
+    func fetchMedicinesById(_ id: Int, kind: MedicalKind) -> [Medicine] {
+        var medicalItems: [Medicine] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalItem.databaseTableName) WHERE \(MedicalItem.medicalC) = ? AND \(MedicalItem.kindC) = ? ",parameters: [id, kind.rawValue])
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medicine.databaseTableName) WHERE \(Medicine.medicalC) = ? AND \(Medicine.kindC) = ? ",parameters: [id, kind.rawValue])
                 for row in rows {
-                    let id: Int = row[MedicalItem.idC]
-                    let medical: Int = row[MedicalItem.medicalC]
-                    let kind: MedicalKind = MedicalKind(rawValue: row[MedicalItem.kindC]) ?? MedicalKind.tablet
-                    let name: String = row[MedicalItem.nameC]
-                    let instruction: String = row[MedicalItem.instructionC]
+                    let id: Int = row[Medicine.idC]
+                    let medical: Int = row[Medicine.medicalC]
+                    let kind: MedicalKind = MedicalKind(rawValue: row[Medicine.kindC]) ?? MedicalKind.tablet
+                    let name: String = row[Medicine.nameC]
+                    let instruction: String = row[Medicine.instructionC]
                     let medicalInstruction = MedicalInstruction.valueOf(instruction)
-                    let dosage: String = row[MedicalItem.dosageC]
-                    let startDate: Date = row[MedicalItem.startDateC]
-                    let endDate: Date = row[MedicalItem.endDateC]
-                    let schedule: String = row[MedicalItem.sheduleC]
+                    let dosage: String = row[Medicine.dosageC]
+                    let startDate: Date = row[Medicine.startDateC]
+                    let endDate: Date? = row[Medicine.endDateC]
+                    let schedule: String = row[Medicine.sheduleC]
+                    let status: Bool = row[Medicine.statusC]
                     let medicalShcedule: [MedicalSchedule] = .from(dbValue: schedule)
-                    medicalItems.append(MedicalItem(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate))
+                    medicalItems.append(Medicine(id: id, medical: medical, kind: kind, name: name, instruction: medicalInstruction, dosage: dosage, startDate: startDate,shedule: medicalShcedule,endDate: endDate, status: status))
                 }
             }
         } catch {
@@ -582,38 +602,24 @@ extension DatabaseAdapter: MedicalItemDatabaseProtocol {
         }
         return medicalItems
     }
-    
-    func updateEndDate(medicalItemId: Int, date: Date) {
-        let sql = "UPDATE \(MedicalItem.databaseTableName) SET \(MedicalItem.endDateC) = ? WHERE \(MedicalItem.idC) = ?"
-        do {
-            try database.write { db in
-                try db.execute(sql, [date,medicalItemId])
-            }
-
-        } catch {
-            print(error)
-        }
-
-    }
-
 }
 
 extension DatabaseAdapter: MedicalIntakeLogDatabase {
-    func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog] {
-        var logs: [MedicalIntakeLog] = []
+    func fetchLog(medicalId: Int,date: Date) -> [MedicineIntakeLog] {
+        var logs: [MedicineIntakeLog] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? AND \(MedicalIntakeLog.dateC) = ? ",parameters: [medicalId, date])
-                
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicineIntakeLog.databaseTableName) WHERE \(MedicineIntakeLog.medicineIdC) = ? AND \(MedicineIntakeLog.dateC) = ? ",parameters: [medicalId, date])
+                //
                 for row in rows {
-                    let id: Int = row[MedicalIntakeLog.idC]
-                    let medicalItemId: Int = row[MedicalIntakeLog.medicalItemIdC]
-                    let date: Date = row[MedicalIntakeLog.dateC]
-                    let schedule: String = row[MedicalIntakeLog.scheduleC]
+                    let id: Int = row[MedicineIntakeLog.idC]
+                    let medicineId: Int = row[MedicineIntakeLog.medicineIdC]
+                    let date: Date = row[MedicineIntakeLog.dateC]
+                    let schedule: String = row[MedicineIntakeLog.scheduleC]
                     let medicalSchedule: MedicalSchedule = MedicalSchedule(rawValue: schedule) ?? .morning
-                    let taken: Bool = row[MedicalIntakeLog.takenC]
+                    let taken: Bool = row[MedicineIntakeLog.takenC]
                     
-                    logs.append(MedicalIntakeLog(id: id, medicalItemId: medicalItemId, date: date, schedule: medicalSchedule, taken: taken))
+                    logs.append(MedicineIntakeLog(id: id, medicineId: medicineId, date: date, schedule: medicalSchedule, taken: taken))
                 }
             }
         } catch {
@@ -622,21 +628,21 @@ extension DatabaseAdapter: MedicalIntakeLogDatabase {
         return logs
 
     }
-    func fetchLog(medicalId: Int) -> [MedicalIntakeLog] {
-        var logs: [MedicalIntakeLog] = []
+    func fetchLog(medicalId: Int) -> [MedicineIntakeLog] {
+        var logs: [MedicineIntakeLog] = []
         do {
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicalIntakeLog.databaseTableName) WHERE \(MedicalIntakeLog.medicalItemIdC) = ? ; ",parameters: [medicalId])
+                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(MedicineIntakeLog.databaseTableName) WHERE \(MedicineIntakeLog.medicineIdC) = ? ; ",parameters: [medicalId])
                 
                 for row in rows {
-                    let id: Int = row[MedicalIntakeLog.idC]
-                    let medicalItemId: Int = row[MedicalIntakeLog.medicalItemIdC]
-                    let date: Date = row[MedicalIntakeLog.dateC]
-                    let schedule: String = row[MedicalIntakeLog.scheduleC]
+                    let id: Int = row[MedicineIntakeLog.idC]
+                    let medicineId: Int = row[MedicineIntakeLog.medicineIdC]
+                    let date: Date = row[MedicineIntakeLog.dateC]
+                    let schedule: String = row[MedicineIntakeLog.scheduleC]
                     let medicalSchedule: MedicalSchedule = MedicalSchedule(rawValue: schedule) ?? .morning
-                    let taken: Bool = row[MedicalIntakeLog.takenC]
+                    let taken: Bool = row[MedicineIntakeLog.takenC]
                     
-                    logs.append(MedicalIntakeLog(id: id, medicalItemId: medicalItemId, date: date, schedule: medicalSchedule, taken: taken))
+                    logs.append(MedicineIntakeLog(id: id, medicineId: medicineId, date: date, schedule: medicalSchedule, taken: taken))
                 }
             }
         } catch {
@@ -727,7 +733,7 @@ extension DatabaseAdapter: LoginDatebaseProtocol {
 
     }
 }
-
+/*
 
 extension DatabaseAdapter: UtilityDatabaseProtocol {
     func fetchUtility() -> [Utility] {
@@ -880,3 +886,4 @@ extension DatabaseAdapter: BillDatabaseProtocol {
     }
     
 }
+*/

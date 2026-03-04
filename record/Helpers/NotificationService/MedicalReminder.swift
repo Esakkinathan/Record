@@ -11,15 +11,15 @@ import UserNotifications
 
 final class RemainderScheduler {
     
-    private let itemRepository: MedicalItemRepositoryProtocol = MedicalItemRepository()
+    private let itemRepository: MedicineRepositoryProtocol = MedicineRepository()
     
     func scheduleNextSevenDays() {
         
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let endDate = calendar.date(byAdding: .day, value: 7, to: today)!
+        //let endDate = calendar.date(byAdding: .day, value: 7, to: today)!
         
-        let medicalItems = itemRepository.fetchMedicalItemsByDate(from: today, to: endDate)
+        let medicalItems = itemRepository.fetchActiveMedicines()
         
         for offset in 0..<7 {
             
@@ -42,14 +42,13 @@ final class RemainderScheduler {
             }
         }
     }
-    private func activeMedicalItems(from items: [MedicalItem], for date: Date) -> [MedicalItem] {
+    private func activeMedicalItems(from items: [Medicine], for date: Date) -> [Medicine] {
         
         let calendar = Calendar.current
         let target = calendar.startOfDay(for: date)
         
         return items.filter {
-            calendar.startOfDay(for: $0.startDate) <= target &&
-            calendar.startOfDay(for: $0.endDate) >= target
+            calendar.startOfDay(for: $0.startDate) <= target && ($0.endDate == nil || calendar.startOfDay(for: $0.endDate!) >= target)
         }
     }
     private func scheduleNotification(date: Date,

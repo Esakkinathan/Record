@@ -8,18 +8,28 @@
 import UIKit
 
 class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
+    
     var title: String {
         medicalItem.name
     }
     
-    var medicalItem: MedicalItem
+    var medicalItem: Medicine
     weak var view: DetailMedicalItemViewDelegate?
     var sections: [DetailMedicalSection] = []
-    init(view: DetailMedicalItemViewDelegate? = nil, medicalItem: MedicalItem) {
+    var updateUseCase: UpdateMedicineUseCaseProtocol
+    let router: DetailMedicineRouterProtocol
+    let medical: Medical
+    init(view: DetailMedicalItemViewDelegate? = nil, medicalItem: Medicine, router: DetailMedicineRouterProtocol, updateUseCase: UpdateMedicineUseCaseProtocol, medical: Medical) {
         self.medicalItem = medicalItem
         self.view = view
+        self.updateUseCase = updateUseCase
+        self.router = router
+        self.medical = medical
     }
-    
+    var status: Bool {
+        medicalItem.status
+    }
+
     func numberOfSection() -> Int {
         return sections.count
     }
@@ -31,7 +41,7 @@ class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
     func buildSections() {
 
         sections = []
-        let dashBoardData: [Medicine] = PdfExportUseCase().fetchLog(medicalItem: medicalItem)
+        let dashBoardData: [MedicineLog] = PdfExportUseCase().fetchLog(medicine: medicalItem)
         let takenCount = dashBoardData.count(where:{
             $0.status
         })
@@ -45,7 +55,10 @@ class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
         infoRow.append(.info(.init(title: "Dosage", value: medicalItem.dosage)))
         infoRow.append(.info(.init(title: "Schedules", value: medicalItem.shedule.dbValue)))
         infoRow.append(.info(.init(title: "Start Date", value: medicalItem.startDate.toString())))
-        infoRow.append(.info(.init(title: "End Date", value: medicalItem.endDate.toString())))
+        infoRow.append(.info(.init(title: "Status", value: "")))
+        if let endDate = medicalItem.endDate {
+            infoRow.append(.info(.init(title: "End Date", value: endDate.toString())))
+        }
         
         sections.append(.init(title: "Info", rows: infoRow))
         
@@ -74,6 +87,27 @@ class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
     func viewDidLoad() {
         buildSections()
     }
+    func setStatus(value: Bool) {
+        let date: Date? = value ? nil  : Date().end
+        medicalItem.setStatus(value: value, date: date)
+        updateUseCase.execute(medicineId: medicalItem.id, value: value, date: date)
+        buildSections()
+        view?.reloadData()
+    }
+    func updateMedicine() {
+        buildSections()
+        view?.reloadData()
+
+    }
+    func editButtonClicked() {
+        router.openEditMedicalVC(mode: .edit(medicalItem), medical: medical, kind: medicalItem.kind, startDate: medicalItem.startDate) { [weak self] updatedMedicine in
+            guard let self = self else { return }
+            updateMedicine()
+            view?.updateMedicine(updatedMedicine)
+        }
+    }
+
+
     
     
 }

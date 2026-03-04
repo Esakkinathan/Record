@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 protocol UpdateUtilityAccountUseCaseProtocol {
     func execute(utilityAccount: UtilityAccount)
 }
@@ -37,3 +37,4 @@ class UpdateUtilityAccountNotesUseCase: UpdateUtilityAccountNotesUseCaseProtocol
         repository.updateNotes(text: text, id: id)
     }
 }
+*/

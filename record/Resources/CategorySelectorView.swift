@@ -22,7 +22,14 @@ class CategorySelectorView: UIView {
     }
     
     var buttons: [String: PillButton] = [:]
-    
+    func applyTint() {
+        for (_,button) in buttons {
+            if button.isSelected {
+                button.backgroundColor = SettingsManager.shared.accent.color
+            }
+        }
+    }
+
     func setUpContens() {
         stack.axis = .horizontal
         stack.spacing = PaddingSize.content

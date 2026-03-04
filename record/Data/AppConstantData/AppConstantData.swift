@@ -117,6 +117,8 @@ enum IconName {
     
     static let arrowRight = "chevron.right"
     
+    static let chevronDown = "chevron.down"
+    
     static let x = "xmark.circle.fill"
     
     static let threeDot = "ellipsis.circle"

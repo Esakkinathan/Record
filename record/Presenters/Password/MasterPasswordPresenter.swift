@@ -27,7 +27,20 @@ class MasterPasswordPresenter: MasterPasswordPresenterProtocol {
         self.view = view
         self.router = router
         self.useCase = KeychainManager.shared
-        if let savedPin = useCase.getPassword(), !savedPin.isEmpty{
+//        self.flow = flow
+//        switch flow {
+//        case .verify(let existingPin):
+//            view?.showInfo("Enter PIN")
+//        case .createFirst:
+//            view?.showInfo("Create new PIN")
+//        case .createConfirm(let firstPin):
+//            view?.showInfo("Enter Pin Again")
+//        }
+        self.flow = .createFirst
+    }
+    
+    func viewWillAppear() {
+        if let savedPin = useCase.getPin(), !savedPin.isEmpty{
             self.flow = .verify(existingPin: savedPin)
             view?.showInfo("Enter PIN")
         } else {
@@ -82,7 +95,7 @@ extension MasterPasswordPresenter {
             PasswordSessionManager.shared.authenticate()
             openListPasswordScreen()
         } else {
-            view?.showToastVC(message: "Incorrect PIN", type: .error)
+            view?.showToastVC(message: "Incorrect PIN", type: .error, completion: nil)
             resetPin()
         }
     }
@@ -102,7 +115,7 @@ extension MasterPasswordPresenter {
     
     func confirmPin(_ firstPin: String) {
         if enteredPin == firstPin {
-            useCase.savePassword(enteredPin)
+            useCase.savePin(enteredPin)
             flow = .verify(existingPin: HashManager.hash(for: enteredPin))
             resetPin()
             view?.showInfo("Enter PIN")
@@ -110,7 +123,7 @@ extension MasterPasswordPresenter {
             
             router.openListPasswordVC()
         } else {
-            view?.showToastVC(message: "PINs do not match. Try again.", type: .error)
+            view?.showToastVC(message: "PINs do not match. Try again.", type: .error, completion: nil)
             flow = .createFirst
             resetPin()
             view?.showInfo("Create new PIN")

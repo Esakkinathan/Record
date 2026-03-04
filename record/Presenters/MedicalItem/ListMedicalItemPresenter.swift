@@ -16,11 +16,15 @@ struct MedicalItemCellViewModel {
 }
 
 class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
-    
+    var endDate: Date? {
+        medical.endDate
+    }
     var isEmpty: Bool {
         visibleItems.isEmpty
     }
-    
+    var canAdd: Bool {
+        medical.status
+    }
     weak var view: ListMedicalItemViewDelegate?
     
     let router: ListMedicalItemRouterProtocol
@@ -30,32 +34,32 @@ class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
     var title: String {
         kind.rawValue
     }
-    var selectedDate = Date().start
+    var selectedDate: Date
     
     var selectedSchedule: MedicalSchedule?
     
-    let addUseCase: AddMedicalItemUseCaseProtocol
-    let updateUseCase: UpdateMedicalItemUseCaseProtocol
-    let deleteUseCase: DeleteMedicalItemUseCaseProtocol
-    let fetchUseCase: FetchMedicalItemUseCaseProtocol
+    let addUseCase: AddMedicineUseCaseProtocol
+    let updateUseCase: UpdateMedicineUseCaseProtocol
+    let deleteUseCase: DeleteMedicineUseCaseProtocol
+    let fetchUseCase: FetchMedicineUseCaseProtocol
     
     let addLogUseCase: AddLogUseCaseProtocol
     let updateLogUseCase: UpdateLogUseCaseProtocol
     let fetchLogUseCase: FetchLogUseCaseProtocol
     
     
-    var medicalItems: [MedicalItem] = []
-    var visibleItems: [MedicalItem] = []
+    var medicalItems: [Medicine] = []
+    var visibleItems: [Medicine] = []
     
-    var logs: [MedicalIntakeLog] = []
+    var logs: [MedicineIntakeLog] = []
     var medical: Medical
-    var startDate: Date {medical.startDate }
-    var endDate: Date {medical.endDate}
+    var startDate: Date {medical.date }
+    //var endDate: Date {medical.endDate}
     
     var canEdit: Bool {
         return selectedSchedule == nil
     }
-    init(view: ListMedicalItemViewDelegate? = nil, router: ListMedicalItemRouterProtocol, kind: MedicalKind, addUseCase: AddMedicalItemUseCaseProtocol, updateUseCase: UpdateMedicalItemUseCaseProtocol, deleteUseCase: DeleteMedicalItemUseCaseProtocol, fetchUseCase: FetchMedicalItemUseCaseProtocol, medical: Medical, addLogUseCase: AddLogUseCaseProtocol, updateLogUseCase: UpdateLogUseCaseProtocol, fetchLogUseCase: FetchLogUseCaseProtocol) {
+    init(view: ListMedicalItemViewDelegate? = nil, router: ListMedicalItemRouterProtocol, kind: MedicalKind, addUseCase: AddMedicineUseCaseProtocol, updateUseCase: UpdateMedicineUseCaseProtocol, deleteUseCase: DeleteMedicineUseCaseProtocol, fetchUseCase: FetchMedicineUseCaseProtocol, medical: Medical, addLogUseCase: AddLogUseCaseProtocol, updateLogUseCase: UpdateLogUseCaseProtocol, fetchLogUseCase: FetchLogUseCaseProtocol) {
         self.view = view
         self.router = router
         self.kind = kind
@@ -67,6 +71,7 @@ class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
         self.addLogUseCase = addLogUseCase
         self.updateLogUseCase = updateLogUseCase
         self.fetchLogUseCase = fetchLogUseCase
+        self.selectedDate = medical.status ? Date().start : medical.endDate ?? Date().start
     }
     
     func changeSelectedDate(_ date: Date) {
@@ -94,12 +99,12 @@ extension ListMedicalItemPresenter {
         return visibleItems.count
     }
     
-    func medicalItem(at index: Int) ->  MedicalItem {
+    func medicalItem(at index: Int) ->  Medicine {
         return visibleItems[index]
     }
     
     func medicalItemViewModel(at index: Int) -> MedicalItemCellViewModel {
-        return makeViewModel(medicalItem: medicalItem(at: index))
+        return makeViewModel(medicine: medicalItem(at: index))
     }
     
     func loadMedicalItems() {
@@ -107,7 +112,7 @@ extension ListMedicalItemPresenter {
     }
     
     func loadLogs() {
-        var temp: [MedicalIntakeLog] = []
+        var temp: [MedicineIntakeLog] = []
         let date = Calendar.current.startOfDay(for: selectedDate)
         for item in self.medicalItems {
             temp += fetchLogUseCase.execute(medicalId: item.id, date: date)
@@ -128,13 +133,13 @@ extension ListMedicalItemPresenter {
         view?.reloadData()
     }
     
-    func addMedicalItem(_ medicalItem: MedicalItem) {
-        addUseCase.execute(medicalItem: medicalItem, medicalId: medical.id)
+    func addMedicalItem(_ medicine: Medicine) {
+        addUseCase.execute(medicine: medicine, medicalId: medical.id)
         reloadItems()
     }
     
-    func updateMedicalItem(_ medicalItem: MedicalItem) {
-        updateUseCase.execute(medicalItem: medicalItem)
+    func updateMedicalItem(_ medicine: Medicine) {
+        updateUseCase.execute(medicine: medicine)
         reloadItems()
     }
     
@@ -145,22 +150,24 @@ extension ListMedicalItemPresenter {
     }
     
     func updateEndDate(at index: Int) {
-        let medicalItem = medicalItem(at: index)
-        updateUseCase.execute(medicalItemId: medicalItem.id, date: selectedDate.end)
+        let medicine = medicalItem(at: index)
+        let date = selectedDate.end
+        medicine.setStatus(value: true, date: date)
+        updateUseCase.execute(medicineId: medicine.id, value: true , date: date)
         reloadItems()
     }
     
     func editMedicalItem(at index: Int) {
         let medicalItem = medicalItem(at: index)
         router.openAddMedicalItemVC(mode: .edit(medicalItem), medical: medical, kind: medicalItem.kind, startDate: selectedDate.start) { [weak self] updatedMedicalItem in
-            self?.updateMedicalItem(updatedMedicalItem as! MedicalItem)
+            self?.updateMedicalItem(updatedMedicalItem as! Medicine)
         }
 
     }
     
     func gotoAddMedicalItemScreen() {
         router.openAddMedicalItemVC(mode: .add, medical: medical, kind: kind, startDate: selectedDate.start) { [weak self] medicalItem in
-            self?.addMedicalItem(medicalItem as! MedicalItem)
+            self?.addMedicalItem(medicalItem as! Medicine)
         }
     }
 }
@@ -168,26 +175,28 @@ extension ListMedicalItemPresenter {
 
 extension ListMedicalItemPresenter {
     
-    func makeViewModel(medicalItem: MedicalItem) -> MedicalItemCellViewModel {
+    func makeViewModel(medicine: Medicine) -> MedicalItemCellViewModel {
         
         let isTaken = logs.first {
-            $0.medicalItemId == medicalItem.id &&
+            $0.medicineId == medicine.id &&
             Calendar.current.isDate($0.date, inSameDayAs: selectedDate) &&
             $0.schedule == selectedSchedule
         }?.taken ?? false
-        return .init(id: medicalItem.id, text1: medicalItem.name, text2: medicalItem.instruction.value, text3: medicalItem.dosage, canShowToggle: selectedSchedule != nil, toggled: isTaken)
+        return .init(id: medicine.id, text1: medicine.name, text2: medicine.instruction.value, text3: medicine.dosage, canShowToggle: selectedSchedule != nil, toggled: isTaken)
     }
 
     
-    private func isItemActiveOnSelectedDate(_ item: MedicalItem) -> Bool {
+    private func isItemActiveOnSelectedDate(_ item: Medicine) -> Bool {
 
         let calendar = Calendar.current
-
-        let start = calendar.startOfDay(for: item.startDate)
-        let end = calendar.startOfDay(for: item.endDate)
         let selected = calendar.startOfDay(for: selectedDate)
-
-        return selected >= start && selected <= end
+        let start = calendar.startOfDay(for: item.startDate)
+        guard let endDate = item.endDate else {
+            return selected >= start
+        }
+        let end = calendar.startOfDay(for: endDate)
+        print(start.toString(), end.toString(), selected.toString())
+        return selected >= start &&  selected <= end
     }
 
     private func buildVisibleItems() {
@@ -203,15 +212,54 @@ extension ListMedicalItemPresenter {
         visibleItems = filtered
 
     }
+    func markAsTaken(at index: Int) {
+        let medicine = medicalItem(at: index)
+        let calendar = Calendar.current
+        let selected = selectedDate.start
+        for schedule in medicine.shedule {
+            let log = logs.first { log in
+                let sameItem = log.medicineId == medicine.id
+                let sameDay = calendar.isDate(log.date, inSameDayAs: selected)
+                let sameSchedule = log.schedule == schedule
+                return sameItem && sameDay && sameSchedule
+            }
+            if let existing = log {
+                if !existing.taken {
+                    let updated = MedicineIntakeLog(
+                        id: existing.id,
+                        medicineId: medicine.id,
+                        date: selected,
+                        schedule: schedule,
+                        taken: true
+                    )
+
+                    updateLogUseCase.execute(log: updated)
+                }
+
+            } else {
+                let newLog = MedicineIntakeLog(
+                    id: 0,
+                    medicineId: medicine.id,
+                    date: selected,
+                    schedule: schedule,
+                    taken: true
+                )
+                addLogUseCase.execute(log: newLog)
+            }
+        }
+        loadLogs()
+        buildVisibleItems()
+        //view?.reloadData()
+    }
     
     func itemToggledAt(_ index: Int, value: Bool) {
         guard let selectedSchedule else {return}
-        let item = visibleItems[index]
+        let item = medicalItem(at: index)
         let calendar = Calendar.current
-        let selected = Calendar.current.startOfDay(for: selectedDate)
+        let selected = selectedDate.start
 
         let log = logs.first { log in
-            let sameItem = log.medicalItemId == item.id
+            let sameItem = log.medicineId == item.id
             let sameDay = calendar.isDate(log.date, inSameDayAs: selected)
             let sameSchedule = log.schedule == selectedSchedule
 
@@ -219,9 +267,9 @@ extension ListMedicalItemPresenter {
         }
         
         if let existing = log {
-            let updated = MedicalIntakeLog(
+            let updated = MedicineIntakeLog(
                 id: existing.id,
-                medicalItemId: item.id,
+                medicineId: item.id,
                 date: selected,
                 schedule: selectedSchedule,
                 taken: value
@@ -230,9 +278,9 @@ extension ListMedicalItemPresenter {
             updateLogUseCase.execute(log: updated)
 
         } else {
-            let newLog = MedicalIntakeLog(
+            let newLog = MedicineIntakeLog(
                 id: 0,
-                medicalItemId: item.id,
+                medicineId: item.id,
                 date: selected,
                 schedule: selectedSchedule,
                 taken: value
@@ -250,10 +298,11 @@ extension ListMedicalItemPresenter {
         let value = canEdit
         if value {
             let medicalItem = medicalItem(at: index)
-            router.openDetailMedicalItemVc(medicalItem: medicalItem)
+            router.openDetailMedicalItemVc(medicalItem: medicalItem, medical: medical) { [weak self] updated in
+                self?.updateMedicalItem(updated as! Medicine)
+            }
         } else {
             view?.showToastVC(message: "Clickable at All Category Page", type: .info)
         }
     }
-
 }

@@ -100,8 +100,8 @@ struct FormField {
 }
 
 protocol FormFieldPresenterProtocol {
-    var title: String {get}
-    
+    var title: String { get }
+    var maxFiles: Int { get }
     func field(at index: Int) -> FormField
     func numberOfFields() -> Int
     func updateValue(_ value: Any?, at index: Int)
@@ -110,20 +110,16 @@ protocol FormFieldPresenterProtocol {
     
     func cancelClicked()
     func saveClicked()
-    //func didSelectOption(at index: Int)
     func selectClicked(at index: Int)
     func formButtonClicked()
     
     func uploadDocument(at index: Int, type: DocumentType)
     func viewDocument(at index: Int)
     func removeDocument(at index: Int)
-    func didPickDocument(url: URL)
-    func didPickDocuments(urls: [URL])
-    func saveImage(_ image: UIImage)
     func openCameraClicked()
     func processImages(from images: [UIImage])
+    func processFile(urls: [URL])
     func exitScreen()
-    //func recognizeText(from image: UIImage)
 }
 
     

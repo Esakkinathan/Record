@@ -17,7 +17,6 @@ class PillButton: UIButton {
             invalidateIntrinsicContentSize()
         }
     }
-    
     init(title: String, image: UIImage?) {
         self.pillTitle = title
         self.pillImage = image

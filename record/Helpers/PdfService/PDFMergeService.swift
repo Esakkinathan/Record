@@ -34,39 +34,39 @@ enum PDFMergeError: LocalizedError {
 
 
 final class PDFMergerService {
-    
-    
+            
     func mergePDFs(from urls: [URL]) throws -> Data {
         
         guard !urls.isEmpty else {
             throw PDFMergeError.emptyInput
         }
         
-        guard urls.count <= PDFMergeError.maxFiles else {
-            throw PDFMergeError.moreThanAllowed
-        }
+        let outputData = NSMutableData()
         
-        let mergedDocument = PDFDocument()
-        var pageIndex = 0
-        
-        for url in urls {
-            guard let document = PDFDocument(url: url) else {
-                throw PDFMergeError.invalidPDF
-            }
-            
-            for i in 0..<document.pageCount {
-                if let page = document.page(at: i) {
-                    mergedDocument.insert(page, at: pageIndex)
-                    pageIndex += 1
-                }
-            }
-        }
-        
-        guard let data = mergedDocument.dataRepresentation() else {
+        guard let consumer = CGDataConsumer(data: outputData as CFMutableData),
+              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else {
             throw PDFMergeError.failedToGenerateData
         }
         
-        return data
+        for url in urls {
+            guard let pdf = CGPDFDocument(url as CFURL) else {
+                throw PDFMergeError.invalidPDF
+            }
+            
+            for pageNumber in 1...pdf.numberOfPages {
+                guard let page = pdf.page(at: pageNumber) else { continue }
+                
+                var mediaBox = page.getBoxRect(.mediaBox)
+                context.beginPage(mediaBox: &mediaBox)
+                context.drawPDFPage(page)
+                context.endPage()
+            }
+        }
+        
+        context.closePDF()
+        
+        return outputData as Data
     }
+    
 }
 

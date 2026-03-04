@@ -64,7 +64,7 @@ class FormFieldViewController: KeyboardNotificationViewController {
         tableView.estimatedRowHeight = 150
         return tableView
     }()
-    let spinner = UIActivityIndicatorView(style: .large)
+    //let spinner = UIActivityIndicatorView(style: .large)
     var presenter: FormFieldPresenterProtocol!
     var onAdd: ((Persistable) -> Void)?
     var onEdit: ((Persistable) -> Void)?
@@ -91,8 +91,8 @@ class FormFieldViewController: KeyboardNotificationViewController {
         presentationController?.delegate = self
         tableView.dataSource = self
         
-        spinner.center = view.center
-        view.addSubview(spinner)
+//        spinner.center = view.center
+//        view.addSubview(spinner)
 
         tableView.register(FormSelectField.self, forCellReuseIdentifier: FormSelectField.identifier)
         tableView.register(FormTextField.self, forCellReuseIdentifier: FormTextField.identifier)
@@ -145,6 +145,11 @@ class FormFieldViewController: KeyboardNotificationViewController {
         presenter.cancelClicked()
     }
     
+    @objc func saveClicked() {
+        view.endEditing(true)
+        presenter.saveClicked()
+    }
+
     func showExitAlert() {
         let alert = UIAlertController(
             title: "Discard Changes?",
@@ -161,10 +166,6 @@ class FormFieldViewController: KeyboardNotificationViewController {
         present(alert, animated: true)
     }
     
-    @objc func saveClicked() {
-        view.endEditing(true)
-        presenter.saveClicked()
-    }
     
 //    func openScanner() {
 //        guard VNDocumentCameraViewController.isSupported else {
@@ -296,11 +297,11 @@ extension FormFieldViewController: UIDocumentPickerDelegate {
         guard !urls.isEmpty else {
             return
         }
-        guard urls.count <= PDFMergeError.maxFiles else {
+        guard urls.count <= presenter.maxFiles else {
             showError("Maximum of \(PDFMergeError.maxFiles) allowed")
             return
         }
-        presenter.didPickDocuments(urls: urls)
+        presenter.processFile(urls: urls)
     }
 }
 
@@ -354,7 +355,8 @@ extension FormFieldViewController: UIImagePickerControllerDelegate, UINavigation
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
 
         if let image = info[.originalImage] as? UIImage {
-            presenter.saveImage(image)
+            let images: [UIImage] = [image]
+            presenter.processImages(from: images)
         }
 
         picker.dismiss(animated: true)
@@ -460,6 +462,10 @@ extension FormFieldViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: FormDateField.identifier, for: indexPath) as! FormDateField
         
         cell.configure(title: field.label, date: field.value as? Date,isRequired: isFieldRequired(field: field))
+        if !field.gotoNextField {
+            cell.datePicker.maximumDate = Date()
+        }
+        
         
         cell.onValueChange = { [weak self] date in
             self?.presenter.updateValue(date, at: indexPath.row)

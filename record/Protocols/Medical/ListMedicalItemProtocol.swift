@@ -9,12 +9,13 @@ import VTDB
 
 protocol ListMedicalItemPresenterProtocol {
     var canEdit: Bool { get }
+    var canAdd: Bool { get }
     var title: String { get }
     var startDate: Date {get}
-    var endDate: Date {get}
+    var endDate: Date? {get}
     var selectedDate: Date {get}
     func numberOfRows() -> Int
-    func medicalItem(at index: Int) ->  MedicalItem
+    func medicalItem(at index: Int) ->  Medicine
     func deleteMedicalItem(at index: Int)
     func editMedicalItem(at index: Int)
     func gotoAddMedicalItemScreen()
@@ -24,6 +25,7 @@ protocol ListMedicalItemPresenterProtocol {
     func itemToggledAt(_ index: Int, value: Bool)
     func medicalItemViewModel(at index: Int) -> MedicalItemCellViewModel
     func updateEndDate(at index: Int)
+    func markAsTaken(at index: Int)
     func didSelectRow(at index: Int)
     var isEmpty: Bool { get }
 }
@@ -34,7 +36,7 @@ protocol ListMedicalItemViewDelegate: AnyObject {
 }
 
 protocol ListMedicalItemRouterProtocol {
-    func openDetailMedicalItemVc(medicalItem: MedicalItem)
+    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical, onUpdate: @escaping (Persistable) -> Void )
     func openAddMedicalItemVC(mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind, startDate: Date,onAdd: @escaping (Persistable) -> Void)
 
 }

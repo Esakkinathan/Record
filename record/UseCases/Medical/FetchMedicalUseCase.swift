@@ -7,8 +7,8 @@
 
 protocol FetchMedicalUseCaseProtocol {
     func execute() -> [Medical]
-    func fetchDoctors() -> [String]
-    func fetchHospitals() -> [String]
+    func fetchDoctors() -> Set<String>
+    func fetchHospitals() -> Set<String>
 }
 
 
@@ -23,12 +23,17 @@ class FetchMedicalUseCase: FetchMedicalUseCaseProtocol {
     func execute() -> [Medical] {
         return repository.fetchAll()
     }
-    func fetchDoctors() -> [String] {
-        repository.fetchDoctors()
+    
+    func activeMedicals() -> [Medical] {
+        return repository.fetchActiveMedical()
     }
     
-    func fetchHospitals() -> [String] {
-        repository.fetchHospitals()
+    func fetchDoctors() -> Set<String> {
+        return Set(repository.fetchDoctors())
+    }
+    
+    func fetchHospitals() -> Set<String> {
+        return Set(repository.fetchHospitals())
     }
 
 }

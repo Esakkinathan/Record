@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 protocol FetchUtilityUseCaseProtocol {
     func execute() -> [Utility]
 }
@@ -20,3 +20,4 @@ class FetchUtilityUseCase: FetchUtilityUseCaseProtocol {
         return repository.fetchAll()
     }
 }
+*/

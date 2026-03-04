@@ -16,7 +16,7 @@ class SelectionViewController: UIViewController {
     
     let searchController = UISearchController(searchResultsController: nil)
     let notFoundView = NotFoundView()
-        
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavigationBar()
@@ -32,8 +32,9 @@ class SelectionViewController: UIViewController {
         searchController.searchBar.placeholder = "Search"
         searchController.searchBar.searchBarStyle = .minimal
         navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
+        navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
+        navigationItem.largeTitleDisplayMode = .never
     }
     
     func setUpContents() {
@@ -53,6 +54,13 @@ class SelectionViewController: UIViewController {
 
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.largeTitleDisplayMode = .never
+        navigationController?.navigationBar.sizeToFit()
+
+    }
+    
     func showAddOptionAlert(_ value: String = "") {
         let alert = UIAlertController(
             title: "Add new Option",
@@ -66,28 +74,13 @@ class SelectionViewController: UIViewController {
             $0.returnKeyType = .done
             $0.autocorrectionType = .no
             $0.keyboardType = .alphabet
+            $0.delegate = self
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak alert] _ in
-            guard let self = self, let alert = alert else { return }
-            alert.textFields?[0].resignFirstResponder()
-            let enteredText = alert.textFields?[0].text ?? ""
-            if enteredText.isEmpty {
-                showToast(message: "Add Option", type: .error)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    self.addOption()
-                }
-                return
-
-            }
-            if enteredText.count < 4 || enteredText.count > 30 {
-                showToast(message: "Length Should be 4 to 30", type: .error)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    self.showAddOptionAlert(enteredText)
-                }
-                return
-            }
-            selectedData(text: enteredText)
+            alert?.textFields?[0].resignFirstResponder()
+            let text = alert?.textFields?[0].text
+            self?.presenter.validateText(enteredText: text)
         })
         present(alert, animated: true)
 
@@ -99,6 +92,26 @@ class SelectionViewController: UIViewController {
     
 }
 
+extension SelectionViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
+        let maxCount = presenter.maxCount
+        guard let currentText = textField.text,
+              let textRange = Range(range, in: currentText)
+        else { return true }
+        
+        let updatedText = currentText.replacingCharacters(in: textRange, with: string)
+        
+        if updatedText.count > maxCount {
+            showToast(message: "Maximum \(maxCount) characters allowed", type: .warning)
+            return false
+        }
+        
+        return true
+    }
+}
+
 extension SelectionViewController: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
         guard let text = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) else {return}
@@ -107,6 +120,10 @@ extension SelectionViewController: UISearchResultsUpdating, UISearchBarDelegate 
 
 }
 extension SelectionViewController: UITableViewDataSource, UITableViewDelegate, SearchViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         presenter.numberOfFields()
     }

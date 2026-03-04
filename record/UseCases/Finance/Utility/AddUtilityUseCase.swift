@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 
 protocol AddUtilityUseCaseProtocol {
     func execute(utility: Utility)
@@ -21,3 +21,4 @@ class AddUtilityUseCase: AddUtilityUseCaseProtocol {
         repository.add(utility: utility)
     }
 }
+*/

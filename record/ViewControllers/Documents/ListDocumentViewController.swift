@@ -224,7 +224,7 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
                                           image: UIImage(systemName: image)) { [weak self] _ in
                 self?.presenter.toggleClicked(at: indexPath.row)
             }
-
+            
             let delete = UIAction(title: AppConstantData.delete,
                                   image: UIImage(systemName: IconName.trash),
                                   attributes: .destructive) { [weak self] _ in
@@ -234,9 +234,9 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
             return UIMenu(title: "", children: [restrictAction,delete])
         }
     }
-
     
-
+    
+    
     func showAlertOnShare(_ indexPath: IndexPath) {
         
         let alert = UIAlertController(
@@ -244,19 +244,19 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
             message: "How would you like to share?",
             preferredStyle: .actionSheet
         )
-
+        
         alert.addAction(UIAlertAction(title: "Without Lock", style: .default) { [weak self]_ in
             self?.presenter.shareDocument(at: indexPath.row)
         })
-
+        
         alert.addAction(UIAlertAction(title: "With Lock", style: .default) { [weak self] _ in
             self?.askForPasswordAndShare(at: indexPath.row)
         })
-
+        
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
+        
         present(alert, animated: true)
-
+        
     }
     
     func askForPasswordAndShare(at index: Int) {
@@ -269,11 +269,14 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
             $0.placeholder = "Password"
             $0.isSecureTextEntry = true
             $0.returnKeyType = .next
+            $0.delegate = self
         }
         alert.addTextField {
             $0.placeholder = "Confirm Password"
             $0.isSecureTextEntry = true
             $0.returnKeyType = .done
+            $0.delegate = self
+            
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Share", style: .default) { [weak self, weak alert] _ in
@@ -317,7 +320,28 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
             self.presenter.shareDocumentWithLock(at: index, password: password)
         })
         present(alert, animated: true)
-    }}
+    }
+}
+
+extension ListDocumentViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
+        let max = 8
+        guard let currentText = textField.text,
+              let textRange = Range(range, in: currentText)
+        else { return true }
+        
+        let updatedText = currentText.replacingCharacters(in: textRange, with: string)
+        
+        if updatedText.count > max {
+            showToast(message: "Maximum \(max) characters allowed", type: .warning)
+            return false
+        }
+        
+        return true
+    }
+}
 
 
 extension ListDocumentViewController: UICollectionViewDelegate {
@@ -329,6 +353,7 @@ extension ListDocumentViewController: UICollectionViewDelegate {
 extension ListDocumentViewController: DocumentNavigationDelegate {
     
     func presentVC(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
         present(vc, animated: true)
     }
     

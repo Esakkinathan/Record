@@ -13,25 +13,25 @@ class MedicalIntakeLogRepository: MedicalIntakeLogRepositoryProtocol {
     init() {
     }
     
-    func add(log: MedicalIntakeLog) {
+    func add(log: MedicineIntakeLog) {
         let columns: [String: Any?] = [
-            MedicalIntakeLog.medicalItemIdC: log.medicalItemId,
-            MedicalIntakeLog.dateC: log.date,
-            MedicalIntakeLog.scheduleC: log.schedule.rawValue,
-            MedicalIntakeLog.takenC: log.taken,
+            MedicineIntakeLog.medicineIdC: log.medicineId,
+            MedicineIntakeLog.dateC: log.date,
+            MedicineIntakeLog.scheduleC: log.schedule.rawValue,
+            MedicineIntakeLog.takenC: log.taken,
         ]
         
-        db.insertInto(tableName: MedicalIntakeLog.databaseTableName, values: columns)
+        db.insertInto(tableName: MedicineIntakeLog.databaseTableName, values: columns)
 
     }
-    func update(log: MedicalIntakeLog) {
+    func update(log: MedicineIntakeLog) {
         db.updateInto(data: log)
     }
 
-    func fetch(medicalId: Int,date: Date) -> [MedicalIntakeLog] {
+    func fetch(medicalId: Int,date: Date) -> [MedicineIntakeLog] {
         return db.fetchLog(medicalId: medicalId, date: date)
     }
-    func fetch(medicalId: Int) -> [MedicalIntakeLog] {
+    func fetch(medicalId: Int) -> [MedicineIntakeLog] {
         return db.fetchLog(medicalId: medicalId)
     }
 

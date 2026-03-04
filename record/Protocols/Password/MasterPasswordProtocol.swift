@@ -10,6 +10,8 @@ protocol MasterPasswordPresenterProtocol {
     func didTapDelete()
     func didTapExit()
     func resetPin()
+    func didClickClear()
+    func viewWillAppear()
 
 }
 
@@ -18,7 +20,10 @@ protocol MasterPasswordViewDelegate: AnyObject {
     func showInfo(_ message: String)
     func clearPin()
     func dismiss()
-    func showToastVC(message: String, type: ToastType)
+    func showToastVC(message: String, type: ToastType, completion: (() -> Void)? ) 
+    func showLoading()
+    func stopLoading()
+    func exit()
 
 }
 

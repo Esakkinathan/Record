@@ -14,8 +14,11 @@ enum ValidationRules: Equatable {
     case numeric
     case alphabetic
     case alphanumeric
+    case singleAlphanumberAllowed
+    case alphanumberAllowed
     case email
     case phone
+    case url
     
     case regex(String, message: String)
     

@@ -7,7 +7,7 @@
 import UIKit
 import PDFKit
 
-struct Medicine {
+struct MedicineLog {
     let date: Date
     let schedule: MedicalSchedule
     let name: String
@@ -16,7 +16,7 @@ struct Medicine {
 
 class PdfExportUseCase {
 
-    let fetchMedicalItemUseCase = FetchMedicalItemUseCase(repository: MedicalItemRepository())
+    let fetchMedicalItemUseCase = FetchMedicineUseCase(repository: MedicineRepository())
     let fetchMedicalLogUseCase = FetchLogUseCase(repository: MedicalIntakeLogRepository())
 
     func datesBetween(start: Date, end: Date) -> [Date] {
@@ -36,30 +36,31 @@ class PdfExportUseCase {
         return dates
     }
     
-    func fetchLog(medicalItem: MedicalItem) -> [Medicine] {
-        let logs: [MedicalIntakeLog] = fetchMedicalLogUseCase.execute(medicalId: medicalItem.id)
+    func fetchLog(medicine: Medicine) -> [MedicineLog] {
+        let logs: [MedicineIntakeLog] = fetchMedicalLogUseCase.execute(medicalId: medicine.id)
         var logDict: [String: Bool] = [:]
         for log in logs {
-            let key = "\(log.medicalItemId)_\(log.date.timeIntervalSince1970)_\(log.schedule.rawValue)"
+            let key = "\(log.medicineId)_\(log.date.timeIntervalSince1970)_\(log.schedule.rawValue)"
             logDict[key] = log.taken
         }
 
-        var medicines: [Medicine] = []
-        let days = datesBetween(start: medicalItem.startDate, end: medicalItem.endDate)
+        var medicinesLog: [MedicineLog] = []
+        let endDate = medicine.endDate
+        let days = datesBetween(start: medicine.startDate, end: endDate == nil ? Date() : endDate!)
         for day in days {
             if day > Date() {continue}
-            for schedule in medicalItem.shedule {
-                let key = "\(medicalItem.id)_\(day.timeIntervalSince1970)_\(schedule.rawValue)"
+            for schedule in medicine.shedule {
+                let key = "\(medicine.id)_\(day.timeIntervalSince1970)_\(schedule.rawValue)"
                 let isTaken = logDict[key] ?? false
-                medicines.append(.init(date: day, schedule: schedule, name: medicalItem.name, status: isTaken))
+                medicinesLog.append(.init(date: day, schedule: schedule, name: medicine.name, status: isTaken))
 
             }
         }
-        return medicines
+        return medicinesLog
     }
     
-    func fetchLog(medicalItemDict: [MedicalKind:[MedicalItem]])-> [MedicalKind:[Medicine]] {
-        var logs: [MedicalIntakeLog] = []
+    func fetchLog(medicalItemDict: [MedicalKind:[Medicine]])-> [MedicalKind:[MedicineLog]] {
+        var logs: [MedicineIntakeLog] = []
         
         for (_, item) in medicalItemDict {
             for data in item {
@@ -68,17 +69,18 @@ class PdfExportUseCase {
         }
         var logDict: [String: Bool] = [:]
         for log in logs {
-            let key = "\(log.medicalItemId)_\(log.date.timeIntervalSince1970)_\(log.schedule.rawValue)"
+            let key = "\(log.medicineId)_\(log.date.timeIntervalSince1970)_\(log.schedule.rawValue)"
             logDict[key] = log.taken
         }
-        var medicines: [MedicalKind:[Medicine]] = [:]
+        var medicines: [MedicalKind:[MedicineLog]] = [:]
         for (kind, item) in medicalItemDict {
             medicines[kind] = []
             let temp = item.sorted {
                 $0.startDate < $1.startDate
             }
             for data in temp {
-                let days = datesBetween(start: data.startDate, end: data.endDate)
+                let endDate = data.endDate
+                let days = datesBetween(start: data.startDate, end: endDate == nil ? Date() : endDate!)
                 for day in days {
                     if day > Date() { break }
                     for schedule in data.shedule {
@@ -93,9 +95,9 @@ class PdfExportUseCase {
         return medicines
 
     }
-    func fetchData(medical: Medical) -> [MedicalKind:[MedicalItem]] {
+    func fetchData(medical: Medical) -> [MedicalKind:[Medicine]] {
 
-        var medicalItemDict: [MedicalKind:[MedicalItem]] = [:]
+        var medicalItemDict: [MedicalKind:[Medicine]] = [:]
         for kind in MedicalKind.allCases {
             medicalItemDict[kind] = fetchMedicalItemUseCase.execute(id: medical.id, kind: kind)
         }
@@ -162,7 +164,7 @@ class PdfExportUseCase {
 
             details.append(.init(title: "Title", value: medical.title))
             details.append(.init(title: "Recorded At", value: medical.date.toString()))
-            details.append(.init(title: "Duration", value: medical.durationText))
+            //details.append(.init(title: "Duration", value: medical.durationText))
             details.append(.init(title: "Type", value: medical.type.rawValue))
 
             if let hospital = medical.hospital {
@@ -270,8 +272,8 @@ class PdfExportUseCase {
         yPosition += boundingRect.height + 40
     }
     private func drawMedicineSections(
-        medicines: [MedicalKind: [Medicine]],
-        medicalItems: [MedicalKind: [MedicalItem]],
+        medicines: [MedicalKind: [MedicineLog]],
+        medicalItems: [MedicalKind: [Medicine]],
         pageWidth: CGFloat,
         pageHeight: CGFloat,
         margin: CGFloat,

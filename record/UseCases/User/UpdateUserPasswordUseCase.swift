@@ -15,7 +15,7 @@ class UpdateUserPasswordUseCase: UpdateUserPasswordUseCaseProtocol {
         self.repository = repository
     }
     func execute(userId: Int, password: String)  {
-        let hashPassword = HashManager.hash(for: password)
+        //let hashPassword = HashManager.hash(for: password)
         //repository.updatePassword(userId: userId, newHash: hashPassword)
     }
 }

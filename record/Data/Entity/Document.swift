@@ -127,7 +127,7 @@ enum DefaultDocument: String, CaseIterable {
         case .passport:
             rules += [.minLength(8),.maxLength(10),.alphanumeric]
         case .drivingLicense:
-            rules += [.alphanumeric,.minLength(10),.maxValue(16)]
+            rules += [.alphanumeric,.minLength(10),.maxLength(16)]
         case .vehicleRegistrationCertificate:
             rules += [.alphanumeric,.minLength(8),.maxLength(14), ]
         default:

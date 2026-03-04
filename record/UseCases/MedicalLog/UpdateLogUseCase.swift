@@ -6,7 +6,7 @@
 //
 
 protocol UpdateLogUseCaseProtocol {
-    func execute(log: MedicalIntakeLog)
+    func execute(log: MedicineIntakeLog)
 }
 class UpdateLogUseCase: UpdateLogUseCaseProtocol {
     private let repository: MedicalIntakeLogRepositoryProtocol
@@ -15,7 +15,7 @@ class UpdateLogUseCase: UpdateLogUseCaseProtocol {
         self.repository = repository
     }
     
-    func execute(log: MedicalIntakeLog) {
+    func execute(log: MedicineIntakeLog) {
         repository.update(log: log)
     }
 

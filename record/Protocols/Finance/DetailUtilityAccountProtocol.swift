@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 12/02/26.
 //
-
+/*
 import Foundation
 import VTDB
 protocol DetailUtilityAccountPresenterProtocol {
@@ -51,3 +51,4 @@ struct DetailUtilityAccountTextSectionRow {
     var title: String
     var value: String
 }
+*/

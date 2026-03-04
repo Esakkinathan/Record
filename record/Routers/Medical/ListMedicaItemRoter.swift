@@ -28,8 +28,9 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
         viewController?.presentVC(navVc)
 
     }
-    func openDetailMedicalItemVc(medicalItem: MedicalItem) {
-        let vc = DetailMedicalItemAssembler.make(medicalItem: medicalItem)
+    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical, onUpdate: @escaping (Persistable) -> Void ) {
+        let vc = DetailMedicalItemAssembler.make(medicalItem: medicalItem, medical: medical)
+        vc.onEdit = onUpdate
         viewController?.push(vc)
     }
 

@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 protocol DeleteUtilityAccountUseCaseProtocol {
     func execute(id: Int)
 }
@@ -21,3 +21,4 @@ class DeleteUtilityAccountUseCase: DeleteUtilityAccountUseCaseProtocol {
     }
 
 }
+*/

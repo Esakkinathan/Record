@@ -65,7 +65,7 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
         loadMedical()
     }
     
-    func getActiveSummary() -> DashBoardData {
+    func getActiveSummary() -> DashboardViewModel {
         let summary = ActiveMedicalUseCase().execute(medical: allMedicals)
         return summary
     }

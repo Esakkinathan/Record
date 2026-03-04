@@ -10,11 +10,11 @@ class ListMedicalItemAssembler {
     static func make(kind: MedicalKind, medical: Medical) -> ListMedicalItemViewController {
         let vc = ListMedicalItemViewController()
         let router = ListMedicaItemRouter(viewController: vc)
-        let repo = MedicalItemRepository()
-        let addUseCase = AddMedicalItemUseCase(repository: repo)
-        let updateUseCase = UpdateMedicalItemUseCase(repository: repo)
-        let deleteUseCase = DeleteMedicalItemUseCase(repository: repo)
-        let fetchUseCase = FetchMedicalItemUseCase(repository: repo)
+        let repo = MedicineRepository()
+        let addUseCase = AddMedicineUseCase(repository: repo)
+        let updateUseCase = UpdateMedicineUseCase(repository: repo)
+        let deleteUseCase = DeleteMedicineUseCase(repository: repo)
+        let fetchUseCase = FetchMedicineUseCase(repository: repo)
 
         let logRepo = MedicalIntakeLogRepository()
         

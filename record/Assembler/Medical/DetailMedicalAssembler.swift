@@ -10,7 +10,8 @@ class DetailMedicalAssembler {
     static func make(medical: Medical) ->  DetailMedicalViewController {
         let vc = DetailMedicalViewController()
         let router = DetailMedicalRouter(viewController: vc)
-        let presenter = DetailMedicalPresenter(medical: medical, view: vc, router: router)
+        let updateUseCase = UpdateMedicalUseCase(repository: MedicalRepository())
+        let presenter = DetailMedicalPresenter(medical: medical, view: vc, router: router, updateUseCase: updateUseCase)
         vc.presenter = presenter
         return vc
         

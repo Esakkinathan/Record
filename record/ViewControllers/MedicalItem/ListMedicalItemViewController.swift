@@ -43,7 +43,9 @@ class ListMedicalItemViewController: UIViewController {
     func setUpNavigationBar() {
         title = presenter.title
         navigationController?.navigationBar.isTranslucent = false
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        navigationItem.rightBarButtonItem = addButton
+        addButton.isEnabled = presenter.canAdd
         navigationItem.largeTitleDisplayMode = .never
     }
     
@@ -101,7 +103,12 @@ extension ListMedicalItemViewController: DateNavigatorViewDelegate {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .compact
         picker.minimumDate = presenter.startDate
-        picker.maximumDate = presenter.endDate < Date() ? presenter.endDate : Date()
+        let endDate = presenter.endDate
+        if let endDate = endDate {
+            picker.maximumDate =  endDate
+        } else {
+            picker.maximumDate =  Date()
+        }
         picker.date = current
 
         let alert = UIAlertController(
@@ -141,8 +148,7 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let medical = presenter.medicalItemViewModel(at: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: ListMedicalItemViewCell.identifier, for: indexPath) as! ListMedicalItemViewCell
-        cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, canShow: medical.canShowToggle, state: medical.toggled)
-        cell.onToggleChanged = { [weak self] value in
+        cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, canShow: medical.canShowToggle, state: medical.toggled){ [weak self] value in
             self?.presenter.itemToggledAt(indexPath.row, value: value)
         }
         return cell
@@ -162,13 +168,13 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     }
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let editAction = UIContextualAction(style: .normal, title: AppConstantData.edit) { [weak self] _, _, completion in
-            self?.presenter.editMedicalItem(at: indexPath.row)
+        let markAction = UIContextualAction(style: .normal, title: "Mark as taken") { [weak self] _, _, completion in
+            self?.presenter.markAsTaken(at: indexPath.row)
             completion(true)
         }
-        
-        editAction.image = UIImage(systemName: IconName.edit)
-        let swipeAction = UISwipeActionsConfiguration(actions: [editAction])
+
+        markAction.image = UIImage(systemName: IconName.checkmark)
+        let swipeAction = UISwipeActionsConfiguration(actions: [markAction])
         swipeAction.performsFirstActionWithFullSwipe = true
         return swipeAction
 
@@ -202,6 +208,7 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
         }
         
         deleteAction.image = UIImage(systemName: IconName.trash)
+        
         let swipeAction = UISwipeActionsConfiguration(actions: [deleteAction])
         swipeAction.performsFirstActionWithFullSwipe = true
         return swipeAction
@@ -215,6 +222,7 @@ extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
     }
     
     func reloadData() {
+        
         tableView.reloadData()
         if presenter.isEmpty {
             tableView.setEmptyView(image: "tray.full", title: "No \(presenter.title)s", subtitle: "Tap + on top to create your first \(presenter.title).")
@@ -231,6 +239,7 @@ extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
 extension ListMedicalItemViewController: DocumentNavigationDelegate {
     
     func presentVC(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
         present(vc, animated: true)
     }
     

@@ -12,12 +12,13 @@ class ListMedicalViewController: CustomSearchBarController {
         let view = UITableView(frame: .zero, style: .insetGrouped)
         view.contentInsetAdjustmentBehavior = .automatic
         view.rowHeight = UITableView.automaticDimension
+        view.backgroundColor = AppColor.background
         view.estimatedRowHeight = 100
         return view
     }()
     
     
-    let activeTreatementView = InfoCardView()
+    //let activeTreatementView = InfoCardView()
     let todayMedicineView = InfoCardView()
     let categorySelector: CategorySelectorView =  {
         let view = CategorySelectorView(frame: .zero, options: MedicalType.getList(), images: MedicalType.getImage())
@@ -30,19 +31,29 @@ class ListMedicalViewController: CustomSearchBarController {
     let identifier = "ListMedicalTabelViewCell"
     var searchButton: UIBarButtonItem!
 
+    private let dashboardContainer = UIView()
+    private var dashboardHeightConstraint: NSLayoutConstraint!
+
+    // Cached natural height of the dashboard card
+    private var dashboardNaturalHeight: CGFloat = 0
+    private let headerWrapper = UIView()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
+        presenter.viewDidLoad()
         setUpNavigationBar()
         setUpContents()
         setupTableHeader()
+        
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        presenter.viewDidLoad()
+        
         let summary = presenter.getActiveSummary()
-        todayMedicineView.configure(section: summary.row1)
-        activeTreatementView.configure(section: summary.row2)
+        todayMedicineView.configure(dashboard: summary,icon: UIImage(systemName: "list.clipboard.fill"), subtitle: DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none,), iconTint: SettingsManager.shared.accent.color)
+        categorySelector.applyTint()
+        //activeTreatementView.configure(section: summary.row2)
 
     }
     
@@ -76,39 +87,62 @@ class ListMedicalViewController: CustomSearchBarController {
     
     
     func setUpContents() {
-        
-        view.backgroundColor = AppColor.background
         view.add(tableView)
         tableView.dataSource = self
         tableView.delegate = self
+
         categorySelector.onSelect = { [weak self] text in
             self?.presenter.didSelectCategory(text)
         }
-        
+        todayMedicineView.onBadgeTapped = { [weak self] rowModel, segment in
+            guard let self else { return }
+            let medicines = segment == .completed ? rowModel.completed : rowModel.remaining
+            let popup = MedicinePopupViewController(
+                scheduleName: rowModel.schedule.rawValue,
+                segment: segment,
+                medicines: medicines
+            )
+            self.present(popup, animated: true)
+        }
+
         NSLayoutConstraint.activate([
-                        
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
-    
+    private var dashboardTopConstraint: NSLayoutConstraint?
+
     private func setupTableHeader() {
-        
+        let padding = PaddingSize.width
+
+        dashboardContainer.clipsToBounds = true
+        if todayMedicineView.superview == nil {
+            dashboardContainer.add(todayMedicineView)
+            NSLayoutConstraint.activate([
+                todayMedicineView.topAnchor.constraint(equalTo: dashboardContainer.topAnchor),
+                todayMedicineView.leadingAnchor.constraint(equalTo: dashboardContainer.leadingAnchor),
+                todayMedicineView.trailingAnchor.constraint(equalTo: dashboardContainer.trailingAnchor),
+                todayMedicineView.bottomAnchor.constraint(equalTo: dashboardContainer.bottomAnchor)
+            ])
+        }
+
+        if dashboardHeightConstraint == nil {
+            dashboardHeightConstraint = dashboardContainer.heightAnchor.constraint(equalToConstant: 0)
+        }
+
+        headerWrapper.subviews.forEach { $0.removeFromSuperview() }
+
         let headerStack = UIStackView(arrangedSubviews: [
-            todayMedicineView,
-            activeTreatementView,
+            dashboardContainer,
             categorySelector,
             sortView
         ])
         headerStack.axis = .vertical
         headerStack.spacing = PaddingSize.height
 
-        let headerWrapper = UIView()
         headerWrapper.add(headerStack)
-
-        let padding = PaddingSize.width
         NSLayoutConstraint.activate([
             headerStack.topAnchor.constraint(equalTo: headerWrapper.topAnchor, constant: PaddingSize.height),
             headerStack.leadingAnchor.constraint(equalTo: headerWrapper.leadingAnchor, constant: padding),
@@ -118,24 +152,66 @@ class ListMedicalViewController: CustomSearchBarController {
 
         tableView.tableHeaderView = headerWrapper
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-
         guard tableView.window != nil else { return }
         guard let header = tableView.tableHeaderView else { return }
 
         header.frame.size.width = tableView.bounds.width
-
-        let height = header.systemLayoutSizeFitting(
+        let fittedHeight = header.systemLayoutSizeFitting(
             CGSize(width: tableView.bounds.width, height: UIView.layoutFittingCompressedSize.height),
             withHorizontalFittingPriority: .required,
             verticalFittingPriority: .fittingSizeLevel
         ).height
 
-        if header.frame.size.height != height {
-            header.frame.size.height = height
+        if abs(header.frame.size.height - fittedHeight) > 1 {
+            header.frame.size.height = fittedHeight
             tableView.tableHeaderView = header
+        }
+    }
+
+    private func invalidateHeaderLayout() {
+        guard let header = tableView.tableHeaderView else { return }
+        header.frame.size.width = tableView.bounds.width
+        let fittedHeight = header.systemLayoutSizeFitting(
+            CGSize(width: tableView.bounds.width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        ).height
+        header.frame.size.height = fittedHeight
+        tableView.tableHeaderView = header
+    }
+
+    func collapseDashboard() {
+        headerWrapper.layoutIfNeeded()
+        dashboardNaturalHeight = dashboardContainer.bounds.height
+
+        guard dashboardNaturalHeight > 0 else { return }
+
+        dashboardHeightConstraint.constant = dashboardNaturalHeight
+        dashboardHeightConstraint.isActive = true
+        headerWrapper.layoutIfNeeded()
+
+        dashboardHeightConstraint.constant = 0
+
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+            self.todayMedicineView.alpha = 0
+            self.headerWrapper.layoutIfNeeded()
+        } completion: { _ in
+            self.invalidateHeaderLayout()
+        }
+    }
+
+    func expandDashboard() {
+        guard dashboardHeightConstraint.isActive else { return }  // already expanded
+        dashboardHeightConstraint.isActive = false
+
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+            self.todayMedicineView.alpha = 1
+            self.headerWrapper.layoutIfNeeded()
+        } completion: { _ in
+            self.invalidateHeaderLayout()
         }
     }
     
@@ -154,13 +230,12 @@ class ListMedicalViewController: CustomSearchBarController {
         presenter.search(text: text)
     }
     override func searchDidShow() {
-        print("i am getting executing")
         searchButton.isEnabled = false
+        collapseDashboard()
     }
     override func searchDidHide() {
-        print("i am not getting executing")
-
         searchButton.isEnabled = true
+        expandDashboard()
     }
 
 }
@@ -178,8 +253,9 @@ extension ListMedicalViewController: UITableViewDataSource {
         let medical = presenter.medical(at: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
         cell.textLabel?.text = medical.title
-        cell.detailTextLabel?.text = "From \(medical.startDate.toString()) to \(medical.endDate.toString())"
+        cell.detailTextLabel?.text = "From \(medical.date.toString())"
         cell.accessoryType = .disclosureIndicator
+        cell.backgroundColor = .secondarySystemBackground
         cell.selectionStyle = .none
         cell.imageView?.image = UIImage(systemName: medical.type.image)
         return cell
@@ -210,34 +286,46 @@ extension ListMedicalViewController: UITableViewDelegate {
 }
 
 extension ListMedicalViewController: ListMedicalViewDelegate {
+    func refreshSortMenu() {
+        buildSortMenu()
+    }
+    
     func reloadData() {
         tableView.reloadData()
         let isEmpty = presenter.isEmpty
         let isSearching = presenter.isSearching
-        tableView.tableHeaderView?.isHidden = isSearching && isEmpty
-        if isEmpty {
-//            tableView.tableHeaderView?.isHidden = true
-//            tableView.tableHeaderView?.frame.size.height = 0
-            if !isSearching {
-                tableView.setEmptyFoooterView(image: "tray.full", title: "No Health Records", subtitle: "Tap + on top to create your first Record.")
 
+        if isSearching && isEmpty {
+            tableView.tableHeaderView = nil
+        } else if tableView.tableHeaderView == nil {
+            setupTableHeader()
+        }
+
+        if isEmpty {
+            if !isSearching {
+                tableView.setEmptyFoooterView(
+                    image: "tray.full",
+                    title: "No Health Records",
+                    subtitle: "Tap + on top to create your first Record."
+                )
             } else {
-                tableView.setEmptyView(image: "tray.full", title: "No Matching Health Record Found", subtitle: "Search with title, hospital and doctor name")
+                tableView.setEmptyView(
+                    image: "tray.full",
+                    title: "No Matching Health Record Found",
+                    subtitle: "Search with title, hospital and doctor name"
+                )
             }
         } else {
-//            tableView.tableHeaderView?.isHidden = false
-            //setupTableHeader()
             tableView.restoreFooter()
+            tableView.restoreBackgroundView()
         }
     }
-    
-    func refreshSortMenu() {
-        buildSortMenu()
-    }
+
 }
 
 extension ListMedicalViewController: DocumentNavigationDelegate {
     func presentVC(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
         present(vc, animated: true)
     }
     

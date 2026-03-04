@@ -77,7 +77,7 @@ final class FormDateField: FormFieldCell {
 
     private var selectedDate: Date?
 
-    private let datePicker: UIDatePicker = {
+    let datePicker: UIDatePicker = {
         let dp = UIDatePicker()
         dp.datePickerMode = .date
         dp.preferredDatePickerStyle = .compact

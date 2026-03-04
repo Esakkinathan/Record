@@ -10,16 +10,20 @@ import UIKit
 class AddMedicalPresenter: FormFieldPresenter {
     let router: AddMedicalRouterProtocol
     let mode: MedicalFormMode
-    let doctors: [String]
-    let hospitals: [String]
+    var doctors: Set<String>
+    var hospitals: Set<String>
     let fetchUseCase: FetchMedicalUseCase
+    let fileManager: AppFileManager
     init(view: FormFieldViewDelegate? = nil, router: AddMedicalRouterProtocol, mode: MedicalFormMode,fetchUseCase: FetchMedicalUseCase ) {
         self.router = router
         self.mode = mode
         self.fetchUseCase = fetchUseCase
         doctors = fetchUseCase.fetchDoctors()
         hospitals = fetchUseCase.fetchHospitals()
+        fileManager = AppFileManager()
         super.init(view: view)
+        hospitals.insert(AppConstantData.none)
+        doctors.insert(AppConstantData.none)
     }
     
     func existing() -> Medical? {
@@ -28,10 +32,6 @@ class AddMedicalPresenter: FormFieldPresenter {
         }
         return nil
     }
-    override func numberOfFields() -> Int {
-        return fields.count - 1
-    }
-    
 
     func buildFields() {
         let existing = existing()
@@ -39,12 +39,10 @@ class AddMedicalPresenter: FormFieldPresenter {
         fields = [
             FormField(label: "Type", type: .select, validators: [.required], gotoNextField: false, value: existing?.type.rawValue ?? MedicalType.checkup.rawValue),
             FormField(label: "Title", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next,),
-            FormField(label: "Hospital", type: .select, validators: [.maxLength(30)], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
-            FormField(label: "Doctor", type: .select, validators: [.maxLength(30)], gotoNextField: false, value: existing?.doctor ?? AppConstantData.none, returnType: .done),
+            FormField(label: "Hospital", type: .select, validators: [.maxLength(30), .alphanumeric], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
+            FormField(label: "Doctor", type: .select, validators: [.maxLength(30), .alphabetic], gotoNextField: false, value: existing?.doctor ?? AppConstantData.none, returnType: .done),
             FormField(label: "Recorded At", type: .date, validators: [.required], gotoNextField: false, value: existing?.date),
             FormField(label: "Medical Reciept", type: .fileUpload, validators: [], gotoNextField: false, value: existing?.receipt),
-            FormField(label: "Duration", type: .textSelect, validators: [.required, .maxValue(30)], gotoNextField: false, placeholder: "Duration", value: existing?.duration != nil ? String(existing!.duration) : nil, returnType: .done, keyboardMode: .numberPad),
-            FormField(label: "Duration Type", type: .text, validators: [], gotoNextField: false, value: existing?.durationType.rawValue ?? DurationType.day.rawValue),
         ]
     }
     override var title: String {
@@ -64,10 +62,6 @@ class AddMedicalPresenter: FormFieldPresenter {
         let doctorData = field(at: 3).value as? String
         let doctor: String? = doctorData == AppConstantData.none ? nil : doctorData
         let recordDate = field(at: 4).value as? Date ?? Date()
-        let durationValue = field(at: 6).value as? String ?? "1"
-        let duration = Int(durationValue) ?? 1
-        let durationType = field(at: 7).value as? String ?? DurationType.day.rawValue
-        let medicalDurationType: DurationType = DurationType(rawValue: durationType) ?? DurationType.day
         var file: String?
         let date = Date().timeIntervalSince1970
         if let path = field(of: .fileUpload)?.value as? String {
@@ -75,59 +69,17 @@ class AddMedicalPresenter: FormFieldPresenter {
         }
         switch mode {
         case .add:
-            return Medical(id: 1, title: title, type: medicalType, duration: duration, durationType: medicalDurationType,hospital: hospital, doctor: doctor, date: recordDate.start,receipt: file)
+            return Medical(id: 1, title: title, type: medicalType,hospital: hospital, doctor: doctor, date: recordDate.start,receipt: file)
         case .edit(let medical):
-            medical.update(title: title, type: medicalType, duration: duration, durationType: medicalDurationType, hospital: hospital,doctor: doctor,date: recordDate.start, receipt: file)
+            medical.update(title: title, type: medicalType, hospital: hospital,doctor: doctor,date: recordDate.start, receipt: file)
             return medical
         }
     }
     
     func saveFileLocally(_ sourceURL: URL, name: String) -> String? {
-
-        let fileManager = FileManager.default
-        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let govtDocsDir = documentsDir.appendingPathComponent("MedicalReciept", isDirectory: true)
-
-        do {
-            if !fileManager.fileExists(atPath: govtDocsDir.path) {
-                try fileManager.createDirectory(at: govtDocsDir,withIntermediateDirectories: true,attributes: nil)
-            }
-
-            let docName = name.replacingOccurrences(of: " ", with: "")
-            let fileName = "\(docName).\(sourceURL.pathExtension)"
-            let destinationURL = govtDocsDir.appendingPathComponent(fileName)
-
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
-            }
-
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-
-            return destinationURL.path
-
-        } catch {
-            print("File save failed:", error)
-            return nil
-        }
-    }
-    override func saveImage(_ image: UIImage) {
-        
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return  }
-        
-        let fileName = UUID().uuidString + ".jpg"
-        
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(fileName)
-        
-        do {
-            try data.write(to: tempURL)
-            print("Temp saved at:", tempURL)
-            didPickDocument(url: tempURL)
-        } catch {
-            print("Error saving temp image:", error)
-            return
-        }
-
+        let fileName = name.replacingOccurrences(of: " ", with: "")
+        let path = fileManager.saveFileLocally(sourceURL: sourceURL, directory: .medicalReciept, name: fileName)
+        return path
     }
     
     override func openCameraClicked(){
@@ -135,21 +87,12 @@ class AddMedicalPresenter: FormFieldPresenter {
     }
     
     func saveFile(pdfData: Data) {
-        let name = UUID().uuidString + ".pdf"
-        
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(name)
-        
-        do {
-            try pdfData.write(to: tempURL)
-            print("Temp saved at:", tempURL)
-            didPickDocument(url: tempURL)
-        } catch {
-            print("Error saving temp image:", error)
-            return
-        }
+        let url = fileManager.saveFile(pdfData: pdfData)
+        guard let url = url else { return }
+        updateFile(url: url)
     }
-    override func didPickDocuments(urls: [URL]) {
+    
+    override func processFile(urls: [URL]) {
         let merger = PDFMergerService()
         do {
             let data = try merger.mergePDFs(from: urls)
@@ -164,7 +107,7 @@ class AddMedicalPresenter: FormFieldPresenter {
         guard !images.isEmpty else {
             return
         }
-        let data = DocumentOCRService().generate(from: images)
+        let data = PDFService().generatePDF(from: images)
         saveFile(pdfData: data)
         view?.stopLoading()
     }
@@ -194,46 +137,27 @@ class AddMedicalPresenter: FormFieldPresenter {
                 options = MedicalType.getList()
                 selected = field.value as? String ?? MedicalType.defaultValue.rawValue
             } else {
-                options += [AppConstantData.none]
+                let value = field.value as? String ?? AppConstantData.none
                 addExtra = true
-                switch mode {
-                case .add:
-                    let value = field.value as? String
-                    if let value, value != AppConstantData.none {
-                        options += [value]
-                    }
-                case .edit(_):
-                    print("")
-                }
                 if index == 2 {
-                    options +=  hospitals
-                   selected = field.value as? String ?? AppConstantData.none
+                    hospitals.insert(value)
+                    options = Array(hospitals)
+                   selected = value
                } else if index == 3 {
-                   options += doctors
-                   selected = field.value as? String ?? AppConstantData.none
+                   doctors.insert(value)
+                   options = Array(doctors)
+                   selected = value
                }
-
             }
-            
-        } else if field.type == .textSelect {
-            let nextField: FormField = super.field(at: index+1)
-            
-            selected = nextField.value as? String ?? DurationType.day.rawValue
-            options = DurationType.getList()
         }
-        router.openSelectVC(options: options, selected: selected, addExtra: addExtra) { [weak self] value in
+        router.openSelectVC(options: options, selected: selected, addExtra: addExtra, validator: field.validators) { [weak self] value in
             self?.didSelectOption(at: index,value)
         }
 
     }
     
     override func didSelectOption(at index: Int,_ value: String) {
-        switch index {
-        case 6:
-            updateValue(value, at: index+1)
-        default:
-            updateValue(value, at: index)
-        }
+        updateValue(value, at: index)
         view?.reloadField(at: index, )
     }
     override func uploadDocument(at index: Int, type: DocumentType) {
@@ -257,7 +181,7 @@ class AddMedicalPresenter: FormFieldPresenter {
         view?.reloadField(at: index)
     }
     
-    override func didPickDocument(url: URL) {
+    func updateFile(url: URL) {
         guard let index = fields.firstIndex(where: { $0.type == .fileUpload }) else { return }
         updateValue(url.path, at: index)
         view?.reloadField(at: index)

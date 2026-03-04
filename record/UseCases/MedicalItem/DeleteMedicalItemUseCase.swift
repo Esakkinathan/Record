@@ -4,15 +4,15 @@
 //
 //  Created by Esakkinathan B on 10/02/26.
 //
-protocol DeleteMedicalItemUseCaseProtocol {
+protocol DeleteMedicineUseCaseProtocol {
     func execute(id: Int)
 }
 
 
-class DeleteMedicalItemUseCase: DeleteMedicalItemUseCaseProtocol {
-    private let repository: MedicalItemRepositoryProtocol
+class DeleteMedicineUseCase: DeleteMedicineUseCaseProtocol {
+    private let repository: MedicineRepositoryProtocol
     
-    init(repository: MedicalItemRepositoryProtocol) {
+    init(repository: MedicineRepositoryProtocol) {
         self.repository = repository
     }
     

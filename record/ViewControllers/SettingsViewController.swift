@@ -17,6 +17,7 @@ class SettingsViewController: UIViewController {
         title = "Settings"
         setUpContents()
     }
+    let identifier = "SettingsViewCell"
     
     func setUpContents() {
         navigationItem.largeTitleDisplayMode = .never
@@ -25,10 +26,11 @@ class SettingsViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: identifier)
         tableView.register(ColorPickerCell.self, forCellReuseIdentifier: ColorPickerCell.identifier)
         tableView.register(SwitchCell.self, forCellReuseIdentifier: SwitchCell.identifier)
         tableView.register(ThemeSegmentCell.self, forCellReuseIdentifier: ThemeSegmentCell.identifier)
+        tableView.register(CompresionCell.self, forCellReuseIdentifier: CompresionCell.identifier)
 
         view.add(tableView)
         
@@ -43,6 +45,9 @@ class SettingsViewController: UIViewController {
 }
 
 extension SettingsViewController: SettingsViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
     func reload() {
         tableView.reloadData()
     }
@@ -56,8 +61,12 @@ extension SettingsViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
-        case 0: return 1   // Theme + Color
-        case 1: return 2   // Face ID
+        case 0: return 2
+        case 1:
+            if let _ = KeychainManager.shared.getPin()  {
+                return 4
+            }
+            return 3
         default: return 0
         }
     }
@@ -91,14 +100,14 @@ extension SettingsViewController: UITableViewDataSource {
             return cell
         }
 
-//        if indexPath.section == 0 && indexPath.row == 1 {
-//            let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
-//            cell.configure(selected: presenter.currentAccent) { [weak self] accent in
-//                self?.navigationController?.navigationBar.backgroundColor = accent.color
-//                self?.presenter.selectAccent(accent)
-//            }
-//            return cell
-//        }
+        if indexPath.section == 0 && indexPath.row == 1 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
+            cell.configure(selected: presenter.currentAccent) { [weak self] accent in
+                self?.presenter.selectAccent(accent)
+                self?.setUpNavigation()
+            }
+            return cell
+        }
         
         if indexPath.section == 1 && indexPath.row == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
@@ -110,17 +119,48 @@ extension SettingsViewController: UITableViewDataSource {
             }
             return cell
         }
+        if indexPath.section == 1 && indexPath.row == 3 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: CompresionCell.identifier, for: indexPath) as! CompresionCell
+            cell.configure(text: presenter.compressionLevel.rawValue)
+            cell.handler = { [weak self] level in
+                self?.presenter.updateCompresseion(level:level)
+            }
+            return cell
+        }
         if indexPath.section == 1 && indexPath.row == 1 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "notificationCell") ?? UITableViewCell(style: .default, reuseIdentifier: "notificationCell")
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
             cell.textLabel?.text = "Edit app system Settings"
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.lineBreakMode = .byWordWrapping
             cell.accessoryType = .disclosureIndicator
             return cell
         }
+        if indexPath.section == 1 && indexPath.row == 2 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
+            cell.textLabel?.text = "Reset Pin"
+//            cell.textLabel?.numberOfLines = 0
+//            cell.textLabel?.lineBreakMode = .byWordWrapping
+            cell.accessoryType = .disclosureIndicator
+            return cell
+        }
+        
         
         return UITableViewCell()
     }
+    func setUpNavigation() {
+        guard let navigationBar = navigationController?.navigationBar else { return }
+        //SettingsManager.shared.accent = accent
+        let accent = SettingsManager.shared.accent
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = accent.color
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+
+        navigationBar.standardAppearance = appearance
+        navigationBar.scrollEdgeAppearance = appearance
+        navigationBar.compactAppearance = appearance
+    }
+
 }
 
 extension SettingsViewController: UITableViewDelegate {
@@ -129,6 +169,22 @@ extension SettingsViewController: UITableViewDelegate {
         if indexPath.section == 1 && indexPath.row == 1 {
             presenter.openSettings()
         }
+        else if indexPath.section == 1 && indexPath.row == 2 {
+            presenter.didClickedResentPin()
+        }
         
     }
+}
+
+extension SettingsViewController: DocumentNavigationDelegate {
+    func push(_ vc: UIViewController) {
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func presentVC(_ vc: UIViewController) {
+        present(vc, animated: true)
+    }
+    
+    
 }

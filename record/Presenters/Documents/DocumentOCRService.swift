@@ -19,23 +19,20 @@ struct ExtractedDocumentModel {
 
 
 final class DocumentOCRService {
-    
+    let pdfGenerateService = PDFService()
     func process(
         images: [UIImage],
         completion: @escaping (Result<ExtractedDocumentModel, Error>) -> Void
     ) {
         
         let limitedImages = Array(images.prefix(10))
-        print("limited images:", limitedImages.count)
-        
-        extractText(from: limitedImages) { text in
-            
+        extractText(from: limitedImages) { [weak self] text in
+            guard let self = self else {return}
             let detectedType = self.detect(from: text)
-            print("detected type:", detectedType)
             
             let number = self.extractNumber(from: text, type: detectedType)
             let expiry = self.extractMaxDate(from: text, type: detectedType)
-            let pdfData = self.generate(from: limitedImages)
+            let pdfData = pdfGenerateService.generatePDF(from: limitedImages)
             
             let model = ExtractedDocumentModel(
                 detectedType: detectedType,
@@ -389,53 +386,5 @@ private extension DocumentOCRService {
     func match(_ pattern: String, in text: String) -> String? {
         return text.range(of: pattern, options: .regularExpression)
             .map { String(text[$0]) }
-    }
-}
-extension DocumentOCRService {
-    
-    func generate(from images: [UIImage]) -> Data {
-        
-        let pageWidth: CGFloat = 595
-        let pageHeight: CGFloat = 842
-        
-        let renderer = UIGraphicsPDFRenderer(
-            bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
-        )
-        
-        return renderer.pdfData { context in
-            for image in images {
-                context.beginPage()
-                
-                let rect = aspectFitRect(
-                    for: image.size,
-                    in: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
-                )
-                
-                image.draw(in: rect)
-            }
-        }
-    }
-    
-    func aspectFitRect(
-        for imageSize: CGSize,
-        in boundingRect: CGRect
-    ) -> CGRect {
-        
-        let widthRatio = boundingRect.width / imageSize.width
-        let heightRatio = boundingRect.height / imageSize.height
-        let scale = min(widthRatio, heightRatio)
-        
-        let scaledWidth = imageSize.width * scale
-        let scaledHeight = imageSize.height * scale
-        
-        let x = (boundingRect.width - scaledWidth) / 2
-        let y = (boundingRect.height - scaledHeight) / 2
-        
-        return CGRect(
-            x: x,
-            y: y,
-            width: scaledWidth,
-            height: scaledHeight
-        )
     }
 }

@@ -8,16 +8,15 @@ import Foundation
 import UserNotifications
 
 class RemainderUseCase {
-    let itemRepository: MedicalItemRepositoryProtocol = MedicalItemRepository()
+    let itemRepository: MedicineRepositoryProtocol = MedicineRepository()
     
-    func activeMedicalItems(from items: [MedicalItem], for date: Date) -> [MedicalItem] {
+    func activeMedicalItems(from items: [Medicine], for date: Date) -> [Medicine] {
         
         let calendar = Calendar.current
         let target = calendar.startOfDay(for: date)
-        
         return items.filter {
-            calendar.startOfDay(for: $0.startDate) <= target &&
-            calendar.startOfDay(for: $0.endDate) >= target
+            calendar.startOfDay(for: $0.startDate) <= target && ( $0.endDate == nil ||
+            calendar.startOfDay(for: $0.endDate!) >= target)
         }
     }
 
@@ -25,10 +24,9 @@ class RemainderUseCase {
     func execute() {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let end = today.end
-
+        //let end = today.end
         
-        let medicalItems = itemRepository.fetchMedicalItemsByDate(from: today, to: end)
+        let medicalItems = itemRepository.fetchActiveMedicines()
         
         for offset in 0..<7 {
             guard let date = calendar.date(byAdding: .day, value: offset, to: today) else {

@@ -26,6 +26,7 @@ protocol PasswordRepositoryProtocol {
     func fetchAll() -> [Password]
     func toggleFavourite(_ password: Password)
     func updateNotes(text: String?, id: Int)
+    func resetPasswords(newPin: String)
 }
 
 protocol MasterPasswordRepositoryProtocol {
@@ -39,20 +40,22 @@ protocol MedicalRepositoryProtocol {
     func delete(id: Int)
     func fetchAll() -> [Medical]
     func updateNotes(text: String?, id: Int)
-    func fetchMedicalByDate(from date: Date) -> [Medical]
+    func fetchActiveMedical() -> [Medical]
     func fetchHospitals() -> [String]
     func fetchDoctors() -> [String]
-
+    func setStatus(id: Int,value: Bool, date: Date?)
 }
-protocol MedicalItemRepositoryProtocol {
-    func add(medicalItem: MedicalItem, medicalId: Int)
-    func update(medicalItem: MedicalItem)
-    func updateEndDate(medicalItemId: Int, date: Date) 
+protocol MedicineRepositoryProtocol {
+    func add(medicine: Medicine, medicalId: Int)
+    func update(medicine: Medicine)
     func delete(id: Int)
-    func fetchByMedicalId(_ id: Int, kind: MedicalKind) -> [MedicalItem]
-    func fetchMedicalItemsByDate(from date: Date, to dateTo: Date) -> [MedicalItem]
+    func fetchMedicinesByMedicalId(_ id: Int, kind: MedicalKind) -> [Medicine]
+    func fetchActiveMedicines(_ medicalId: Int) -> [Medicine]
+    func fetchActiveMedicines() -> [Medicine]
+//    func fetchMedicines(for medicalId: Int) -> [Medicine]
+    func setStatus(id: Int,value: Bool, date: Date?)
 }
-
+/*
 protocol UtilityRepositoryProtocol {
     func add(utility: Utility)
     func update(utility: Utility)
@@ -78,7 +81,7 @@ protocol BillRepositoryProtocol {
     func fetchAll(utilityAccountId: Int, billType: BillType) -> [Bill]
     func markAsPaid(billId: Int, paidDate: Date)
 }
-
+*/
 protocol UserRepositoryProtocol {
     func add(user: User)
     func updatePassword(userId: Int, newHash: String)
@@ -93,8 +96,8 @@ protocol LoginRepositoryProtocol {
 }
 
 protocol MedicalIntakeLogRepositoryProtocol {
-    func add(log: MedicalIntakeLog)
-    func update(log: MedicalIntakeLog)
-    func fetch(medicalId: Int,date: Date) -> [MedicalIntakeLog]
-    func fetch(medicalId: Int) -> [MedicalIntakeLog]
+    func add(log: MedicineIntakeLog)
+    func update(log: MedicineIntakeLog)
+    func fetch(medicalId: Int,date: Date) -> [MedicineIntakeLog]
+    func fetch(medicalId: Int) -> [MedicineIntakeLog]
 }

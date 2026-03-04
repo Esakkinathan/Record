@@ -17,6 +17,7 @@ protocol DetailPasswordPresenterProtocol {
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
     func updateLastCopiedDate()
+    func openUrl()
 
 }
 
@@ -43,6 +44,7 @@ struct DetailPasswordSection {
 enum DetailPasswordTextSection: CaseIterable {
     case text
     case copyLabel
+    case url
     case passwordLabel
 }
 

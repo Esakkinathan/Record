@@ -4,6 +4,7 @@
 //
 //  Created by Esakkinathan B on 12/02/26.
 //
+/*
 import Foundation
 
 protocol MarkAsPaidUseCaseProtocol {
@@ -22,3 +23,4 @@ class MarkAsPaidUseCase: MarkAsPaidUseCaseProtocol {
     }
     
 }
+*/

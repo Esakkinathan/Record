@@ -238,7 +238,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					77ED32872F20A7C700EF4F77 = {
 						CreatedOnToolsVersion = 26.2;
@@ -462,8 +462,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = record/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan your documents securely.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock you personal data";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use Documents";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -502,8 +503,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = record/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan your documents securely.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock you personal data";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use Documents";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -585,6 +587,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -641,6 +644,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};

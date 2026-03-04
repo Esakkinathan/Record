@@ -8,7 +8,7 @@
 import Foundation
 import Security
 
-final class KeychainManager {
+class KeychainManager {
     
     static let shared = KeychainManager()
     private init() {}
@@ -16,8 +16,8 @@ final class KeychainManager {
     let key = "masterPassword"
     
     @discardableResult
-    func savePassword(_ password: String) -> Bool {
-        
+    func savePin(_ password: String) -> Bool {
+        deletePin()
         let data = HashManager.hash(for: password)
         //guard let data = hashed else { return false }
                 
@@ -32,8 +32,9 @@ final class KeychainManager {
         return status == errSecSuccess
     }
     
-    func getPassword() -> Data? {
-        deletePassword()
+    func getPin() -> Data? {
+        //deletePassword()
+        //deletePin()
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
@@ -53,7 +54,7 @@ final class KeychainManager {
     }
     
     @discardableResult
-    func deletePassword() -> Bool {
+    func deletePin() -> Bool {
         
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

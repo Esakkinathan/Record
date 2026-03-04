@@ -4,6 +4,7 @@
 //
 //  Created by Esakkinathan B on 20/02/26.
 //
+import Foundation
 
 protocol SelectionPresenterProtocol {
     func numberOfFields() -> Int
@@ -15,12 +16,15 @@ protocol SelectionPresenterProtocol {
     func didSelectRow(at index: Int)
     func clickedAddOption(text: String)
     var isEmpty: Bool { get }
+    func validateText(enteredText: String?)
+    var maxCount: Int { get }
 }
 protocol SearchViewDelegate: AnyObject {
     func selectedData(text: String)
     func dismiss()
     func reloadData()
     func showAddOptionAlert(_ value: String)
+    func showToastVC(message: String, type: ToastType)
 }
 class SelectionPresenter: SelectionPresenterProtocol {
     
@@ -30,18 +34,33 @@ class SelectionPresenter: SelectionPresenterProtocol {
     var addExtra: Bool
     var isSearching = false
     var visibleRecords: [String] = []
+    var maxCount: Int {
+        for rule in validators {
+            switch rule {
+            case .maxLength(let value):
+                return value
+            case .exactLength(let value):
+                return value
+            default:
+                return 30
+            }
+        }
+        return 30
+    }
     var isEmpty: Bool {
         current().isEmpty
     }
+    let validators: [ValidationRules]
     var title: String {
         "Select Option"
     }
     
-    init(view: SearchViewDelegate? = nil, options: [String], selectedOption: String, addExtra: Bool = true) {
+    init(view: SearchViewDelegate? = nil, options: [String], selectedOption: String, addExtra: Bool = true, validators: [ValidationRules]) {
         self.view = view
         self.options = options
         self.selectedOption = selectedOption
         self.addExtra = addExtra
+        self.validators = validators
     }
     
     
@@ -75,6 +94,43 @@ class SelectionPresenter: SelectionPresenterProtocol {
         }
         view?.reloadData()
     }
+    
+    func validateText(enteredText: String?) {
+        guard let enteredText = enteredText else {
+            view?.showToastVC(message: "Add Option", type: .error)
+            self.clickedAddOption()
+            return
+        }
+        
+        let result = Validator.Validate(input: enteredText, rules: validators)
+        if result.isValid {
+            view?.selectedData(text: enteredText)
+            return
+        }
+        view?.showToastVC(message: result.errorMessage ?? "Some error in entered text", type: .error)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.clickedAddOption(text: enteredText)
+        }
+
+    }
+//        if enteredText.isEmpty {
+//            view?.showToastVC(message: "Add Option", type: .error)
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//                self.clickedAddOption()
+//            }
+//            return
+//
+//        }
+//        if enteredText.count < 1 || enteredText.count > maxCount {
+//            view?.showToastVC(message: "Length Should be 1 to \(maxCount)", type: .error)
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//                self.clickedAddOption(text: enteredText)
+//            }
+//            return
+//        }
+//        
+//
+//    }
     
     func didSelectRow(at index: Int) {
         let selected = field(at: index)

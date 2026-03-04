@@ -39,16 +39,18 @@ protocol MasterPasswordDatabaseProtocol: DatabaseProtocol {
 protocol MedicalDatabaseProtocol: DatabaseProtocol {
     var database: VTDatabase {get}
     func fetchMedical() -> [Medical]
-    func fetchMedicalByDate(date: Date) -> [Medical] 
+    func fetchActiveMedical() -> [Medical]
+    func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?)
 }
 
 
-protocol MedicalItemDatabaseProtocol: DatabaseProtocol {
-    func fetchMedialItemById(_ id: Int, kind: MedicalKind) -> [MedicalItem]
-    func fetchActiveMedicalItem(_ medicalId: Int, date: Date) -> [MedicalItem]
-    func updateEndDate(medicalItemId: Int, date: Date)
-    func fetchMedicalItems(from date: Date, to dateTo: Date) -> [MedicalItem]
+protocol MedicineDatabaseProtocol: DatabaseProtocol {
+    func fetchMedicinesById(_ id: Int, kind: MedicalKind) -> [Medicine]
+    func fetchActiveMedicines(_ medicalId: Int) -> [Medicine]
+    func fetchActiveMedicines() -> [Medicine]
+    func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?)
 }
+/*
 
 protocol UtilityDatabaseProtocol: DatabaseProtocol {
     //var database: VTDatabase {get}
@@ -65,6 +67,7 @@ protocol BillDatabaseProtocol: DatabaseProtocol {
     func markAsPaid(billId: Int, paidDate: Date)
     func fetchBillByUtilityAccountId(utilityAccoundId: Int, billType: BillType) -> [Bill]
 }
+ */
 protocol UserDatebaseProtocol: DatabaseProtocol {
     func updatePassword(userId: Int, newHash: String)
     func getUserByEmail(_ email: String) -> User?
@@ -78,6 +81,6 @@ protocol LoginDatebaseProtocol: DatabaseProtocol {
 
 protocol MedicalIntakeLogDatabase: DatabaseProtocol {
     var database: VTDatabase {get}
-    func fetchLog(medicalId: Int,date: Date) -> [MedicalIntakeLog]
-    func fetchLog(medicalId: Int) -> [MedicalIntakeLog]
+    func fetchLog(medicalId: Int,date: Date) -> [MedicineIntakeLog]
+    func fetchLog(medicalId: Int) -> [MedicineIntakeLog]
 }

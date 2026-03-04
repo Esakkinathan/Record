@@ -9,8 +9,6 @@ import UIKit
 import PDFKit
 
 class DetailMedicalPresenter: DetailMedicalPresenterProtocol {
-    
-    
     var title: String {
         return medical.title
     }
@@ -18,13 +16,14 @@ class DetailMedicalPresenter: DetailMedicalPresenterProtocol {
     weak var view: DetailMedicalViewDelegate?
     let router: DetailMedicalRouterProtocol
     var sections: [DetailMedicalSection] = []
-    
+    let updateUseCase:  UpdateMedicalUseCaseProtocol
     var isNotesEditing: Bool = false
         
-    init(medical: Medical, view: DetailMedicalViewDelegate? = nil, router: DetailMedicalRouterProtocol) {
+    init(medical: Medical, view: DetailMedicalViewDelegate? = nil, router: DetailMedicalRouterProtocol, updateUseCase: UpdateMedicalUseCaseProtocol) {
         self.medical = medical
         self.view = view
         self.router = router
+        self.updateUseCase = updateUseCase
     }
 }
 
@@ -32,14 +31,16 @@ class DetailMedicalPresenter: DetailMedicalPresenterProtocol {
 extension DetailMedicalPresenter {
     
     func viewDidLoad() {
-        //loadMedicalItems()
-        
         buildSection()
+    }
+    
+    var status: Bool {
+        medical.status
     }
     
     func buildSection() {
         sections = []
-        let dashboardData: [MedicalKind:[MedicalItem]] = PdfExportUseCase().fetchData(medical: medical)
+        let dashboardData: [MedicalKind:[Medicine]] = PdfExportUseCase().fetchData(medical: medical)
         
         var infoRows: [DetailMedicalRow] = [
             .info(.init(title: "Title", value: medical.title)),
@@ -52,11 +53,11 @@ extension DetailMedicalPresenter {
             infoRows.append(.info(.init(title: "Doctor", value: doctor)))
         }
         infoRows.append(.info(.init(title: "Diagoned at", value: medical.date.toString())))
-        infoRows.append(.info(.init(title: "Duration", value: medical.durationText)))
         infoRows.append(.info(.init(title: "Created At", value: medical.createdAt.toString())))
         infoRows.append(.info(.init(title: "Last modified", value: medical.lastModified.reminderFormatted())))
         infoRows.append(.info(.init(title: "button", value: "Export As Pdf")))
-        
+        infoRows.append(.info(.init(title: "Status", value: "")))
+
         var chartSegment: [ChartSegment] = []
         
         let colors: [UIColor] = [
@@ -86,6 +87,14 @@ extension DetailMedicalPresenter {
         sections.append(.init(title: "Medicines", rows: chartRow))
         sections.append(.init(title: "Medical Items", rows: itemRow))
         sections.append(.init(title: "Notes", rows: [.notes(text: medical.notes, isEditable: isNotesEditing)]))
+    }
+    
+    func setStatus(value: Bool) {
+        let date: Date? = value ? nil  : Date().end
+        medical.setStatus(value: value, date: date)
+        updateUseCase.setStatus(id: medical.id, value: value, date: date)
+        buildSection()
+        view?.reloadData()
     }
 
 }

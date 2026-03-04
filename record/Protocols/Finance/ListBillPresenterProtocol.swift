@@ -4,6 +4,7 @@
 //
 //  Created by Esakkinathan B on 12/02/26.
 //
+/*
 import VTDB
 
 protocol ListBillPresenterProtocol {
@@ -30,3 +31,4 @@ func openAddBillVC(mode: BillFormMode, utilityAccountId: Int, type: BillType,onC
 //    func openEditBillVC(mode: BillFormMode, utilityAccoundId: Int, type: BillType, onEdit: @escaping (Bill) -> Void)
 
 }
+*/

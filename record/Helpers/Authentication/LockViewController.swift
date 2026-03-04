@@ -57,7 +57,7 @@ final class LockViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
             UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
         })
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
             // Treated same as cancel — exit app
             UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { exit(0) }

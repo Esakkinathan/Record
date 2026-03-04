@@ -5,7 +5,7 @@
 //  Created by Esakkinathan B on 11/02/26.
 //
 
-
+/*
 protocol AddUtilityAccountUseCaseProtocol {
     func execute(utilityAccount: UtilityAccount)
 }
@@ -22,3 +22,4 @@ class AddUtilityAccountUseCase: AddUtilityAccountUseCaseProtocol {
     }
 }
 
+*/

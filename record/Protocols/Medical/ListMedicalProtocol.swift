@@ -19,7 +19,7 @@ protocol ListMedicalPresenterProtocol {
     func didSelectSortField(_ field: MedicalSortField)
     func viewDidLoad()
     func didSelectCategory(_ text: String)
-    func getActiveSummary() -> DashBoardData
+    func getActiveSummary() -> DashboardViewModel
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
 

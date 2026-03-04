@@ -13,8 +13,8 @@ class AddMedicalItemRouter: AddMedicalItemRouterProtocol {
         self.viewController = viewController
     }
 
-    func openSelectVC(options: [String], selected: String, addExtra: Bool,onSelect: @escaping (String) -> Void) {
-        let vc = SelectViewAssembler.make(options: options,selectedOption: selected, addExtra: addExtra)
+    func openSelectVC(options: [String], selected: String, addExtra: Bool, validator: [ValidationRules],onSelect: @escaping (String) -> Void) {
+        let vc = SelectViewAssembler.make(options: options,selectedOption: selected, addExtra: addExtra, validator: validator)
         vc.onValueSelected = onSelect
         viewController?.push(vc)
     }
@@ -23,7 +23,5 @@ class AddMedicalItemRouter: AddMedicalItemRouterProtocol {
         vc.onValuesSelected = onSelect
         viewController?.push(vc)
     }
-
-    
 
 }

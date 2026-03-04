@@ -11,5 +11,5 @@ class HashManager {
     static func hash(for pin: String) -> Data {
         let pinData = Data(pin.utf8)
         let hash = SHA256.hash(data: pinData)
-        return Data(hash) // ✅ 32 raw bytes
+        return Data(hash)
     }}

@@ -124,7 +124,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.tintColor = accent.color
 
         updateVisibleControllers(with: accent.color)
-        setUpNavigation()
+        //setUpNavigation()
     }
     private func updateVisibleControllers(with color: UIColor) {
         guard let window = window,

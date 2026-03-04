@@ -7,7 +7,7 @@
 
 
 protocol AddLogUseCaseProtocol {
-    func execute(log: MedicalIntakeLog)
+    func execute(log: MedicineIntakeLog)
 }
 
 class AddLogUseCase: AddLogUseCaseProtocol {
@@ -17,7 +17,7 @@ class AddLogUseCase: AddLogUseCaseProtocol {
         self.repository = repository
     }
     
-    func execute(log: MedicalIntakeLog) {
+    func execute(log: MedicineIntakeLog) {
         repository.add(log: log)
     }
 }

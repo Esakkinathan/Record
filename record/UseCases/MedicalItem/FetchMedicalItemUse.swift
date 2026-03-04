@@ -6,18 +6,18 @@
 //
 
 
-protocol FetchMedicalItemUseCaseProtocol {
-    func execute(id: Int, kind: MedicalKind) -> [MedicalItem]
+protocol FetchMedicineUseCaseProtocol {
+    func execute(id: Int, kind: MedicalKind) -> [Medicine]
 }
 
-class FetchMedicalItemUseCase: FetchMedicalItemUseCaseProtocol {
-    private let repository: MedicalItemRepositoryProtocol
+class FetchMedicineUseCase: FetchMedicineUseCaseProtocol {
+    private let repository: MedicineRepositoryProtocol
     
-    init(repository: MedicalItemRepositoryProtocol) {
+    init(repository: MedicineRepositoryProtocol) {
         self.repository = repository
     }
     
-    func execute(id: Int, kind: MedicalKind) -> [MedicalItem] {
-        return repository.fetchByMedicalId(id, kind: kind)
+    func execute(id: Int, kind: MedicalKind) -> [Medicine] {
+        return repository.fetchMedicinesByMedicalId(id, kind: kind)
     }
 }

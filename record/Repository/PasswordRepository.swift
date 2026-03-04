@@ -30,7 +30,7 @@ class PasswordRepository: PasswordRepositoryProtocol {
 
     func fetchAll() -> [Password] {
         let encryptedPasswords = db.fetchPasswords()
-        
+        if encryptedPasswords.isEmpty {return encryptedPasswords}
         return encryptedPasswords.map { password in
             let decrypted = password
             
@@ -51,7 +51,8 @@ class PasswordRepository: PasswordRepositoryProtocol {
             Password.createdAtC: password.createdAt,
             Password.lastModifiedC: password.lastModified,
             Password.isFavoriteC: password.isFavorite,
-            Password.lastCopiedDateC: password.lastCopiedDate
+            Password.lastCopiedDateC: password.lastCopiedDate,
+            Password.urlC: password.url
         ]
         
         db.insertInto(tableName: Password.databaseTableName, values: columns)
@@ -90,6 +91,17 @@ class PasswordRepository: PasswordRepositoryProtocol {
             return try CryptoManager.decrypt(baseString: text)
         } catch {
             fatalError("Decryption failed: \(error)")
+        }
+    }
+    
+    func resetPasswords(newPin: String) {
+        let passwords: [Password] = fetchAll()
+        print(KeychainManager.shared.savePin(newPin))
+        for password in passwords {
+            delete(id: password.id)
+        }
+        for password in passwords {
+            add(password: password)
         }
     }
 }

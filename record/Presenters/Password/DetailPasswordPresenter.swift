@@ -73,18 +73,29 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
     func buildSection() {
         sections = []
         
-        let infoRows: [DetailPasswordRow] = [
+        var infoRows: [DetailPasswordRow] = [
             .info(.init(title: "Title", value: password.title, type: .text)),
             .info(.init(title: "Username", value: password.username, type: .copyLabel)),
             .info(.init(title: "Password", value: password.password, date: password.lastCopiedDate,type: .passwordLabel)),
             .info(.init(title: "Created At", value: password.createdAt.toString(), type: .text)),
             .info(.init(title: "Last modified", value: password.lastModified.reminderFormatted(), type: .text))
         ]
-        print(password.lastCopiedDate?.reminderFormatted() ?? "nothing found")
+        if let url = password.url {
+            infoRows.append(.info(.init(title: "Url", value: url, type: .url)))
+        }
         
+        print(infoRows.count)
         sections.append(.init(title: "Info", rows: infoRows ))
             
         sections.append(.init(title: "Notes", rows: [.notes(text: password.notes, isEditable: isNotesEditing)]))
+    }
+    func openUrl() {
+        guard let urlPath = password.url else { return }
+        if let url = URL(string: urlPath) {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+        }
     }
     
     func section(at indexPath: IndexPath) -> DetailPasswordRow {

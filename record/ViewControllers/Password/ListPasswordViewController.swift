@@ -181,7 +181,7 @@ extension ListPasswordViewController {
         sortView.configure(text: current.field.rawValue)
 //        DispatchQueue.main.async { [weak self] in
             sortView.button.menu = UIMenu(
-                title: "Options",
+                title: "",
                 children: [filterMenu, sortMenu]
             )
 

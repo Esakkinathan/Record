@@ -18,12 +18,17 @@ class MasterPasswordViewController: UIViewController {
         label.textAlignment = .center
         return label
     }()
-    
+    private var loadingOverlay: LoadingOverlayView?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpContens()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewWillAppear()
+    }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         presenter.resetPin()
@@ -50,6 +55,29 @@ class MasterPasswordViewController: UIViewController {
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+    }
+    
+    func showLoading() {
+        
+        let overlay = LoadingOverlayView()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        loadingOverlay = overlay
+
+    }
+    
+    func stopLoading() {
+        loadingOverlay?.removeFromSuperview()
+        loadingOverlay = nil
+
     }
 
     private func createKeypad() -> UIStackView {
@@ -99,7 +127,7 @@ class MasterPasswordViewController: UIViewController {
         presenter.didTapDelete()
     }
     @objc private func clearClicked() {
-        presenter.resetPin()
+        presenter.didClickClear()
     }
 }
 
@@ -120,9 +148,17 @@ extension MasterPasswordViewController: MasterPasswordViewDelegate {
     func dismiss() {
         dismiss(animated: true)
     }
-    func showToastVC(message: String, type: ToastType) {
+    func showToastVC(message: String, type: ToastType, completion: (() -> Void)? ) {
         showToast(message: message, type: type)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            completion?()
+        }
+        
     }
+    func exit() {
+        navigationController?.popViewController(animated: true)
+    }
+
 }
 extension MasterPasswordViewController: DocumentNavigationDelegate {
     func push(_ vc: UIViewController) {

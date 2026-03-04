@@ -26,9 +26,10 @@ class AddPasswordPresenter: FormFieldPresenter {
     func buildFields() {
         let existing = existing()
         fields = [
-            FormField(label: "Title", type: .text, validators: [.required,.maxLength(30)], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next),
-            FormField(label: "Username", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Username",value: existing?.username, returnType: .next, keyboardMode: .emailAddress),
-            FormField(label: "Password", type: .password, validators: [.required, .minLength(4), .maxLength(20)], gotoNextField: false, placeholder: "Enter Password", value: existing?.password,returnType: .done),
+            FormField(label: "Title", type: .text, validators: [.required,.maxLength(30), .singleAlphanumberAllowed], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next),
+            FormField(label: "Username", type: .text, validators: [.required, .maxLength(30), .singleAlphanumberAllowed], gotoNextField: true, placeholder: "Enter Username",value: existing?.username, returnType: .next, keyboardMode: .emailAddress),
+            FormField(label: "Url", type: .text, validators: [.maxLength(100), .url], gotoNextField: true, placeholder: "Enter Url",value: existing?.url, returnType: .next, keyboardMode: .URL),
+            FormField(label: "Password", type: .password, validators: [.required, .minLength(4), .maxLength(20),], gotoNextField: false, placeholder: "Enter Password", value: existing?.password,returnType: .done),
             FormField(label: "Suggest Password", type: .button, validators: [], gotoNextField: false),
         ]
     }
@@ -42,13 +43,14 @@ class AddPasswordPresenter: FormFieldPresenter {
     func buildPassword() -> Password {
         let title = field(at: 0).value as? String ?? DefaultDocument.defaultValue.rawValue
         let username = field(at: 1).value as? String ?? DefaultDocument.defaultValue.rawValue
-        let passwordValue = field(at: 2).value as? String ?? DefaultDocument.defaultValue.rawValue
+        let url = field(at: 2).value as? String
+        let passwordValue = field(at: 3).value as? String ?? DefaultDocument.defaultValue.rawValue
         
         switch mode {
         case .add:
-            return Password(id: 1, title: title, username: username, password: passwordValue)
+            return Password(id: 1, title: title, username: username, password: passwordValue, url: url)
         case .edit(let password):
-            password.update(title: title, username: username, password: passwordValue)
+            password.update(title: title, username: username, password: passwordValue, url: url)
             return password
         }
 

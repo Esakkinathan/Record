@@ -9,7 +9,8 @@ import UIKit
 class SettingsAssembler {
     static func make() -> SettingsViewController {
         let vc = SettingsViewController()
-        let presenter = SettingsPresenter(view: vc)
+        let router = SettingsPasswordRouter(viewController: vc)
+        let presenter = SettingsPresenter(view: vc,router: router)
         vc.presenter = presenter
         return vc
     }

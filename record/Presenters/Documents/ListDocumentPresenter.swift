@@ -78,14 +78,35 @@ extension ListDocumentPresenter {
         loadDocuments()
     }
     
-    func deleteDocument(at index: Int) {
-        let document = currentDocuments()[index]
+    func deleteDocument(_ document: Document) {
         deleteUseCase.execute(id: document.id)
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 1)
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 2)
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 3)
 
         loadDocuments()
+    }
+    
+    func deleteDocument(at index: Int) {
+        let document = document(at: index)
+        if document.isRestricted {
+            DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
+                self?.deleteDocument(document)
+            },onFailure: { [weak self] error in
+                switch error {
+                case .permissionDenied:
+                    self?.view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+                case .notAvailable:
+                    self?.view?.showToastVC(message: "No lock screen set up on this device", type: .error)
+                default:
+                    self?.view?.showToastVC(message: "Authentication failed", type: .error)
+                }
+
+            })
+
+        } else {
+            deleteDocument(document)
+        }
     }
     
     func loadDocuments() {
@@ -184,7 +205,6 @@ extension ListDocumentPresenter {
         if let lockedUrlPath = lockedUrl {
             router.openShareDocumentVC(filePath: lockedUrlPath.path)
         }
-        
     }
 
 }

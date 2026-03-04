@@ -167,6 +167,12 @@ extension UITableView {
         
 
     }
+     
+    func restoreBackgroundView() {
+        self.backgroundView = nil
+        self.separatorStyle = .singleLine
+    }
+
     func restoreView() {
         self.backgroundView = nil
         self.tableHeaderView = nil

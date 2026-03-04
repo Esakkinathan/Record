@@ -105,6 +105,9 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
             .info(title: "Created At", value: document.createdAt.toString()),
             .info(title: "Last modified", value: document.lastModified.reminderFormatted())
         ]
+        if let file = document.file {
+            infoRows.append(.info(title: "File Size", value: formattedFileSize(from: URL(filePath: file))))
+        }
         if let date = document.expiryDate {
             infoRows.append(.info(title: "Expiry Date", value: date.toString()))
         }
@@ -240,6 +243,24 @@ extension DetailDocumentPresenter {
             return
         }
         view?.showTimePicker(baseDate: baseDate)
-
+    }
+    
+    func formattedFileSize(from url: URL) -> String {
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            if let fileSize = attributes[.size] as? Int64 {
+                
+                let formatter = ByteCountFormatter()
+                formatter.allowedUnits = [.useKB, .useMB, .useGB]
+                formatter.countStyle = .file
+                formatter.allowsNonnumericFormatting = false
+                
+                return formatter.string(fromByteCount: fileSize)
+            }
+        } catch {
+            print("Error:", error)
+        }
+        
+        return "0 KB"
     }
 }

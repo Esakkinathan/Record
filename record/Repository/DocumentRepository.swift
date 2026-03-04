@@ -41,8 +41,23 @@ class DocumentRepository: DocumentRepositoryProtocol {
     }
     
     func update(document: Document) {
-        db.updateInto(data: document)
+        let columns: [String: Any?] = [
+            Document.idC: document.id,
+            Document.nameC: document.name,
+            Document.numberC: document.number,
+            Document.createdAtC: document.createdAt,
+            Document.expiryDateC: document.expiryDate,
+            Document.fileC: document.file,
+            Document.notesC: document.notes,
+            Document.lastModifiedC: document.lastModified,
+            Document.isRestrictedC: document.isRestricted
+        ]
+        
+        db.insertInto(tableName: Document.databaseTableName, values: columns)
     }
+
+        //db.updateInto(data: document)
+    
     
     func updateNotes(text: String?, id: Int) {
         db.updateNotes(table: Document.databaseTableName, id: id, text: text, date: Date())

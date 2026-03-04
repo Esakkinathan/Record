@@ -11,6 +11,7 @@ import VTDB
 
 protocol DetailMedicalPresenterProtocol {
     var title: String { get }
+    var status: Bool { get }
     func editButtonClicked()
     func updateNotes(text: String?)
     func numberOfSection() -> Int
@@ -23,6 +24,7 @@ protocol DetailMedicalPresenterProtocol {
     func viewDocument()
     func exportDocumentClicked()
     func didSelectRowAt(indexPath: IndexPath)
+    func setStatus(value: Bool)
     
 
 }

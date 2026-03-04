@@ -5,6 +5,7 @@
 //  Created by Esakkinathan B on 11/02/26.
 //
 
+/*
 protocol DeleteBillUseCaseProtocl {
     func execute(id: Int)
 }
@@ -21,3 +22,4 @@ class DeleteBillUseCase: DeleteBillUseCaseProtocl {
     }
 
 }
+*/

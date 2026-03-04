@@ -382,6 +382,7 @@ class ImageTextView: UIView {
         return label
     }()
     
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         //label.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -417,6 +418,61 @@ class ImageTextView: UIView {
         imageView.tintColor = tint
     }
 }
+
+class ToggleView: UIView {
+    let toggle = UISwitch()
+    let markLabel: UILabel = {
+       let label = UILabel()
+        label.textAlignment = .center
+        label.font = AppFont.caption
+        return label
+    }()
+    var onToggleChanged: ((Bool) -> Void)?
+    var text: String = "" {
+        didSet {
+            markLabel.text = text
+        }
+    }
+    var isOn: Bool = false {
+        didSet {
+            toggle.setOn(isOn, animated: true)
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setUpContents()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUpContents() {
+        layer.cornerRadius = PaddingSize.cornerRadius
+        add(toggle)
+        add(markLabel)
+        toggle.addTarget(self, action: #selector(toggleChanged), for: .valueChanged)
+        backgroundColor = .secondarySystemBackground
+        NSLayoutConstraint.activate([
+            
+            markLabel.topAnchor.constraint(equalTo: topAnchor, constant: PaddingSize.content),
+            markLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.content),
+            markLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.content),
+            toggle.topAnchor.constraint(equalTo: markLabel.bottomAnchor, constant: PaddingSize.content),
+            toggle.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -PaddingSize.content),
+            toggle.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.content),
+            toggle.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.content)
+        ])
+
+    }
+    
+    @objc func toggleChanged() {
+        onToggleChanged?(toggle.isOn)
+    }
+
+
+}
 class ListMedicalItemViewCell: UITableViewCell {
     let label1: ImageTextView = {
         let label = ImageTextView()
@@ -440,23 +496,10 @@ class ListMedicalItemViewCell: UITableViewCell {
         return label
     }()
     
-    let markLabel: UILabel = {
-       let label = UILabel()
-        label.text = "Mark As Taken"
-        label.textAlignment = .center
-        label.font = AppFont.caption
-        return label
-    }()
-    
-    let toggle = UISwitch()
-    
-    let toggleContainer: UIView = {
-       let view = UIView()
-        view.backgroundColor = .secondarySystemBackground
-        view.layer.cornerRadius = PaddingSize.cornerRadius
+    let toggleContainer: ToggleView = {
+       let view = ToggleView()
         return view
     }()
-    var onToggleChanged: ((Bool) -> Void)?
     
     static let identifier = "ListMedicalItemViewCell"
     
@@ -470,13 +513,6 @@ class ListMedicalItemViewCell: UITableViewCell {
     }
     
     func setUpContentView() {
-        let bottomLine: UIView = {
-            let view = UIView()
-            view.backgroundColor = .lightGray
-            view.heightAnchor.constraint(equalToConstant: 1).isActive = true
-            view.translatesAutoresizingMaskIntoConstraints = false
-            return view
-        }()
 
         let stack: UIStackView = {
             let stack = UIStackView(arrangedSubviews: [label1, label2, label3])
@@ -492,30 +528,16 @@ class ListMedicalItemViewCell: UITableViewCell {
         //toggle.isOn = false
         selectionStyle = .none
         contentView.add(stack)
-        toggleContainer.add(toggle)
         
         contentView.add(toggleContainer)
-        toggleContainer.add(markLabel)
         
-        NSLayoutConstraint.activate([
-            
-            markLabel.topAnchor.constraint(equalTo: toggleContainer.topAnchor, constant: PaddingSize.content),
-            markLabel.leadingAnchor.constraint(equalTo: toggleContainer.leadingAnchor, constant: PaddingSize.content),
-            markLabel.trailingAnchor.constraint(equalTo: toggleContainer.trailingAnchor, constant: -PaddingSize.content),
-            toggle.topAnchor.constraint(equalTo: markLabel.bottomAnchor, constant: PaddingSize.content),
-            toggle.bottomAnchor.constraint(equalTo: toggleContainer.bottomAnchor, constant: -PaddingSize.content),
-            toggle.leadingAnchor.constraint(equalTo: toggleContainer.leadingAnchor, constant: PaddingSize.content),
-            toggle.trailingAnchor.constraint(equalTo: toggleContainer.trailingAnchor, constant: -PaddingSize.content)
-        ])
-        
-        toggle.addTarget(self, action: #selector(toggleChanged), for: .valueChanged)
         
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.content),
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.content),
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width * 3),
             
-            stack.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -PaddingSize.width*2),
+            stack.trailingAnchor.constraint(equalTo: toggleContainer.leadingAnchor, constant: -PaddingSize.width*2),
             
             
             toggleContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 3),
@@ -523,25 +545,21 @@ class ListMedicalItemViewCell: UITableViewCell {
         ])
     }
     
-    @objc func toggleChanged() {
-        onToggleChanged?(toggle.isOn)
-    }
     
-    func configure(text1: String, text2: String, text3: String, canShow: Bool, state: Bool) {
+    func configure(text1: String, text2: String, text3: String, canShow: Bool, state: Bool, onToggle: ((Bool) -> Void)?) {
         label1.configure(text: text1)
         label2.configure(text: text2)
         label3.configure(text: text3)
-        markLabel.isHidden = !canShow
-        toggle.isHidden = !canShow
         toggleContainer.isHidden = !canShow
-        markLabel.text = state ? "Taken" : "Mark as taken"
-        toggle.setOn(state, animated: false)
+        toggleContainer.text = state ? "Taken" : "Mark as taken"
+        toggleContainer.isOn = state
+        toggleContainer.onToggleChanged = onToggle
+
+        
     }
     override func prepareForReuse() {
         super.prepareForReuse()
-        toggle.isHidden = false
-        markLabel.isHidden = false
-        onToggleChanged = nil
+        toggleContainer.isHidden = true
     }
 }
 

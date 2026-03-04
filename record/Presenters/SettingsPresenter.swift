@@ -10,8 +10,10 @@ import UIKit
 final class SettingsPresenter: SettingsPresenterProtocol {
     
     weak var view: SettingsViewDelegate?
-    init(view: SettingsViewDelegate? = nil) {
+    var router: SettingsRouterProtocol
+    init(view: SettingsViewDelegate? = nil, router: SettingsRouterProtocol) {
         self.view = view
+        self.router = router
     }
 
     
@@ -22,7 +24,9 @@ final class SettingsPresenter: SettingsPresenterProtocol {
     var currentAccent: AppAccent {
         SettingsManager.shared.accent
     }
-    
+    var compressionLevel: PDFCompressionLevel {
+        SettingsManager.shared.compressionLevel
+    }
     var isFaceIdEnabled: Bool {
         UserDefaults.standard.bool(forKey: "faceIdEnabled")
     }
@@ -46,7 +50,7 @@ final class SettingsPresenter: SettingsPresenterProtocol {
             sceneDelegate.applyAccent()
             sceneDelegate.setUpNavigation()
         }
-
+        
         view?.reload()
     }
     
@@ -63,4 +67,29 @@ final class SettingsPresenter: SettingsPresenterProtocol {
         }
 
     }
+    
+    func didClickedResentPin() {
+        DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
+            self?.openResetPassword()
+        },onFailure: { [weak self] error in
+            switch error {
+            case .permissionDenied:
+                self?.view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+            case .notAvailable:
+                self?.view?.showToastVC(message: "No lock screen set up on this device", type: .error)
+            default:
+                self?.view?.showToastVC(message: "Authentication failed", type: .error)
+            }
+
+        })
+    }
+    
+    func updateCompresseion(level: PDFCompressionLevel) {
+        SettingsManager.shared.compressionLevel = level
+    }
+    
+    func openResetPassword() {
+        router.openResetPasswordScreen()
+    }
+    
 }

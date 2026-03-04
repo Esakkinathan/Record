@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 protocol FetchBillUseCaseProtocol {
     func execute(utilityAccountId: Int, billType: BillType) -> [Bill]
 }
@@ -20,3 +20,4 @@ class FetchBillUseCase: FetchBillUseCaseProtocol {
         return repository.fetchAll(utilityAccountId: utilityAccountId, billType: billType)
     }
 }
+*/

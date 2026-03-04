@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 12/02/26.
 //
-
+/*
 import UIKit
 class DetailUtilityAccountAssembler {
     static func make(utilityAccount: UtilityAccount, utility: Utility) ->  DetailUtilityAccountViewController {
@@ -16,3 +16,4 @@ class DetailUtilityAccountAssembler {
         
     }
 }
+*/

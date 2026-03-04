@@ -13,7 +13,24 @@ enum AppTheme: String {
     case dark
 }
 
-
+enum PDFCompressionLevel: String {
+    case low
+    case medium
+    case high
+    var value: CGFloat {
+        switch self {
+        case .low:
+            return 0.8
+        case .medium:
+            return 0.5
+        case .high:
+            return 0.3
+        }
+    }
+    static var `default`: PDFCompressionLevel {
+        return .medium
+    }
+}
 enum AppAccent: String, CaseIterable {
     case blue
     case emerald
@@ -66,6 +83,7 @@ class SettingsManager {
     static let accentKey = "accent"
     static let themeKey = "theme"
     static let faceIdKey = "faceIdEnabled"
+    static let compressionKey = "pdf_compression_level"
     var accent: AppAccent {
         get {
             let value = UserDefaults.standard.string(forKey: SettingsManager.accentKey) ?? AppAccent.blue.rawValue
@@ -92,12 +110,23 @@ class SettingsManager {
     var faceId: Bool {
         get {
             let value: Bool = UserDefaults.standard.bool(forKey: SettingsManager.faceIdKey)
-            print("value is",value)
             return value
         }
         set(newValue) {
-            print("value is", newValue)
             UserDefaults.standard.set(newValue, forKey: SettingsManager.faceIdKey)
+        }
+    }
+    
+    var compressionLevel: PDFCompressionLevel {
+        get {
+            guard let value = UserDefaults.standard.string(forKey: SettingsManager.compressionKey),
+                  let level = PDFCompressionLevel(rawValue: value) else {
+                return .default
+            }
+            return level
+
+        } set(newValue) {
+            UserDefaults.standard.set(newValue.rawValue, forKey: SettingsManager.compressionKey)
         }
     }
 }

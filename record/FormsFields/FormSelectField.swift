@@ -28,7 +28,12 @@ class FormSelectField: FormFieldCell {
         return imgView
     }()
     var onSelectClicked: (() -> Void)?
-    
+    let stack: UIStackView = {
+       let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = PaddingSize.content
+        return stack
+    }()
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
@@ -57,9 +62,8 @@ class FormSelectField: FormFieldCell {
         
         super.setUpContentView()
         
-        let stack = UIStackView(arrangedSubviews: [valueLabel,arrowImageView])
-        stack.axis = .horizontal
-        stack.spacing = PaddingSize.content
+        stack.addArrangedSubview(valueLabel)
+        stack.addArrangedSubview(arrowImageView)
         rightView.add(stack)
                         
         rightView.isUserInteractionEnabled = true

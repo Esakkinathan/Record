@@ -41,5 +41,5 @@ protocol AddDocumentRouterProtocol {
     func openDocumentPicker(type: DocumentType)
     func openDocumentViewer(filePath: String)
     func openCamera()
-    func openSelectVC(options: [String], selected: String, addExtra: Bool,onSelect: @escaping (String) -> Void )
+    func openSelectVC(options: [String], selected: String, addExtra: Bool,validator: [ValidationRules],onSelect: @escaping (String) -> Void )
 }

@@ -4,7 +4,7 @@
 //
 //  Created by Esakkinathan B on 11/02/26.
 //
-
+/*
 import VTDB
 
 enum BillType: String, CaseIterable {
@@ -73,3 +73,4 @@ class Bill: Persistable {
     }
     
 }
+*/

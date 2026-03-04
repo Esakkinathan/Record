@@ -47,7 +47,26 @@ class Validator {
                 if !allowed.isSuperset(of: CharacterSet(charactersIn: value)) {
                     return .init(isValid: false, errorMessage: "Only letters and numbers allowed")
                 }
-
+            case .alphanumberAllowed:
+                let allowedSymbol = "\\/_-(),@. "
+                let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: allowedSymbol))
+                if !allowed.isSuperset(of: CharacterSet(charactersIn: value)) {
+                    return .init(isValid: false, errorMessage: "Only letters, numbers and \(allowed) allowed")
+                }
+            case .singleAlphanumberAllowed:
+                let allowedSymbol = "\\/_-(),@. "
+                let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: allowedSymbol))
+                
+                let valueSet = CharacterSet(charactersIn: value)
+                
+                if !allowed.isSuperset(of: valueSet) {
+                    return .init(isValid: false, errorMessage: "Only letters, numbers and allowed symbols are permitted")
+                }
+                
+                let letterSet = CharacterSet.letters
+                if value.rangeOfCharacter(from: letterSet) == nil {
+                    return .init(isValid: false, errorMessage: "At least one alphabet is required")
+                }
             case .email:
                 let regex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
                 if !NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: value) {
@@ -57,6 +76,15 @@ class Validator {
             case .phone:
                 if value.count != 10 {
                     return .init(isValid: false, errorMessage: "Invalid phone number")
+                }
+            case .url:
+                guard let url = URL(string: value.trimmingCharacters(in: .whitespaces)),
+                      let scheme = url.scheme,
+                      let host = url.host,
+                      ["http", "https"].contains(scheme.lowercased()),
+                      !host.isEmpty
+                else {
+                    return .init(isValid: false, errorMessage: "Enter a valid URL (http or https)")
                 }
             case .regex(let pattern, let message):
                 if !NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: value) {
