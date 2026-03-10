@@ -35,8 +35,8 @@ class FormCopyLabel: FormFieldCell {
         copyLabel.contentView.backgroundColor = .tertiarySystemBackground
         rightView.add(copyLabel)
         NSLayoutConstraint.activate([
-            copyLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
-            copyLabel.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width),
+            copyLabel.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.content),
+            copyLabel.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width * 2),
             copyLabel.centerYAnchor.constraint(equalTo: rightView.centerYAnchor),
         ])
         

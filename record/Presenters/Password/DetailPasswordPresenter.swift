@@ -18,28 +18,29 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
     var sections: [DetailPasswordSection] = []
     
     var isNotesEditing: Bool = false
-    
-    init(password: Password, view: DetailPasswordViewDelegate? = nil, router: DetailPasswordRouterProtocol) {
+    let updateUseCase: UpdatePasswordUseCase
+    init(password: Password, view: DetailPasswordViewDelegate? = nil, router: DetailPasswordRouterProtocol, updateUseCase: UpdatePasswordUseCase) {
         self.password = password
         self.view = view
         self.router = router
-        
+        self.updateUseCase = updateUseCase
         buildSection()
     }
     
     func updatePassword(_ password: Password) {
         self.password.update(title: password.title, username: password.username, password: password.password)
+        DispatchQueue.global().async { [weak self] in
+            self?.updateUseCase.execute(password: password)
+        }
         buildSection()
         view?.reloadData()
     }
-
-    
-    
     func editButtonClicked() {
         router.openEditPasswordVC(mode: .edit(password)) { [weak self] updatedPassword in
             guard let self = self else { return }
             updatePassword(updatedPassword as! Password)
-            view?.updatePassword(updatedPassword)
+            //view?.updatePassword(updatedPassword)
+            view?.showToastVC(message: "Data modified successfully", type: .success)
         }
     }
 
@@ -48,14 +49,14 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
             return
         }
         password.notes = text
-        buildSection()
-        view?.reloadData()
+        //buildSection()
+        //view?.reloadData()
     }
 
     func updateLastCopiedDate() {
         let date = Date()
         password.updateLastCopiedDate(date: date)
-        view?.updatePassword(password)
+        updateUseCase.execute(id: password.id, date: date)
         buildSection()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
             self?.view?.reloadData()
@@ -107,10 +108,7 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
         isNotesEditing = editing
 
         if !editing {
-            view?.updatePasswordNotes(
-                text: password.notes,
-                id: password.id
-            )
+            updateUseCase.execute(text: password.notes, id: password.id)
         }
 
         buildSection()

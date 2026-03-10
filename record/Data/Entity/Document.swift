@@ -130,8 +130,10 @@ enum DefaultDocument: String, CaseIterable {
             rules += [.alphanumeric,.minLength(10),.maxLength(16)]
         case .vehicleRegistrationCertificate:
             rules += [.alphanumeric,.minLength(8),.maxLength(14), ]
+//        case .rationCard:
+//            rules += [.numeric, .maxLength(12)]
         default:
-            rules += [.minLength(4), .maxLength(20), .allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/ "), message: "Invalid Character Found")]
+            rules += [.minLength(4), .maxLength(20), .allowedCharacters(CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/. "), message: "Invalid Character Found")]
         }
         return rules
     }
@@ -204,6 +206,14 @@ enum DocumentSortField: String, Codable {
 enum SortDirection: String, Codable {
     case ascending
     case descending
+    var dbValue: String {
+        switch self {
+        case .ascending:
+            return "ASC"
+        case .descending:
+            return "DESC"
+        }
+    }
 }
 
 struct DocumentSortOption: Codable, Equatable  {

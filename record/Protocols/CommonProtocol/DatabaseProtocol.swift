@@ -21,12 +21,19 @@ protocol DatabaseProtocol {
 protocol DocumentDatabaseProtocol: DatabaseProtocol {
     func toggle(table name: String, column: String,id: Int, value: Bool,lastModified: Date)
     func fetchDocuments() -> [Document]
+    func fetchDocuments(limit: Int, offset: Int, sort: DocumentSortOption, searchText: String?) -> [Document]
     
+}
+protocol RemainderDatabaseProtocol: DatabaseProtocol {
+    func fetchRemainderByDocumentId(_ id: Int) -> [Remainder]
+    func insertandGetRemainderId(table name: String, values: [TableColumnName: TableColumnValue] ) -> Int
 }
 
 protocol PasswordDatabaseProtocol: DatabaseProtocol {
+    func updateLastCopiedDate(id: Int,date: Date)
     func toggle(table name: String, column: String,id: Int, value: Bool,lastModified: Date)
     func fetchPasswords() -> [Password]
+    func fetchPasswords(limit: Int, offset: Int, sort: PasswordSortOption, searchText: String?, isFavorite: Bool) -> [Password]
     
 }
 
@@ -41,6 +48,7 @@ protocol MedicalDatabaseProtocol: DatabaseProtocol {
     func fetchMedical() -> [Medical]
     func fetchActiveMedical() -> [Medical]
     func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?)
+    func fetchMedical(limit: Int, offset: Int, sort: MedicalSortOption, category: MedicalType?,searchText: String?) -> [Medical]
 }
 
 

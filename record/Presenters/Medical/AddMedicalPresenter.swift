@@ -11,7 +11,7 @@ class AddMedicalPresenter: FormFieldPresenter {
     let router: AddMedicalRouterProtocol
     let mode: MedicalFormMode
     var doctors: Set<String>
-    var hospitals: Set<String>
+    var hospitals: Set<String> = Set()
     let fetchUseCase: FetchMedicalUseCase
     let fileManager: AppFileManager
     init(view: FormFieldViewDelegate? = nil, router: AddMedicalRouterProtocol, mode: MedicalFormMode,fetchUseCase: FetchMedicalUseCase ) {
@@ -19,15 +19,18 @@ class AddMedicalPresenter: FormFieldPresenter {
         self.mode = mode
         self.fetchUseCase = fetchUseCase
         doctors = fetchUseCase.fetchDoctors()
-        hospitals = fetchUseCase.fetchHospitals()
+        
         fileManager = AppFileManager()
         super.init(view: view)
-        hospitals.insert(AppConstantData.none)
         doctors.insert(AppConstantData.none)
+        hospitals.insert(AppConstantData.none)
     }
     
     func existing() -> Medical? {
         if case let .edit(medical) = mode {
+            if let file = medical.receipt {
+                medical.receipt = DocumentThumbnailProvider.fullURL(from: file)
+            }
             return medical
         }
         return nil
@@ -39,7 +42,7 @@ class AddMedicalPresenter: FormFieldPresenter {
         fields = [
             FormField(label: "Type", type: .select, validators: [.required], gotoNextField: false, value: existing?.type.rawValue ?? MedicalType.checkup.rawValue),
             FormField(label: "Title", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next,),
-            FormField(label: "Hospital", type: .select, validators: [.maxLength(30), .alphanumeric], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
+            FormField(label: "Hospital", type: .select, validators: [.maxLength(100), .alphanumeric], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
             FormField(label: "Doctor", type: .select, validators: [.maxLength(30), .alphabetic], gotoNextField: false, value: existing?.doctor ?? AppConstantData.none, returnType: .done),
             FormField(label: "Recorded At", type: .date, validators: [.required], gotoNextField: false, value: existing?.date),
             FormField(label: "Medical Reciept", type: .fileUpload, validators: [], gotoNextField: false, value: existing?.receipt),
@@ -50,6 +53,13 @@ class AddMedicalPresenter: FormFieldPresenter {
     }
     
     override func viewDidLoad() {
+        
+        Task { @MainActor in
+            view?.showLoading()
+            self.hospitals = await fetchUseCase.fetchHospitals()
+            view?.stopLoading()
+        }
+
         buildFields()
     }
     
@@ -120,8 +130,11 @@ class AddMedicalPresenter: FormFieldPresenter {
             switch mode {
             case .add:
                 view?.onAdd?(medical)
+                view?.showToastVc(message: "Data added successfully", type: .success)
             case .edit:
                 view?.onEdit?(medical)
+                view?.showToastVc(message: "Data modified successfully", type: .success)
+
             }
             view?.dismiss()
         }

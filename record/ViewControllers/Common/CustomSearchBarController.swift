@@ -24,12 +24,6 @@ class CustomSearchBarController: UIViewController {
         return sb
     }()
     
-//    let searchButton = UIBarButtonItem(
-//        barButtonSystemItem: .search,
-//        target: self,
-//        action: #selector(openSearch)
-//    )
-
     private var bottomConstraint: NSLayoutConstraint!
     private var isSearchVisible = false
     
@@ -85,8 +79,6 @@ class CustomSearchBarController: UIViewController {
         searchDidShow()
         bottomSearchBar.becomeFirstResponder()
         
-//        view.layoutIfNeeded()
-//        updateScrollInsets()
     }
 
     func hideSearch() {

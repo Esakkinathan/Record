@@ -153,6 +153,7 @@ class Medicine: Persistable {
     static let startDateC = "startDate"
     static let endDateC = "endDate"
     static let statusC = "status"
+    
     let id: Int
     let medical: Int
     var kind: MedicalKind

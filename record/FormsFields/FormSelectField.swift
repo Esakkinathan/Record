@@ -32,6 +32,7 @@ class FormSelectField: FormFieldCell {
        let stack = UIStackView()
         stack.axis = .horizontal
         stack.spacing = PaddingSize.content
+        stack.distribution = .fillProportionally
         return stack
     }()
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -74,6 +75,7 @@ class FormSelectField: FormFieldCell {
             stack.bottomAnchor.constraint(equalTo: errorLabel.topAnchor ),
             stack.centerYAnchor.constraint(equalTo: rightView.centerYAnchor, ),
             stack.trailingAnchor.constraint(equalTo: rightView.trailingAnchor,constant: -FormSpacing.width * 2 ),
+            stack.leadingAnchor.constraint(equalTo: rightView.leadingAnchor,constant: FormSpacing.width)
         ])
     }
     @objc func didTapValue() {

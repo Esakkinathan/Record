@@ -78,12 +78,13 @@ class Validator {
                     return .init(isValid: false, errorMessage: "Invalid phone number")
                 }
             case .url:
-                guard let url = URL(string: value.trimmingCharacters(in: .whitespaces)),
-                      let scheme = url.scheme,
-                      let host = url.host,
-                      ["http", "https"].contains(scheme.lowercased()),
-                      !host.isEmpty
-                else {
+                if value.isEmpty {
+                    break
+                }
+
+                let regex = #"^(https?:\/\/)([A-Za-z0-9-]+\.)+[A-Za-z]{2,}(\/.*)?$"#
+
+                if !NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: value) {
                     return .init(isValid: false, errorMessage: "Enter a valid URL (http or https)")
                 }
             case .regex(let pattern, let message):

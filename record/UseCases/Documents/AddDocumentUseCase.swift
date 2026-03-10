@@ -4,8 +4,11 @@
 //
 //  Created by Esakkinathan B on 30/01/26.
 //
-
-class AddDocumentUseCase {
+ 
+protocol AddDocumentUseCaseProtocol {
+    func execute(document: Document)
+}
+class AddDocumentUseCase: AddDocumentUseCaseProtocol {
     private let repository: DocumentRepositoryProtocol
     
     init(repository: DocumentRepositoryProtocol) {

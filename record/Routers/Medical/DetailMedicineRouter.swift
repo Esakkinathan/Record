@@ -19,6 +19,7 @@ class DetailMedicineRouter: DetailMedicineRouterProtocol {
         let vc = AddMedicalItemAssembler.make(mode: mode, medical: medical, kind: kind, startDate: startDate)
         let navVc = UINavigationController(rootViewController: vc)
         navVc.modalPresentationStyle = .pageSheet
+        vc.onEdit = onEdit
         viewController?.presentVC(navVc)
     }
     

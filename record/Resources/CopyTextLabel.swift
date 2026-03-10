@@ -212,6 +212,7 @@ class CopyTextLabel: UIView {
         return v
     }()
 
+    var tapGesture: UITapGestureRecognizer?
 
     var text: String? {
         get { textLabel.text }
@@ -221,12 +222,29 @@ class CopyTextLabel: UIView {
     func setText(_ text: String) {
         textLabel.text = text
     }
+    var canCopy: Bool
 
-
-    init() {
+    init(canCopy: Bool = true) {
+        self.canCopy = canCopy
         super.init(frame: .zero)
         setupLayout()
-        setupGesture()
+        if canCopy {
+            setupGesture()
+        }
+    }
+    let iconContainer = UIView()
+    func configure(canCopy: Bool) {
+        iconContainer.isHidden = !canCopy
+        if !canCopy {
+            if let tap = tapGesture {
+                removeGestureRecognizer(tap)
+                tapGesture = nil
+            }
+        } else {
+            if tapGesture == nil {
+                setupGesture()
+            }
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -236,12 +254,10 @@ class CopyTextLabel: UIView {
     private func setupLayout() {
         translatesAutoresizingMaskIntoConstraints = false
 
-        // Icon container — stack copy + check on top of each other
-        let iconContainer = UIView()
         iconContainer.isUserInteractionEnabled = true
         iconContainer.add(copyIconView)
         iconContainer.add(checkIconView)
-
+        iconContainer.isHidden = !canCopy
         contentView.add(textLabel)
         contentView.add(iconContainer)
         add(contentView)
@@ -285,15 +301,18 @@ class CopyTextLabel: UIView {
     private func setupGesture() {
         let tap = UITapGestureRecognizer(target: self, action: #selector(copyToClipboard))
         // Tap anywhere on the view copies (more ergonomic)
+        tapGesture = tap
         addGestureRecognizer(tap)
     }
 
     // MARK: - Copy Action
 
     @objc private func copyToClipboard() {
-        guard let textToCopy = textLabel.text, !textToCopy.isEmpty else { return }
-        UIPasteboard.general.string = textToCopy
-        animateCopied()
+        guard canCopy else { return }
+            guard let textToCopy = textLabel.text, !textToCopy.isEmpty else { return }
+            UIPasteboard.general.string = textToCopy
+            animateCopied()
+        
     }
 
     private func animateCopied() {

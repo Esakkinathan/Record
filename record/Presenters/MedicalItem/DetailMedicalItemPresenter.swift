@@ -68,11 +68,7 @@ class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
         ]
         let chartRow: [DetailMedicalRow] = [.dashBoard(chartSegment)]
         sections.append(.init(title: "Logs", rows: chartRow))
-        var missedRow: [DetailMedicalRow] = []
-        for data in dashBoardData {
-            guard !data.status else {continue}
-            missedRow.append(.info(.init(title: data.date.toString(), value: data.schedule.rawValue)))
-        }
+        var missedRow: [DetailMedicalRow] = [.missed(dashBoardData)]
         sections.append(.init(title: "Missed Schedule", rows: missedRow))
     }
     
@@ -94,20 +90,22 @@ class DetailMedicalItemPresenter: DetailMedicalItemPresenterProtocol {
         buildSections()
         view?.reloadData()
     }
-    func updateMedicine() {
-        buildSections()
-        view?.reloadData()
+    func updateMedicine(updated: Medicine) {
+        medicalItem.update(kind: updated.kind, name: updated.name, instruction: updated.instruction, dosage: updated.dosage, shedule: updated.shedule, startDate: updated.startDate)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            updateUseCase.execute(medicine: medicalItem)
+            buildSections()
+            view?.reloadData()
+        }
 
     }
     func editButtonClicked() {
         router.openEditMedicalVC(mode: .edit(medicalItem), medical: medical, kind: medicalItem.kind, startDate: medicalItem.startDate) { [weak self] updatedMedicine in
             guard let self = self else { return }
-            updateMedicine()
-            view?.updateMedicine(updatedMedicine)
+            updateMedicine(updated: updatedMedicine as! Medicine)
+            //view?.showToastVC(message: "Data modified successfully", type: .success)
+            //view?.updateMedicine(updatedMedicine)
         }
     }
-
-
-    
-    
 }

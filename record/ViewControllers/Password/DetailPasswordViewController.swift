@@ -145,7 +145,7 @@ extension DetailPasswordViewController: UITableViewDataSource, UITableViewDelega
             case .url:
                 let newCell = tableView.dequeueReusableCell(withIdentifier: FormSelectField.identifier, for: indexPath) as! FormSelectField
                 newCell.configure(title: section.title, text: section.value)
-                newCell.valueLabel.textColor = .systemBlue
+                newCell.valueLabel.textColor = .link
                 newCell.valueLabel.textAlignment = .left
                 newCell.stack.distribution = .equalSpacing
                 newCell.stack.leadingAnchor.constraint(equalTo: newCell.rightView.leadingAnchor, constant: FormSpacing.width).isActive = true
@@ -180,6 +180,9 @@ extension DetailPasswordViewController: DetailPasswordViewDelegate {
     
     func updatePassword(_ password: Persistable) {
         onEdit?(password)
+    }
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
     }
     
     

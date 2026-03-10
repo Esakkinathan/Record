@@ -109,7 +109,7 @@ enum IconName {
     
     static let photoAdd = "photo.badge.plus"
     
-    static let medical = "medical.thermometer"
+    static let medical = "thermometer.variable.and.figure.circle.fill"
     
     static let password = "key.shield"
     

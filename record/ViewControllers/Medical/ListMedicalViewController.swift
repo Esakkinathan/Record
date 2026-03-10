@@ -41,7 +41,7 @@ class ListMedicalViewController: CustomSearchBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
-        presenter.viewDidLoad()
+        
         setUpNavigationBar()
         setUpContents()
         setupTableHeader()
@@ -49,7 +49,7 @@ class ListMedicalViewController: CustomSearchBarController {
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        presenter.viewDidLoad()
         let summary = presenter.getActiveSummary()
         todayMedicineView.configure(dashboard: summary,icon: UIImage(systemName: "list.clipboard.fill"), subtitle: DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none,), iconTint: SettingsManager.shared.accent.color)
         categorySelector.applyTint()
@@ -102,12 +102,13 @@ class ListMedicalViewController: CustomSearchBarController {
                 segment: segment,
                 medicines: medicines
             )
+            //popup.modalPresentationStyle = .
             self.present(popup, animated: true)
         }
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -PaddingSize.height),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
@@ -181,6 +182,8 @@ class ListMedicalViewController: CustomSearchBarController {
         ).height
         header.frame.size.height = fittedHeight
         tableView.tableHeaderView = header
+        tableView.beginUpdates()
+        tableView.endUpdates()
     }
 
     func collapseDashboard() {
@@ -198,7 +201,6 @@ class ListMedicalViewController: CustomSearchBarController {
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
             self.todayMedicineView.alpha = 0
             self.headerWrapper.layoutIfNeeded()
-        } completion: { _ in
             self.invalidateHeaderLayout()
         }
     }
@@ -210,9 +212,8 @@ class ListMedicalViewController: CustomSearchBarController {
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
             self.todayMedicineView.alpha = 1
             self.headerWrapper.layoutIfNeeded()
-        } completion: { _ in
             self.invalidateHeaderLayout()
-        }
+        } 
     }
     
     @objc func openSearch() {
@@ -227,7 +228,8 @@ class ListMedicalViewController: CustomSearchBarController {
     }
 
     override func performSearch(text: String?) {
-        presenter.search(text: text)
+        let enteredText = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+        presenter.search(text: enteredText)
     }
     override func searchDidShow() {
         searchButton.isEnabled = false
@@ -241,7 +243,16 @@ class ListMedicalViewController: CustomSearchBarController {
 }
 
 extension ListMedicalViewController: UITableViewDataSource {
-    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let position = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let frameHeight = scrollView.frame.size.height
+
+        if position > contentHeight - frameHeight - 100 {
+            presenter.loadMedical(reset: false)
+        }
+    }
+
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -268,7 +279,7 @@ extension ListMedicalViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
-            self?.presenter.deleteMedical(at: indexPath.row)
+            self?.presenter.deleteClicked(at: indexPath.row)
             completion(true)
         }
         
@@ -286,10 +297,28 @@ extension ListMedicalViewController: UITableViewDelegate {
 }
 
 extension ListMedicalViewController: ListMedicalViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func refreshSortMenu() {
         buildSortMenu()
     }
-    
+    func showAlertOnDelete(at index: Int) {
+        let alert = UIAlertController(
+            title: "Delete?",
+            message: "Are you sure you want to delete?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
+            self?.presenter.deleteMedical(at: index )
+        })
+        present(alert, animated: true)
+    }
+
     func reloadData() {
         tableView.reloadData()
         let isEmpty = presenter.isEmpty
@@ -309,7 +338,7 @@ extension ListMedicalViewController: ListMedicalViewDelegate {
                     subtitle: "Tap + on top to create your first Record."
                 )
             } else {
-                tableView.setEmptyView(
+                tableView.setHeaderEmptyView(
                     image: "tray.full",
                     title: "No Matching Health Record Found",
                     subtitle: "Search with title, hospital and doctor name"
@@ -317,10 +346,42 @@ extension ListMedicalViewController: ListMedicalViewDelegate {
             }
         } else {
             tableView.restoreFooter()
-            tableView.restoreBackgroundView()
+            setupTableHeader()
         }
     }
 
+    /*
+    func reloadData() {
+        tableView.reloadData()
+
+        let isEmpty = presenter.isEmpty
+        let isSearching = presenter.isSearching
+
+        if isSearching && isEmpty {
+            headerWrapper.isHidden = true
+        } else {
+            headerWrapper.isHidden = false
+        }
+
+        if isEmpty {
+            if !isSearching {
+                tableView.setEmptyFoooterView(
+                    image: "tray.full",
+                    title: "No Health Records",
+                    subtitle: "Tap + on top to create your first Record."
+                )
+            } else {
+                tableView.setHeaderEmptyView(
+                    image: "tray.full",
+                    title: "No Matching Health Record Found",
+                    subtitle: "Search with title, hospital and doctor name"
+                )
+            }
+        } else {
+            tableView.restoreFooter()
+        }
+    }
+     */
 }
 
 extension ListMedicalViewController: DocumentNavigationDelegate {
@@ -384,7 +445,7 @@ extension ListMedicalViewController {
             self?.presenter.didSelectSortField(.updatedAt)
         }
 
-        sortView.configure(text: current.field.rawValue, iconName: current.direction == .ascending ? IconName.arrowUp : IconName.arrowDown)
+        sortView.configure(text: current.field.rawValue)
         sortView.button.menu = UIMenu(
             title: "Sort By",
             children: [name, created, updated]

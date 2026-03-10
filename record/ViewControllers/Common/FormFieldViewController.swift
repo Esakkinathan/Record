@@ -64,7 +64,6 @@ class FormFieldViewController: KeyboardNotificationViewController {
         tableView.estimatedRowHeight = 150
         return tableView
     }()
-    //let spinner = UIActivityIndicatorView(style: .large)
     var presenter: FormFieldPresenterProtocol!
     var onAdd: ((Persistable) -> Void)?
     var onEdit: ((Persistable) -> Void)?
@@ -153,7 +152,7 @@ class FormFieldViewController: KeyboardNotificationViewController {
     func showExitAlert() {
         let alert = UIAlertController(
             title: "Discard Changes?",
-            message: "Are you sure you want to exit?",
+            message: "You have unsaved changes. Are you sure you want to leave?",
             preferredStyle: .alert
         )
         
@@ -166,18 +165,6 @@ class FormFieldViewController: KeyboardNotificationViewController {
         present(alert, animated: true)
     }
     
-    
-//    func openScanner() {
-//        guard VNDocumentCameraViewController.isSupported else {
-//            print("Scanner not supported")
-//            return
-//        }
-//
-//        let scanner = VNDocumentCameraViewController()
-//        scanner.delegate = self
-//        present(scanner, animated: true)
-//    }
-
 }
 
 extension FormFieldViewController: VNDocumentCameraViewControllerDelegate {
@@ -187,7 +174,7 @@ extension FormFieldViewController: VNDocumentCameraViewControllerDelegate {
         didFinishWith scan: VNDocumentCameraScan
     ) {
         controller.dismiss(animated: true)
-
+        restoreNavigationAppearance()
         var images: [UIImage] = []
 
         for i in 0..<min(scan.pageCount, 10) {
@@ -201,7 +188,19 @@ extension FormFieldViewController: VNDocumentCameraViewControllerDelegate {
     ) {
         
         controller.dismiss(animated: true)
+        restoreNavigationAppearance()
     }
+    private func restoreNavigationAppearance() {
+        let accent = SettingsManager.shared.accent
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = accent.color
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+    }
+
 }
 
 extension FormFieldViewController: QLPreviewControllerDataSource {
@@ -298,10 +297,35 @@ extension FormFieldViewController: UIDocumentPickerDelegate {
             return
         }
         guard urls.count <= presenter.maxFiles else {
-            showError("Maximum of \(PDFMergeError.maxFiles) allowed")
+            showError("Maximum of \(presenter.maxFiles) allowed")
             return
         }
         presenter.processFile(urls: urls)
+    }
+    func askForPassword(name: String,completion: @escaping (String, Bool) -> Void) {
+
+        let alert = UIAlertController(
+            title: "Password Required",
+            message: "Enter the password to unlock \(name)",
+            preferredStyle: .alert
+        )
+
+        alert.addTextField {
+            $0.isSecureTextEntry = true
+            $0.placeholder = "Password"
+        }
+
+        alert.addAction(UIAlertAction(title: "Unlock", style: .default) { _ in
+
+            let password = alert.textFields?.first?.text ?? ""
+            completion(password, true)
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            completion("", false)
+        })
+
+        present(alert, animated: true)
     }
 }
 
@@ -460,8 +484,13 @@ extension FormFieldViewController {
 
     func dateFieldCell(_ indexPath: IndexPath, _ field: FormField) -> FormDateField {
         let cell = tableView.dequeueReusableCell(withIdentifier: FormDateField.identifier, for: indexPath) as! FormDateField
-        
+        print("I am getting reloading")
         cell.configure(title: field.label, date: field.value as? Date,isRequired: isFieldRequired(field: field))
+        
+        cell.onButtonClicked = { [weak self] date in
+            self?.openDatePicker(at: indexPath.row, selectedDate: date, futureDate: field.gotoNextField)
+        }
+        
         if !field.gotoNextField {
             cell.datePicker.maximumDate = Date()
         }
@@ -474,7 +503,38 @@ extension FormFieldViewController {
         return cell
 
     }
-    
+    func openDatePicker(at index: Int, selectedDate: Date?, futureDate: Bool) {
+        let picker = UIDatePicker()
+        picker.datePickerMode = .date
+        picker.preferredDatePickerStyle = .compact
+
+        if let selectedDate {
+            picker.date = selectedDate
+        }
+        
+        if !futureDate {
+            picker.maximumDate = Date()
+        }
+         
+        let alert = UIAlertController(title: "Select Date\n\n", message: nil, preferredStyle: .actionSheet)
+
+        alert.view.addSubview(picker)
+
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 40)
+        ])
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        alert.addAction(UIAlertAction(title: "Done", style: .default) { [weak self] _ in
+            self?.presenter.updateValueAt(picker.date, at: index)
+        })
+
+        present(alert, animated: true)
+    }
+
     
     
     func getNextCell(indexPath: IndexPath) -> UITableViewCell? {

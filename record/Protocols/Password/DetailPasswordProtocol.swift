@@ -25,6 +25,7 @@ protocol DetailPasswordViewDelegate: AnyObject {
     func reloadData()
     func updatePasswordNotes(text: String?, id: Int)
     func updatePassword(_ password: Persistable)
+    func showToastVC(message: String, type: ToastType)
 }
 
 protocol DetailPasswordRouterProtocol {

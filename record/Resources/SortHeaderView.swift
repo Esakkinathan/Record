@@ -12,13 +12,14 @@ class SortHeaderView: UIView {
         let button = UIButton(type: .custom)
         var config = UIButton.Configuration.plain()
         config.title = "Sort"
-        config.image = UIImage(systemName: IconName.arrowUp)
+        //config.image = UIImage(systemName: IconName.arrowUp)
         config.baseForegroundColor = .secondaryLabel
         config.baseBackgroundColor = .secondarySystemBackground
         config.imagePlacement = .trailing
         config.imagePadding = 4
         button.configuration = config
         button.showsMenuAsPrimaryAction = true
+        button.changesSelectionAsPrimaryAction = true
         return button
     }()
     
@@ -62,18 +63,27 @@ class SortHeaderView: UIView {
             button.trailingAnchor.constraint(equalTo: buttonView.trailingAnchor, constant: -space),
             
         ])
-        let stack: UIStackView = {
-           let view = UIStackView(arrangedSubviews: [textLabel, timerLabel, buttonView])
-            view.axis = .horizontal
-            view.distribution = .equalCentering
+        let contentView: UIView = {
+           let view = UIView()
             return view
         }()
-        add(stack)
+        contentView.add(buttonView)
+        contentView.add(timerLabel)
+        add(contentView)
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.width)
+            buttonView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            buttonView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            buttonView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+            
+            timerLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+            timerLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            timerLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+        ])
+        NSLayoutConstraint.activate([
+            contentView.topAnchor.constraint(equalTo: topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
     func setTimer(text: NSMutableAttributedString) {
@@ -89,11 +99,7 @@ class SortHeaderView: UIView {
             }
         )
     }
-    func configure(text: String, iconName: String? = nil) {
+    func configure(text: String) {
         textLabel.text = text
-        if let icon = iconName {
-            button.configuration?.image = UIImage(systemName: icon)
-
-        }
     }
 }

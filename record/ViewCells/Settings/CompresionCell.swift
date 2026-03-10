@@ -11,13 +11,13 @@ class CompresionCell: UITableViewCell {
     var button: UIButton = {
         let button = UIButton(type: .custom)
         var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: IconName.chevronDown)
         config.baseForegroundColor = .secondaryLabel
         config.baseBackgroundColor = .secondarySystemBackground
         config.imagePlacement = .trailing
         config.imagePadding = 4
         button.configuration = config
         button.showsMenuAsPrimaryAction = true
+        button.changesSelectionAsPrimaryAction = true
         return button
 
     }()
@@ -63,16 +63,16 @@ class CompresionCell: UITableViewCell {
     
     func buildMenu() {
         let lowAction = UIAction(title: "Low") { [weak self] _ in
-            self?.configure(text: "Low")
+            //self?.configure(text: "Low")
             self?.handler?(.low)
         }
         let mediumAction = UIAction(title: "Medium") { [weak self] _ in
-            self?.configure(text: "Medium")
+            //self?.configure(text: "Medium")
 
             self?.handler?(.medium)
         }
         let highAction = UIAction(title: "High") { [weak self] _ in
-            self?.configure(text: "High")
+            //self?.configure(text: "High")
             self?.handler?(.high)
         }
         button.menu = UIMenu(title: "",children: [lowAction, mediumAction, highAction])

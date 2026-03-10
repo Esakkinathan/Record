@@ -50,6 +50,9 @@ class ListPasswordPresenter: ListPasswordProtocol {
     func toggleFavorite(_ password: Password) {
         password.toggleFavorite()
         toggleFavouriteUseCase.execute(password)
+        loadPasswords()
+        didSelectedFavourite(reset: false)
+        //view?.reloadData()
     }
     
     
@@ -64,12 +67,7 @@ class ListPasswordPresenter: ListPasswordProtocol {
     
     func didSelectedRow(at index: Int) {
         let password = password(at: index)
-        router.openDetailPasswordVC(password: password, onUpdate: { [weak self] updatedPassword in
-            self?.updatePassword(updatedPassword as! Password)
-        }, onUpdateNotes: { [weak self] text, id in
-            self?.updateNotes(text: text, id: id)
-            }
-        )
+        router.openDetailPasswordVC(password: password)
     }
 }
 
@@ -88,6 +86,7 @@ extension ListPasswordPresenter {
         let record = password(at: index)
         deleteUseCase.execute(id: record.id)
         loadPasswords()
+        view?.showToastVC(message: "Data deleted successfully", type: .success)
 
     }
     
@@ -136,9 +135,12 @@ extension ListPasswordPresenter {
     }
     
     func viewDidLoad() {
-        loadPasswords()
         configureSession()
         startUITimer()
+
+    }
+    func viewWillAppear() {
+        loadPasswords()
     }
     
     func startUITimer() {
@@ -173,6 +175,7 @@ extension ListPasswordPresenter {
     func gotoAddPasswordScreen() {
         router.openAddPasswordVC(mode: .add) { [weak self] newPassword in
             self?.addPassword(newPassword as! Password)
+            self?.view?.showToastVC(message: "Data modified successfully", type: .success)
         }
     }
 
@@ -216,9 +219,16 @@ extension ListPasswordPresenter {
         PasswordSortStore.save(currentSort)
         applySort()
     }
+    func deleteClicked(at index: Int) {
+        view?.showAlertOnDelete(at: index)
+    }
 
-    func didSelectedFavourite() {
-        isFavoriteSelected.toggle()
+
+    func didSelectedFavourite(reset: Bool = true) {
+        if reset {
+            isFavoriteSelected.toggle()
+        }
+        
         if isFavoriteSelected {
             visibleRecords = visibleRecords.filter { $0.isFavorite}
             view?.refreshSortMenu()
@@ -229,6 +239,7 @@ extension ListPasswordPresenter {
     }
 
     func applySort() {
+        
         visibleRecords = passwordList
         
         visibleRecords.sort(by: { (lhs: Password, rhs: Password) -> Bool in

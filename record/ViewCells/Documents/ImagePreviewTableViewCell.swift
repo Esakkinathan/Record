@@ -21,7 +21,7 @@ class NoImagePreview: UIView {
         let label = UILabel()
         label.text = "No Document Uploaded"
         label.labelSetUp()
-        label.textColor = AppColor.SecondaryColor
+        label.textColor = AppColor.primaryColor
         label.font =  AppFont.heading3
         label.textAlignment = .center
         return label
@@ -29,12 +29,14 @@ class NoImagePreview: UIView {
     
     let label2: UILabel = {
         let label = UILabel()
-        label.text = "Upload PDF or Image"
+        label.text = "Tap Edit on top to upload a PDF or image"
         label.labelSetUp()
         label.textColor = .secondaryLabel
 
         label.textAlignment = .center
         label.font =  AppFont.heading2
+        label.numberOfLines = 2
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
     
@@ -48,7 +50,7 @@ class NoImagePreview: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setUpContents()
-        addDashedBorder()
+        //addDashedBorder()
     }
     
     required init?(coder: NSCoder) {
@@ -58,7 +60,7 @@ class NoImagePreview: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         layer.sublayers?.removeAll(where: { $0 is CAShapeLayer })
-        addDashedBorder()
+        //addDashedBorder()
     }
 
     func setUpContents() {
@@ -75,7 +77,7 @@ class NoImagePreview: UIView {
         NSLayoutConstraint.activate([
 
             topSpacer.topAnchor.constraint(equalTo: topAnchor),
-            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2),
+            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.15),
 
             imageView.topAnchor.constraint(equalTo: topSpacer.bottomAnchor),
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -86,7 +88,8 @@ class NoImagePreview: UIView {
             label1.centerXAnchor.constraint(equalTo: centerXAnchor),
 
             label2.topAnchor.constraint(equalTo: label1.bottomAnchor, constant: PaddingSize.height),
-            label2.centerXAnchor.constraint(equalTo: centerXAnchor),
+            label2.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
+            label2.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.width),
 
 //            button.topAnchor.constraint(equalTo: label2.bottomAnchor, constant: PaddingSize.height),
 //            button.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -95,7 +98,7 @@ class NoImagePreview: UIView {
 
             bottomSpacer.topAnchor.constraint(equalTo: label2.bottomAnchor),
             bottomSpacer.bottomAnchor.constraint(equalTo: bottomAnchor),
-            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2)
+            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.15)
         ])
     }
 }
@@ -135,27 +138,26 @@ class ImagePreviewTableViewCell: UITableViewCell {
     }
 
     func configure(with imagePath: String?) {
-        if let path = imagePath {
-            DocumentThumbnailProvider.generate(for: path) { [weak self] image in
-                self?.imagePreview.image = image ?? DocumentConstantData.docImage
+        var isHidden: Bool = false
+        if let path = imagePath, let filePath =  DocumentThumbnailProvider.fullURL(from: path) {
+            
+            DispatchQueue.main.async {
+                DocumentThumbnailProvider.generate(for: filePath) { [weak self] image in
+                    self?.imagePreview.image = image ?? DocumentConstantData.docImage
+                }
             }
-            imagePreview.isHidden = false
-            imagePreview.isUserInteractionEnabled = true
-            uploadView.isHidden = true
-        } else {
-            imagePreview.isHidden = true
-            imagePreview.isUserInteractionEnabled = false
-            uploadView.isHidden = false
-
+            isHidden = true
         }
-        
+        imagePreview.isHidden = !isHidden
+        imagePreview.isUserInteractionEnabled = isHidden
+        uploadView.isHidden = isHidden
     }
 
     func setUpContentView() {
         contentView.add(imagePreview)
         contentView.add(uploadView)
         selectionStyle = .none
-        
+        backgroundColor = .secondarySystemBackground
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageClicked))
         imagePreview.addGestureRecognizer(tapGesture)
         

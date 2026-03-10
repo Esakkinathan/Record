@@ -262,6 +262,9 @@
 			);
 			mainGroup = 77ED327F2F20A7C700EF4F77;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				770F54EC2F58380100C4A593 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 77ED32892F20A7C700EF4F77 /* Products */;
 			projectDirPath = "";
@@ -451,17 +454,19 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BCA8FCCEE38DB534185517B3 /* Pods-record.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon1;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = record/record.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KC2PBQPZBL;
+				DEVELOPMENT_TEAM = 9AL7N3QTCC;
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = "SQLITE_HAS_CODEC=1";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = record/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan your documents securely.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock you personal data";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use Documents";
@@ -475,7 +480,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zoho.record1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zoho.record14;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -492,17 +497,19 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C572C90BE68109262D9B5B78 /* Pods-record.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon1;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = record/record.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KC2PBQPZBL;
+				DEVELOPMENT_TEAM = 9AL7N3QTCC;
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = "SQLITE_HAS_CODEC=1";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = record/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to scan your documents securely.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock you personal data";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use Documents";
@@ -516,7 +523,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zoho.record1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zoho.record14;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -774,6 +781,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		770F54EC2F58380100C4A593 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 77ED32802F20A7C700EF4F77 /* Project object */;
 }

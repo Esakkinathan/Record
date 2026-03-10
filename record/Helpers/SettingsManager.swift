@@ -43,32 +43,44 @@ enum AppAccent: String, CaseIterable {
         case .blue:
             return UIColor { trait in
                 trait.userInterfaceStyle == .dark ?
-                UIColor(red: 0.35, green: 0.65, blue: 1.0, alpha: 1) :
-                UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1)
+                UIColor(red: 0.35, green: 0.65, blue: 0.9, alpha: 1) :
+                UIColor(red: 0.25, green: 0.55, blue: 1.0, alpha: 1)
             }
+//        case .emerald:
+//            return UIColor { trait in
+//                trait.userInterfaceStyle == .dark ?
+//                UIColor(red: 0.2, green: 0.85, blue: 0.6, alpha: 1) :
+//                UIColor(red: 0.0, green: 0.6, blue: 0.4, alpha: 1)
+//            }
         case .emerald:
             return UIColor { trait in
-                trait.userInterfaceStyle == .dark ?
-                UIColor(red: 0.2, green: 0.85, blue: 0.6, alpha: 1) :
-                UIColor(red: 0.0, green: 0.6, blue: 0.4, alpha: 1)
+                trait.userInterfaceStyle == .dark ? UIColor(red: 0.28, green: 0.76, blue: 0.53, alpha: 1.0) :
+                UIColor(red: 0.18, green: 0.66, blue: 0.43, alpha: 1.0) 
+                
             }
         case .violet:
             return UIColor { trait in
                 trait.userInterfaceStyle == .dark ?
                 UIColor(red: 0.7, green: 0.5, blue: 1.0, alpha: 1) :
-                UIColor(red: 0.5, green: 0.3, blue: 0.9, alpha: 1)
+                UIColor(red: 0.6, green: 0.4, blue: 0.9, alpha: 1)
             }
+//        case .coral:
+//            return UIColor { trait in
+//                trait.userInterfaceStyle == .dark ?
+//                UIColor(red: 1.0, green: 0.45, blue: 0.45, alpha: 1) :
+//                UIColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1)
+//            }
         case .coral:
             return UIColor { trait in
                 trait.userInterfaceStyle == .dark ?
-                UIColor(red: 1.0, green: 0.45, blue: 0.45, alpha: 1) :
-                UIColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1)
+                UIColor(red: 0.89, green: 0.4, blue: 0.4, alpha: 1) :
+                UIColor(red: 0.95, green: 0.31, blue: 0.31, alpha: 1.0)
             }
         case .amber:
             return UIColor { trait in
-                trait.userInterfaceStyle == .dark ?
-                UIColor(red: 1.0, green: 0.7, blue: 0.3, alpha: 1) :
-                UIColor(red: 1.0, green: 0.55, blue: 0.0, alpha: 1)
+                trait.userInterfaceStyle == .dark ? UIColor(red: 0.37, green: 0.72, blue: 0.76, alpha: 1)
+                 : UIColor(red: 0.27, green: 0.62, blue: 0.66, alpha: 1.0)
+                
             }
         }
     }

@@ -31,10 +31,8 @@ class ListDocumentRouter: ListDocumentRouterProtocol {
         viewController?.presentVC(navVc)
     }
         
-    func openDetailDocumentVC(document: Document, onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void) {
+    func openDetailDocumentVC(document: Document) {
         let vc = DetailDocumentAssembler.make(document: document)
-        vc.onEdit = onUpdate
-        vc.onUpdateNotes = onUpdateNotes
         viewController?.push(vc)
     }
 }

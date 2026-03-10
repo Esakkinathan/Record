@@ -23,18 +23,10 @@ class TabBarController: UITabBarController {
         let password = UITab(title: "Password", image: UIImage(systemName: IconName.password), identifier: "post"){ tab in
             return UINavigationController(rootViewController: MasterPasswordAssembler.make())
         }
-        let medical = UITab(title: "Health", image: UIImage(systemName: IconName.medical), identifier: "Health") {_ in 
+        let medical = UITab(title: "Health", image: UIImage(systemName: IconName.medical), identifier: "health") {_ in
             return UINavigationController(rootViewController: ListMedicalAssembler.make())
         }
-        
-//        let finance = UITab(title: "Finance", image: UIImage(systemName: IconName.finance), identifier: "finance") {_ in
-//            return UINavigationController(rootViewController: ListUtilityAssembler.make())
-//        }
-//        
-//        let timeLine = UITab(title: "TimeLine", image: UIImage(systemName: "calendar.day.timeline.leading"), identifier: "timeline") {_ in 
-//            return UINavigationController(rootViewController: ListDocumentAssembler.make())
-//        }
-        
+                
         let settings = UITab(title: "Settings", image: UIImage(systemName: IconName.settings), identifier: "settings") {_ in
             return UINavigationController(rootViewController: SettingsAssembler.make())
         }
@@ -43,7 +35,7 @@ class TabBarController: UITabBarController {
         mode = .automatic
         tabBar.tintColor = AppColor.primaryColor
         tabBarMinimizeBehavior = .onScrollDown
-        
+
     }
     
 

@@ -11,6 +11,8 @@ enum MedicalType: String, CaseIterable {
     case checkup = "Check Up"
     case chronic = "Chrnoic"
     case vaccination = "Vaccination"
+    case surgery = "Surgery"
+
     case emergency = "Emergency"
     
     static var defaultValue: MedicalType {
@@ -25,6 +27,8 @@ enum MedicalType: String, CaseIterable {
             "waveform.path.ecg"
         case .vaccination:
             "syringe.fill"
+        case .surgery:
+            "cross.case.fill"
         case .emergency:
             "bolt.heart.fill"
         }

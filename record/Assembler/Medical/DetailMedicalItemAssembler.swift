@@ -11,6 +11,7 @@ class DetailMedicalItemAssembler {
         let vc = DetailMedicalItemViewController()
         let updateUseCase = UpdateMedicineUseCase(repository: MedicineRepository())
         let router = DetailMedicineRouter(view: vc)
+        //let updateUseCase = UpdateMedicineUseCase(repository: MedicineRepository())
         let presenter = DetailMedicalItemPresenter(view: vc, medicalItem: medicalItem, router: router,updateUseCase: updateUseCase,medical: medical)
         vc.presenter = presenter
         return vc

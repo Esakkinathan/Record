@@ -11,7 +11,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     private var isLocked = SettingsManager.shared.faceId
-
+    private var backgroundDate: Date?
+    private let lockDelay: TimeInterval = 30
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         
@@ -22,6 +23,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         applyTheme()
         applyAccent()
         setUpNavigation()
+        window?.rootViewController = TabBarController()
         window?.makeKeyAndVisible()
         if isLocked == false {
             showMainInterface()
@@ -35,30 +37,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidDisconnect(_ scene: UIScene) {
     }
 
-    func sceneDidBecomeActive(_ scene: UIScene) {
-    }
 
     func sceneWillResignActive(_ scene: UIScene) {
     }
 
-    func sceneWillEnterForeground(_ scene: UIScene) {
-//        if isLocked == false {
-//            showMainInterface()
-//            return
-//        }
-//        showLockScreen()
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-        //isLocked = true
-
-    }
     func showLockScreen() {
 
-        isLocked = true
+        guard let root = window?.rootViewController else { return }
+
+        if root.presentedViewController is LockViewController { return }
+
         let lockVC = LockViewController()
-        window?.rootViewController = lockVC
+        lockVC.modalPresentationStyle = .fullScreen
+
+        root.present(lockVC, animated: false)
     }
+
     
     func showMainInterface() {
 
@@ -147,6 +141,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
 
         vc.children.forEach { updateController($0, color: color) }
+    }
+    
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        backgroundDate = Date()
+    }
+    
+    func sceneDidBecomeActive(_ scene: UIScene) {
+
+        guard SettingsManager.shared.faceId else { return }
+
+        if let backgroundDate = backgroundDate {
+
+            let elapsed = Date().timeIntervalSince(backgroundDate)
+
+            if elapsed > lockDelay {
+                showLockScreen()
+            }
+        }
+        self.backgroundDate = nil
     }
 
 }

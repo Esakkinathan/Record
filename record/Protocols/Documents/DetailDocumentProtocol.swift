@@ -20,7 +20,7 @@ protocol DetailDocumentPresenterProtocol {
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
     func uploadDocument()
-    func didPickDocument(url: URL)
+    //func didPickDocument(url: URL)
     func viewDidLoad()
     func addRemainderClicked()
     func addRemainder(date: Date)
@@ -34,8 +34,6 @@ protocol DetailDocumentViewDelegate: AnyObject {
     func reloadData()
     func showAlertOnAddRemainder()
     func configureToOpenDocument(previewUrl: URL)
-    func updateDocumentNotes(text: String?,id: Int)
-    func updateDocument(document: Persistable)
     func showTimePicker(baseDate: Date)
 }
 

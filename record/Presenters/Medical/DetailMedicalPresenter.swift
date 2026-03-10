@@ -55,9 +55,11 @@ extension DetailMedicalPresenter {
         infoRows.append(.info(.init(title: "Diagoned at", value: medical.date.toString())))
         infoRows.append(.info(.init(title: "Created At", value: medical.createdAt.toString())))
         infoRows.append(.info(.init(title: "Last modified", value: medical.lastModified.reminderFormatted())))
-        infoRows.append(.info(.init(title: "button", value: "Export As Pdf")))
-        infoRows.append(.info(.init(title: "Status", value: "")))
+        if let endDate = medical.endDate {
+            infoRows.append(.info(.init(title: "Completed At", value: endDate.toString())))
+        }
 
+        infoRows.append(.info(.init(title: "button", value: "")))
         var chartSegment: [ChartSegment] = []
         
         let colors: [UIColor] = [
@@ -92,7 +94,7 @@ extension DetailMedicalPresenter {
     func setStatus(value: Bool) {
         let date: Date? = value ? nil  : Date().end
         medical.setStatus(value: value, date: date)
-        updateUseCase.setStatus(id: medical.id, value: value, date: date)
+        updateUseCase.setStatus(medical: medical, value: value, date: date)
         buildSection()
         view?.reloadData()
     }
@@ -103,7 +105,11 @@ extension DetailMedicalPresenter {
 extension DetailMedicalPresenter {
     
     func updateMedical() {
-//        self.medical.update(title: medical.title, type: medical.type,hospital: medical.hospital, doctor: medical.doctor, date: medical.date)
+        //self.medical.update(title: medical.title, type: medical.type,hospital: medical.hospital, doctor: medical.doctor, date: medical.date)
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+            updateUseCase.execute(medical: medical)
+        }
         buildSection()
         view?.reloadData()
     }
@@ -112,7 +118,8 @@ extension DetailMedicalPresenter {
         router.openEditMedicalVC(mode: .edit(medical)) { [weak self] updatedMedical in
             guard let self = self else { return }
             updateMedical()
-            view?.updateMedicalRecord(updatedMedical)
+            view?.showToastVC(message: "Data modifed successfully", type: .success)
+            //view?.updateMedicalRecord(updatedMedical)
         }
     }
 
@@ -125,17 +132,14 @@ extension DetailMedicalPresenter {
         }
         medical.notes = text
         buildSection()
-        view?.reloadData()
+        //view?.reloadData()
     }
     
     func toggleNotesEditing(_ editing: Bool) {
         isNotesEditing = editing
 
         if !editing {
-            view?.updateMedicalNotes(
-                text: medical.notes,
-                id: medical.id
-            )
+            updateUseCase.execute(text: medical.notes, id: medical.id)
         }
 
         buildSection()
@@ -179,17 +183,17 @@ extension DetailMedicalPresenter {
         }
     }
     func viewDocument() {
-        if let filePath = medical.receipt {
-            router.openDocumentViewer(filePath: filePath)
-            view?.configureToOpenDocument(previewUrl: URL(filePath: filePath))
+        if let filePath = medical.receipt, let path = DocumentThumbnailProvider.fullURL(from: filePath) {
+            router.openDocumentViewer(filePath: path)
+            view?.configureToOpenDocument(previewUrl: URL(filePath: path))
         }
         
     }
     func exportDocumentClicked() {
         view?.showLoading()
-        view?.showAlertToIncludeNotes() { [weak self] value in
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let pdfData = PdfExportUseCase().generateMedicalPDF(medical: medical, includeNotes: value)
+            let pdfData = PdfExportUseCase().generateMedicalPDF(medical: medical)
             let mergedPdf = PDFDocument(data: pdfData)
             if let receipt = medical.receipt {
                 if let receiptPdf = PDFDocument(url: URL(filePath: receipt)) {
@@ -206,7 +210,6 @@ extension DetailMedicalPresenter {
             self.view?.stopLoading()
             self.router.sharePdf(url: tempURL)
         }
-
     }
 
 }

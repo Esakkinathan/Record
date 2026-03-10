@@ -7,7 +7,7 @@
 
 import UIKit
 import VTDB
-
+import PDFKit
 enum DocumentFormFieldType {
     case select
     case number
@@ -120,6 +120,7 @@ protocol FormFieldPresenterProtocol {
     func processImages(from images: [UIImage])
     func processFile(urls: [URL])
     func exitScreen()
+    func updateValueAt(_ value: Any?, at index: Int)
 }
 
     
@@ -137,5 +138,6 @@ protocol FormFieldViewDelegate: AnyObject {
     func showExitAlert()
     func showToastVc(message: String, type: ToastType)
     func showYesNoAlert(completion: @escaping (Bool) -> Void)
+    func askForPassword(name: String,completion: @escaping (String, Bool) -> Void)
     //var previewurl: URL? {get}
 }

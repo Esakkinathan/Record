@@ -44,8 +44,8 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         super.viewDidLoad()
         view.backgroundColor = AppColor.background
         tableView.backgroundColor = AppColor.background
-        presenter.viewDidLoad()
         setUpNavigationBar()
+        presenter.viewDidLoad()
         setUpContents()
     }
         
@@ -76,7 +76,10 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         
 
     }
-        
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewWillAppear()
+    }
     func setUpContents() {
         view.add(tableView)
         view.add(sortView)
@@ -89,10 +92,10 @@ class ListPasswordViewController: KeyboardNotificationViewController {
         NSLayoutConstraint.activate([
             sortView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
             sortView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width * 2 ),
-            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.content),
+            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
 
-            tableView.topAnchor.constraint(equalTo: sortView.bottomAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: sortView.bottomAnchor, constant: PaddingSize.height),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -PaddingSize.height),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
@@ -163,7 +166,7 @@ extension ListPasswordViewController {
             title: "Favourite",
             state: presenter.isFavoriteSelected ? .on : .off
         ) { [weak self] _ in
-            self?.presenter.didSelectedFavourite()
+            self?.presenter.didSelectedFavourite(reset: true)
         }
         let filterMenu = UIMenu(
             title: "Filter",
@@ -216,7 +219,7 @@ extension ListPasswordViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: AppConstantData.delete) { [weak self] _, _, completion in
-            self?.presenter.deletePassword(index: indexPath.row)
+            self?.presenter.deleteClicked(at: indexPath.row)
             completion(true)
         }
         
@@ -235,10 +238,28 @@ extension ListPasswordViewController: UITableViewDelegate {
 }
 
 extension ListPasswordViewController: ListPasswordViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func refreshSortMenu() {
         buildSortMenu()
     }
-    
+    func showAlertOnDelete(at index: Int) {
+        let alert = UIAlertController(
+            title: "Delete?",
+            message: "Are you sure you want to delete?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
+            self?.presenter.deletePassword(index: index)
+        })
+        present(alert, animated: true)
+    }
+
     func reloadData() {
         tableView.reloadData()
         let isEmpty = presenter.isEmpty

@@ -19,12 +19,14 @@ protocol ListPasswordProtocol {
     func exitPassoword()
     func extendSession()
     func didSelectSortField(_ field: PasswordSortField)
-    func didSelectedFavourite()
+    func didSelectedFavourite(reset: Bool)
     func search(text: String?)
     func deletePassword(index: Int)
+    func deleteClicked(at indet: Int)
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
     func stopAutoExitTimer()
+    func viewWillAppear()
 
 }
 
@@ -35,9 +37,11 @@ protocol ListPasswordViewDelegate: AnyObject {
     func showExitPrompt(expired: Bool)
     func dismiss()
     func refreshSortMenu()
+    func showAlertOnDelete(at index: Int)
+    func showToastVC(message: String, type: ToastType)
 }
 
 protocol ListPasswordRouterProtocol {
     func openAddPasswordVC(mode: PasswordFormMode, onAdd: @escaping (Persistable) -> Void)
-    func openDetailPasswordVC(password: Password,onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
+    func openDetailPasswordVC(password: Password)
 }

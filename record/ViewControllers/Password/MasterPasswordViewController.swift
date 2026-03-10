@@ -150,7 +150,7 @@ extension MasterPasswordViewController: MasterPasswordViewDelegate {
     }
     func showToastVC(message: String, type: ToastType, completion: (() -> Void)? ) {
         showToast(message: message, type: type)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             completion?()
         }
         

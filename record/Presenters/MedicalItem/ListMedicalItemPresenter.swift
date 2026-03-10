@@ -13,6 +13,8 @@ struct MedicalItemCellViewModel {
     let text3: String
     let canShowToggle: Bool
     let toggled: Bool
+    let schedules: [MedicalSchedule]
+    let takenSchedule: Set<MedicalSchedule>
 }
 
 class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
@@ -71,7 +73,7 @@ class ListMedicalItemPresenter: ListMedicalItemPresenterProtocol {
         self.addLogUseCase = addLogUseCase
         self.updateLogUseCase = updateLogUseCase
         self.fetchLogUseCase = fetchLogUseCase
-        self.selectedDate = medical.status ? Date().start : medical.endDate ?? Date().start
+        self.selectedDate = medical.status ? Date().start : medical.endDate?.start ?? Date().start
     }
     
     func changeSelectedDate(_ date: Date) {
@@ -147,13 +149,14 @@ extension ListMedicalItemPresenter {
         let medicalItem = medicalItem(at: index)
         deleteUseCase.execute(id: medicalItem.id)
         reloadItems()
+        view?.showToastVC(message: "Data deleted successfully", type: .success)
     }
     
     func updateEndDate(at index: Int) {
         let medicine = medicalItem(at: index)
         let date = selectedDate.end
-        medicine.setStatus(value: true, date: date)
-        updateUseCase.execute(medicineId: medicine.id, value: true , date: date)
+        medicine.setStatus(value: false, date: date)
+        updateUseCase.execute(medicineId: medicine.id, value: false , date: date)
         reloadItems()
     }
     
@@ -168,6 +171,7 @@ extension ListMedicalItemPresenter {
     func gotoAddMedicalItemScreen() {
         router.openAddMedicalItemVC(mode: .add, medical: medical, kind: kind, startDate: selectedDate.start) { [weak self] medicalItem in
             self?.addMedicalItem(medicalItem as! Medicine)
+            self?.view?.showToastVC(message: "Data added successfully", type: .success)
         }
     }
 }
@@ -182,9 +186,15 @@ extension ListMedicalItemPresenter {
             Calendar.current.isDate($0.date, inSameDayAs: selectedDate) &&
             $0.schedule == selectedSchedule
         }?.taken ?? false
-        return .init(id: medicine.id, text1: medicine.name, text2: medicine.instruction.value, text3: medicine.dosage, canShowToggle: selectedSchedule != nil, toggled: isTaken)
+        return .init(id: medicine.id, text1: medicine.name, text2: medicine.instruction.value, text3: medicine.dosage, canShowToggle: selectedSchedule != nil, toggled: isTaken, schedules: medicine.shedule, takenSchedule: selectedSchedule == nil ? getTakenScheduleForMedicine(medicine: medicine): Set())
     }
-
+    
+    func getTakenScheduleForMedicine(medicine: Medicine) -> Set<MedicalSchedule> {
+        return Set(logs.compactMap { log -> MedicalSchedule? in
+            guard log.medicineId == medicine.id && log.taken else { return nil }
+            return log.schedule
+        })
+    }
     
     private func isItemActiveOnSelectedDate(_ item: Medicine) -> Bool {
 
@@ -212,46 +222,59 @@ extension ListMedicalItemPresenter {
         visibleItems = filtered
 
     }
-    func markAsTaken(at index: Int) {
+    func markAsTaken(at index: Int, value: Bool) {
         let medicine = medicalItem(at: index)
         let calendar = Calendar.current
         let selected = selectedDate.start
+        
+        let todayLogs = logs.filter {
+            $0.medicineId == medicine.id &&
+            calendar.isDate($0.date, inSameDayAs: selected)
+        }
+        
+        
+        let newValue = !value
+        
         for schedule in medicine.shedule {
-            let log = logs.first { log in
-                let sameItem = log.medicineId == medicine.id
-                let sameDay = calendar.isDate(log.date, inSameDayAs: selected)
-                let sameSchedule = log.schedule == schedule
-                return sameItem && sameDay && sameSchedule
-            }
+            let log = todayLogs.first { $0.schedule == schedule }
+            
             if let existing = log {
-                if !existing.taken {
-                    let updated = MedicineIntakeLog(
-                        id: existing.id,
-                        medicineId: medicine.id,
-                        date: selected,
-                        schedule: schedule,
-                        taken: true
-                    )
-
-                    updateLogUseCase.execute(log: updated)
-                }
-
+                let updated = MedicineIntakeLog(
+                    id: existing.id,
+                    medicineId: medicine.id,
+                    date: selected,
+                    schedule: schedule,
+                    taken: newValue
+                )
+                
+                updateLogUseCase.execute(log: updated)
+                
             } else {
                 let newLog = MedicineIntakeLog(
                     id: 0,
                     medicineId: medicine.id,
                     date: selected,
                     schedule: schedule,
-                    taken: true
+                    taken: newValue
                 )
+                
                 addLogUseCase.execute(log: newLog)
             }
         }
+        
         loadLogs()
         buildVisibleItems()
-        //view?.reloadData()
+        
+        let message = newValue
+            ? "\(medicine.name) marked as taken"
+            : "\(medicine.name) marked as not taken"
+        
+        view?.showToastVC(message: message, type: newValue ? .success : .error)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.view?.reloadData()
+        }
     }
-    
     func itemToggledAt(_ index: Int, value: Bool) {
         guard let selectedSchedule else {return}
         let item = medicalItem(at: index)
@@ -298,9 +321,7 @@ extension ListMedicalItemPresenter {
         let value = canEdit
         if value {
             let medicalItem = medicalItem(at: index)
-            router.openDetailMedicalItemVc(medicalItem: medicalItem, medical: medical) { [weak self] updated in
-                self?.updateMedicalItem(updated as! Medicine)
-            }
+            router.openDetailMedicalItemVc(medicalItem: medicalItem, medical: medical) 
         } else {
             view?.showToastVC(message: "Clickable at All Category Page", type: .info)
         }

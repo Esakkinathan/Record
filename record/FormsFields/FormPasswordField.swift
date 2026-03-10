@@ -8,7 +8,7 @@ import UIKit
 class FormPasswordField: FormTextField {
     static let myidentifier = "FormPasswordField"
     let eyeButton: UIButton = {
-        let button = UIButton(type: .system)
+        let button = UIButton(type: .custom)
         button.setImage(UIImage(systemName: IconName.eye), for: .normal)
         button.setImage(UIImage(systemName: IconName.eyeSlash), for: .selected)
         button.backgroundColor = .clear

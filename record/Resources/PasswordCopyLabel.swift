@@ -66,7 +66,7 @@ class PasswordCopyLabel: UIView {
     private let lastCopiedLabel: UILabel = {
         let l = UILabel()
         l.font = AppFont.verysmall
-        l.textColor = .systemGray5
+        l.textColor = .systemGray
         l.text = "" // hidden until first copy
         l.translatesAutoresizingMaskIntoConstraints = false
         return l
@@ -178,6 +178,7 @@ class PasswordCopyLabel: UIView {
             guard let self = self, self.isRevealed else { return }
             self.hidePassword()
         }
+        onCopy?()
     }
 
     private func hidePassword() {
@@ -228,7 +229,7 @@ class PasswordCopyLabel: UIView {
     @objc private func copyToClipboard() {
         guard let text = password, !text.isEmpty else { return }
         UIPasteboard.general.string = text
-        lastCopiedDate = Date()
+        //lastCopiedDate = Date()
         //startLastCopiedTimer()
         animateCopied()
         onCopy?()
@@ -287,7 +288,7 @@ class PasswordCopyLabel: UIView {
             lastCopiedLabel.text = ""
             return
         }
-        let text = "Last copied at: \(date.reminderFormatted())"
+        let text = "Last accessed at: \(date.reminderFormatted())"
 
         UIView.transition(with: lastCopiedLabel, duration: 0.2, options: .transitionCrossDissolve) {
             self.lastCopiedLabel.text = text

@@ -32,6 +32,7 @@ protocol DetailMedicalViewDelegate: AnyObject {
     func showLoading()
     func stopLoading()
     func reloadData()
+    func showToastVC(message: String, type: ToastType)
     func updateMedicalNotes(text: String?, id: Int)
     func updateMedicalRecord(_ medical: Persistable)
     func reloadSection(at section: Int)
@@ -56,11 +57,23 @@ enum DetailMedicalRow {
     case notes(text: String?, isEditable: Bool)
     case medicalItem(MedicalKind)
     case dashBoard([ChartSegment])
+    case missed([MedicineLog])
+}
+enum DetailMedicineRow {
+    case image(path: String)
+    case info(DetailMedicalTextSectionRow)
+    case notes(text: String?, isEditable: Bool)
+    case medicalItem(MedicalKind)
+    case dashBoard([ChartSegment])
 }
 
 struct DetailMedicalSection {
     let title: String?
     let rows: [DetailMedicalRow]
+}
+struct DetailMedicineSection {
+    let title: String?
+    let rows: [DetailMedicineRow]
 }
 
 struct DetailMedicalTextSectionRow {

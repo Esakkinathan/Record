@@ -62,8 +62,11 @@ class AddPasswordPresenter: FormFieldPresenter {
             switch mode {
             case .add:
                 view?.onAdd?(password)
+                view?.showToastVc(message: "Data added successfully", type: .success)
             case .edit:
                 view?.onEdit?(password)
+                view?.showToastVc(message: "Data modified successfully", type: .success)
+
             }
             view?.dismiss()
         }

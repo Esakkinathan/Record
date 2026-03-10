@@ -56,7 +56,7 @@ class ListPasswordCell: UITableViewCell {
         backgroundColor = .secondarySystemBackground
         textLabel?.labelSetUp()
         detailTextLabel?.labelSetUp()
-
+        button.addTarget(self, action: #selector(favouriteClicked), for: .touchUpInside)
         NSLayoutConstraint.activate([
             button.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width*3),
             button.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -65,6 +65,7 @@ class ListPasswordCell: UITableViewCell {
     
     
     @objc func favouriteClicked() {
+        print("button clicked")
         button.isSelected.toggle()
         onFavoriteButtonClicked?()
     }

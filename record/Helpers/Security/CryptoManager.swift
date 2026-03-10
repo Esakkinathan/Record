@@ -13,7 +13,6 @@ class CryptoManager {
     static func encrypt(text: String) throws -> String {
         let key = KeychainManager.shared.getPin()
         guard let key = key else { return "" }
-        print((key))
         let symmetricKey = SymmetricKey(data: key)
         
         let data = Data(text.utf8)
@@ -31,7 +30,6 @@ class CryptoManager {
         let key = KeychainManager.shared.getPin()
         
         guard let key = key else { return "" }
-        print(key.base64EncodedString())
 
         let symmetricKey = SymmetricKey(data: key)
 

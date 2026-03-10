@@ -109,19 +109,15 @@ class ActiveMedicineUseCase {
 class ActiveMedicineUseCase {
     var itemRepository  = MedicineRepository()
     var logRepository   = MedicalIntakeLogRepository()
-
-    /// Pass the full list of `Medical` records so we can resolve each medicine → medical title.
-    func execute(medicals: [Medical]) -> DashboardViewModel {
-
+    var medicalRepository = MedicalRepository()
+    func execute() -> DashboardViewModel {
+        let medicals: [Medical] = medicalRepository.fetchAll()
         let today        = Date().start
         let medicines    = itemRepository.fetchActiveMedicines()
         let logs         = medicines.flatMap { logRepository.fetch(medicalId: $0.id, date: today) }
 
-        // medical-id → Medical  (fast lookup)
-        print("logs for entirely",logs, logs.count)
         let medicalMap   = Dictionary(uniqueKeysWithValues: medicals.map { ($0.id, $0) })
 
-        // (medicineId, schedule) → log
         let logMap       = Dictionary(
             uniqueKeysWithValues: logs.map {
                 (LogKey(medicalItemId: $0.medicineId, schedule: $0.schedule), $0)
@@ -141,7 +137,8 @@ class ActiveMedicineUseCase {
                 let medicalTitle = medicalMap[medicine.medical]?.title ?? "Unknown"
                 let detail       = MedicineDetail(
                     medicineName: medicine.name,
-                    medicalTitle: medicalTitle
+                    medicalTitle: medicalTitle,
+                    kind: medicine.kind
                 )
 
                 let key = LogKey(medicalItemId: medicine.id, schedule: schedule)

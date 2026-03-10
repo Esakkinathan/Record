@@ -14,6 +14,7 @@ protocol ListDocumentPresenterProtocol {
     func numberOfRows() -> Int
     func document(at index: Int)  -> Document
     func deleteDocument(at index: Int)
+    func deleteClicked(at index: Int)
     func gotoAddDocumentScreen()
     func didSelectedRow(at index: Int)
     func shareDocument(at index: Int)
@@ -26,6 +27,7 @@ protocol ListDocumentPresenterProtocol {
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
     func shareButtonClicked(_ indexPath: IndexPath)
+    func loadDocuments(reset: Bool)
 }
 
 protocol DocumentNavigationDelegate: AnyObject {
@@ -37,10 +39,11 @@ protocol ListDocumentViewDelegate: AnyObject {
     func reloadData()
     func refreshSortMenu()
     func showAlertOnShare(_ indexPath: IndexPath)
+    func showAlertOnDelete(at index: Int)
 }
 
 protocol ListDocumentRouterProtocol {
-    func openDetailDocumentVC(document: Document,onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
+    func openDetailDocumentVC(document: Document)
     func openAddDocumentVC(mode: DocumentFormMode, onAdd: @escaping (Persistable) -> Void)
     func openShareDocumentVC(filePath: String)
 }

@@ -25,7 +25,6 @@ class UpdateMedicineUseCase: UpdateMedicineUseCaseProtocol {
     func execute(medicineId: Int, value: Bool,date: Date?) {
         repository.setStatus(id: medicineId, value: value, date: date)
         NotificationManager.shared.syncMedicalNotifications()
-
     }
 
 }

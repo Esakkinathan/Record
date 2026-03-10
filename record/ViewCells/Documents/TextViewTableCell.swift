@@ -31,7 +31,7 @@ class TextViewTableViewCell: UITableViewCell {
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("init(codeAddr:) has not been implemented")
     }
     
     func configure(text: String?, value: Bool) {
@@ -66,4 +66,17 @@ extension TextViewTableViewCell: UITextViewDelegate {
     func textViewDidEndEditing(_ textView: UITextView) {
         onValueChange?(textView.text)
     }
+    
+    func textView(_ textView: UITextView,
+                  shouldChangeTextIn range: NSRange,
+                  replacementText text: String) -> Bool {
+        
+        let currentText = textView.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        
+        return updatedText.count <= 1000
+    }
 }
+

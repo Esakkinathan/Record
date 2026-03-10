@@ -65,6 +65,12 @@ class AddDocumentRouter: AddDocumentRouterProtocol {
             return
         }
 
+        let transparentAppearance = UINavigationBarAppearance()
+        transparentAppearance.configureWithTransparentBackground()
+        UINavigationBar.appearance().standardAppearance = transparentAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = transparentAppearance
+        UINavigationBar.appearance().compactAppearance = transparentAppearance
+
         let scanner = VNDocumentCameraViewController()
         scanner.delegate = viewController as? VNDocumentCameraViewControllerDelegate
         viewController?.presentVC(scanner)

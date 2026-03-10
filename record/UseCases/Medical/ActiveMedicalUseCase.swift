@@ -20,10 +20,10 @@ class ActiveMedicalUseCase {
 
     }
     
-    func execute(medical: [Medical]) -> DashboardViewModel {
+    func execute() -> DashboardViewModel {
         
         //let active = activeMedicals(medicals: medical)
-        let sections = ActiveMedicineUseCase().execute(medicals: medical)
+        let sections = ActiveMedicineUseCase().execute()
         
         
         //var summary: [InfoRowModel] = []

@@ -23,9 +23,8 @@ class ListPasswordRouter: ListPasswordRouterProtocol {
         viewController?.presentVC(navVc)
     }
     
-    func openDetailPasswordVC(password: Password, onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?, Int) -> Void) {
+    func openDetailPasswordVC(password: Password) {
         let vc = DetailPasswordAssembler.make(password: password)
-        vc.onEdit = onUpdate
         viewController?.push(vc)
     }
 

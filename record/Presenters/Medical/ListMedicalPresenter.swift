@@ -32,12 +32,17 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
     var currentSort: MedicalSortOption
     
     var allMedicals: [Medical] = []
-    var categoryFiltered: [Medical] = []
-    var searchFiltered: [Medical] = []
-    var finalMedicals: [Medical] = []
+//    var categoryFiltered: [Medical] = []
+//    var searchFiltered: [Medical] = []
+//    var finalMedicals: [Medical] = []
     
+    private var limit = 20
+    private var offset = 0
+    private var isLoading = false
+    private var hasMoreData = true
+
     var isEmpty: Bool {
-        finalMedicals.isEmpty
+        allMedicals.isEmpty
     }
     var isSearching: Bool = false 
 
@@ -66,46 +71,20 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
     }
     
     func getActiveSummary() -> DashboardViewModel {
-        let summary = ActiveMedicalUseCase().execute(medical: allMedicals)
+        let summary = ActiveMedicalUseCase().execute()
         return summary
-    }
-
-    func currentMedical() -> [Medical]{
-        return finalMedicals
     }
     
     func numberOfRows() -> Int {
-        return currentMedical().count
+        return allMedicals.count
     }
     
-    var sortComparator: (Medical, Medical) -> Bool {
-        return { lhs, rhs in
-            switch self.currentSort.field {
-            case .title:
-                return self.currentSort.direction == .ascending
-                ? lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
-                : lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedDescending
-                
-            case .createdAt:
-                return self.currentSort.direction == .ascending
-                ? lhs.date > rhs.date
-                : lhs.date < rhs.date
-                
-            case .updatedAt:
-                return self.currentSort.direction == .ascending
-                ? lhs.lastModified > rhs.lastModified
-                : lhs.lastModified < rhs.lastModified
-            }
-        }
-    }
-
-
 }
 
 extension ListMedicalPresenter {
     
     func medical(at index: Int) -> Medical {
-        return currentMedical()[index]
+        return allMedicals[index]
     }
     
     func addMedical(_ medical: Medical) {
@@ -119,16 +98,40 @@ extension ListMedicalPresenter {
     }
     
     func deleteMedical(at index: Int) {
-        let medical = currentMedical()[index]
+        let medical = medical(at: index)
         deleteUseCase.execute(id: medical.id)
+        if let receipt = medical.receipt {
+            AppFileManager().removeFile(name: receipt, type: .medicalReciept)
+        }
+        NotificationManager.shared.syncMedicalNotifications()
         loadMedical()
+        view?.showToastVC(message: "Data deleted successfully", type: .success)
     }
     
         
-    func loadMedical() {
-        allMedicals = fetchUseCase.execute()
-        rebuildList()
+//    func loadMedical() {
+//        allMedicals = fetchUseCase.execute()
+//        rebuildList()
+//    }
+    
+    func loadMedical(reset: Bool = true) {
+        if reset {
+            offset = 0
+            hasMoreData = true
+            allMedicals.removeAll()
+        }
+        guard !isLoading, hasMoreData else { return }
+        isLoading = true
+        let result = fetchUseCase.fetchMedical(limit: limit, offset: offset, sort: currentSort, category: selectedType, searchText: searchText)
 
+        if result.count < limit {
+            hasMoreData = false
+        }
+        allMedicals.append(contentsOf: result)
+        offset += result.count
+        isLoading = false
+        view?.refreshSortMenu()
+        view?.reloadData()
     }
     
     func updateNotes(text: String?, id: Int) {
@@ -136,57 +139,38 @@ extension ListMedicalPresenter {
         loadMedical()
     }
     
+    func deleteClicked(at index: Int) {
+        view?.showAlertOnDelete(at: index)
+    }
+    
 }
 
 extension ListMedicalPresenter {
     func search(text: String?) {
         searchText = text
-        rebuildList()
+        isSearching = !(text?.isEmpty ?? true)
+        loadMedical(reset: true)
     }
 }
 
 extension ListMedicalPresenter {
     
-    func rebuildList() {
-        if let type = selectedType {
-            categoryFiltered = allMedicals.filter { $0.type == type }
-        } else {
-            categoryFiltered = allMedicals
-        }
-        
-        
-        if let text = searchText, !text.isEmpty {
-            isSearching = true
-            let value = text.prepareSearchWord()
-            searchFiltered = categoryFiltered.filter {
-                $0.title.filterForSearch(value) ||
-                $0.type.rawValue.filterForSearch(value)
-            }
-        } else {
-            isSearching = false
-            searchFiltered = categoryFiltered
-        }
-        
-        finalMedicals = searchFiltered.sorted(by: sortComparator)
-        
-        view?.refreshSortMenu()
-        view?.reloadData()
-    }
-
-    
-    func didSelectSortField(_ field: MedicalSortField) {
+    func updateSortLogic(_ field: MedicalSortField) {
         if currentSort.field == field {
             currentSort = MedicalSortOption(field: field, direction: currentSort.direction == .ascending ? .descending : .ascending)
         } else {
             currentSort = MedicalSortOption(field: field, direction: .ascending)
         }
         MedicalSortStore.save(currentSort)
-        rebuildList()
+    }
+    func didSelectSortField(_ field: MedicalSortField) {
+        updateSortLogic(field)
+        loadMedical(reset: true)
     }
     
     func didSelectCategory(_ text: String) {
         selectedType = MedicalType(rawValue: text)
-        rebuildList()
+        loadMedical(reset: true)
     }
     
 }
@@ -194,17 +178,64 @@ extension ListMedicalPresenter {
 extension ListMedicalPresenter {
     func didSelectedRow(at index: Int) {
         let medical = medical(at: index)
-        router.openDetailMedicalVC(medical: medical, onUpdate: { [weak self] updatedMedical in
-            self?.updateMedical(medical: updatedMedical as! Medical)},
-            onUpdateNotes: { [weak self] text, id in
-            self?.updateNotes(text: text, id: id)
-        })
+        router.openDetailMedicalVC(medical: medical)
     }
     
     func gotoAddMedicalScreen() {
         router.openAddMedicalVC(mode: .add) { [weak self] newMedical in
             self?.addMedical(newMedical as! Medical)
+            self?.view?.showToastVC(message: "Data added successfully", type: .success)
         }
     }
 
 }
+
+/*
+ var sortComparator: (Medical, Medical) -> Bool {
+     return { lhs, rhs in
+         switch self.currentSort.field {
+         case .title:
+             return self.currentSort.direction == .ascending
+             ? lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+             : lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedDescending
+             
+         case .createdAt:
+             return self.currentSort.direction == .ascending
+             ? lhs.date > rhs.date
+             : lhs.date < rhs.date
+             
+         case .updatedAt:
+             return self.currentSort.direction == .ascending
+             ? lhs.lastModified > rhs.lastModified
+             : lhs.lastModified < rhs.lastModified
+         }
+     }
+ }
+
+ func rebuildList() {
+     if let type = selectedType {
+         categoryFiltered = allMedicals.filter { $0.type == type }
+     } else {
+         categoryFiltered = allMedicals
+     }
+     
+     
+     if let text = searchText, !text.isEmpty {
+         isSearching = true
+         let value = text.prepareSearchWord()
+         searchFiltered = categoryFiltered.filter {
+             $0.title.filterForSearch(value) ||
+             $0.type.rawValue.filterForSearch(value)
+         }
+     } else {
+         isSearching = false
+         searchFiltered = categoryFiltered
+     }
+     
+     finalMedicals = searchFiltered.sorted(by: sortComparator)
+     
+     view?.refreshSortMenu()
+     view?.reloadData()
+ }
+
+ */

@@ -17,11 +17,12 @@ class AppFileManager {
         let fileManager = FileManager.default
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dir = documentsDir.appendingPathComponent(directory.rawValue, isDirectory: true)
+        
         do {
             if !fileManager.fileExists(atPath: dir.path) {
                 try fileManager.createDirectory(at: dir,withIntermediateDirectories: true,attributes: nil)
             }
-
+            let name = name.replacingOccurrences(of: " ", with: "")
             let fileName = "\(name).\(sourceURL.pathExtension)"
             let destinationURL = dir.appendingPathComponent(fileName)
 
@@ -31,12 +32,19 @@ class AppFileManager {
 
             try fileManager.copyItem(at: sourceURL, to: destinationURL)
 
-            return destinationURL.path
+            return relativePath(from: destinationURL)
 
         } catch {
             print("File save failed:", error)
             return nil
         }
+    }
+    func relativePath(from url: URL) -> String? {
+        guard let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+
+        return url.path.replacingOccurrences(of: documentsURL.path + "/", with: "")
     }
     
     func saveImage(_ image: UIImage) -> URL? {
@@ -57,6 +65,27 @@ class AppFileManager {
             return nil
         }
 
+    }
+    
+    func removeFile(name: String, type: AppFileDirectory) {
+        let fileManager = FileManager.default
+        
+        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        let directoryURL = documentsDir.appendingPathComponent(type.rawValue, isDirectory: true)
+        
+        let fileURL = directoryURL.appendingPathComponent(name)
+        
+        do {
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+                print("File removed successfully")
+            } else {
+                print("File not found")
+            }
+        } catch {
+            print("Error removing file:", error)
+        }
     }
     func saveFile(pdfData: Data) -> URL? {
         let name = UUID().uuidString + ".pdf"

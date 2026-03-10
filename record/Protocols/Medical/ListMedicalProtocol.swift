@@ -20,16 +20,20 @@ protocol ListMedicalPresenterProtocol {
     func viewDidLoad()
     func didSelectCategory(_ text: String)
     func getActiveSummary() -> DashboardViewModel
+    func deleteClicked(at index: Int)
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
+    func loadMedical(reset: Bool)
 
 }
 
 protocol ListMedicalViewDelegate: AnyObject {
+    func showAlertOnDelete(at index: Int)
     func reloadData()
     func refreshSortMenu()
+    func showToastVC(message: String, type: ToastType)
 }
 protocol ListMedicalRouterProtocol {
     func openAddMedicalVC(mode: MedicalFormMode, onAdd: @escaping (Persistable) -> Void)
-    func openDetailMedicalVC(medical: Medical,onUpdate: @escaping (Persistable) -> Void, onUpdateNotes: @escaping (String?,Int) -> Void)
+    func openDetailMedicalVC(medical: Medical)
 }

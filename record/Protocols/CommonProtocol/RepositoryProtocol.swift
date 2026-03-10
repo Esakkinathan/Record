@@ -16,12 +16,16 @@ protocol DocumentRepositoryProtocol {
     func delete(id: Int)
     func fetchAll() -> [Document]
     func updateNotes(text: String?, id: Int)
-    func toggleRestricted(_ document: Document) 
+    func toggleRestricted(_ document: Document)
+    func fetchDocumentName() -> [String]
+    
+    func fetchDocuments(limit: Int, offset: Int, sort: DocumentSortOption, searchText: String?) -> [Document]
 }
 
 protocol PasswordRepositoryProtocol {
+    func updateLastCopiedDate(id: Int, date: Date)
     func add(password: Password)
-    func update(newPassword: Password)
+    func update(password: Password)
     func delete(id: Int)
     func fetchAll() -> [Password]
     func toggleFavourite(_ password: Password)
@@ -43,7 +47,9 @@ protocol MedicalRepositoryProtocol {
     func fetchActiveMedical() -> [Medical]
     func fetchHospitals() -> [String]
     func fetchDoctors() -> [String]
+    func getHospitals() async -> [String] 
     func setStatus(id: Int,value: Bool, date: Date?)
+    func fetchMedical(limit: Int, offset: Int, sort: MedicalSortOption, category: MedicalType?,searchText: String?) -> [Medical]
 }
 protocol MedicineRepositoryProtocol {
     func add(medicine: Medicine, medicalId: Int)

@@ -15,7 +15,8 @@ class DetailDocumentAssembler {
         let addUseCase = AddRemainderUseCase(repository: repo)
         let fetchUseCase = FetchRemainderUseCase(repository: repo)
         let deleteUseCase = DeleteRemainderUseCase(repository: repo)
-        let presenter = DetailDocumentPresenter(document: document, router: router, addRemainderUseCase: addUseCase, fetchRemainderUseCase: fetchUseCase, deleteRemainderUseCase: deleteUseCase)
+        let updateUseCase: UpdateDocumentUseCaseProtocol = UpdateDocumentUseCase(repository: DocumentRepository())
+        let presenter = DetailDocumentPresenter(document: document, router: router, addRemainderUseCase: addUseCase, fetchRemainderUseCase: fetchUseCase, deleteRemainderUseCase: deleteUseCase, updateUseCase: updateUseCase)
         vc.presenter = presenter
         presenter.view = vc
         return vc

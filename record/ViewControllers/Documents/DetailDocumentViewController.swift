@@ -19,10 +19,8 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         return tableView
     }()
     var previewUrl: URL?
-    var onEdit: ((Persistable) -> Void)?
     
     var presenter: DetailDocumentPresenterProtocol!
-    var onUpdateNotes: ((String?,Int) -> Void)?
     
     override var keyboardScrollableView: UIScrollView? {
         return tableView
@@ -209,8 +207,8 @@ extension DetailDocumentViewController: UIDocumentPickerDelegate {
         _ controller: UIDocumentPickerViewController,
         didPickDocumentsAt urls: [URL]
     ) {
-        guard let url = urls.first else { return }
-        presenter.didPickDocument(url: url)
+        //guard let url = urls.first else { return }
+        //presenter.didPickDocument(url: url)
     }
 }
 
@@ -307,13 +305,6 @@ extension DetailDocumentViewController: DetailDocumentViewDelegate {
     func reloadData() {
         title = presenter.title
         tableView.reloadData()
-    }
-    func updateDocumentNotes(text: String?,id: Int) {
-        onUpdateNotes?(text,id)
-    }
-    
-    func updateDocument(document: Persistable) {
-        onEdit?(document)
     }
 }
 

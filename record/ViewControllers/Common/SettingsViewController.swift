@@ -56,38 +56,28 @@ extension SettingsViewController: SettingsViewDelegate {
 extension SettingsViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 2
+        presenter.numberOfSections()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0: return 2
-        case 1:
-            if let _ = KeychainManager.shared.getPin()  {
-                return 4
-            }
-            return 3
-        default: return 0
-        }
+        presenter.numberOfRows(section: section)
     }
     
     func tableView(
         _ tableView: UITableView,
         titleForHeaderInSection section: Int
     ) -> String? {
-        switch section {
-        case 0: return "Appearance"
-        case 1: return "System"
-        default: return nil
-        }
+        return presenter.titleForSection(at: section)
     }
     
     func tableView(
         _ tableView: UITableView,
         cellForRowAt indexPath: IndexPath
     ) -> UITableViewCell {
+        let sectionItem = presenter.sectionRowAt(indexPath)
         
-        if indexPath.section == 0 && indexPath.row == 0 {
+        switch sectionItem {
+        case .theme:
             let cell = tableView.dequeueReusableCell(withIdentifier: ThemeSegmentCell.identifier, for: indexPath) as! ThemeSegmentCell
             
             cell.configure(
@@ -98,54 +88,57 @@ extension SettingsViewController: UITableViewDataSource {
             }
             
             return cell
-        }
 
-        if indexPath.section == 0 && indexPath.row == 1 {
+        case .accent:
             let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
             cell.configure(selected: presenter.currentAccent) { [weak self] accent in
                 self?.presenter.selectAccent(accent)
                 self?.setUpNavigation()
             }
             return cell
-        }
-        
-        if indexPath.section == 1 && indexPath.row == 0 {
+
+        case .appLock:
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
             cell.configure(
-                title: "Face ID",
+                title: "App Lock",
                 isOn: presenter.isFaceIdEnabled
             ) { [weak self] isOn in
-                self?.presenter.toggleFaceId(isOn)
+                self?.presenter.toggleFaceId(isOn){ success in
+                    if !success {
+                        // revert switch
+                        cell.setSwitchState(!isOn)
+                    }
+                }
             }
             return cell
-        }
-        if indexPath.section == 1 && indexPath.row == 3 {
+
+        case .systemSettings:
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
+            cell.textLabel?.text = "Edit app system Settings"
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.lineBreakMode = .byWordWrapping
+            cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .none
+            return cell
+
+        case .resetPin:
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
+            cell.textLabel?.text = "Reset Pin"
+//            cell.textLabel?.numberOfLines = 0
+//            cell.textLabel?.lineBreakMode = .byWordWrapping
+            cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .none
+            return cell
+
+        case .compression:
             let cell = tableView.dequeueReusableCell(withIdentifier: CompresionCell.identifier, for: indexPath) as! CompresionCell
             cell.configure(text: presenter.compressionLevel.rawValue)
             cell.handler = { [weak self] level in
                 self?.presenter.updateCompresseion(level:level)
             }
             return cell
+
         }
-        if indexPath.section == 1 && indexPath.row == 1 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
-            cell.textLabel?.text = "Edit app system Settings"
-            cell.textLabel?.numberOfLines = 0
-            cell.textLabel?.lineBreakMode = .byWordWrapping
-            cell.accessoryType = .disclosureIndicator
-            return cell
-        }
-        if indexPath.section == 1 && indexPath.row == 2 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
-            cell.textLabel?.text = "Reset Pin"
-//            cell.textLabel?.numberOfLines = 0
-//            cell.textLabel?.lineBreakMode = .byWordWrapping
-            cell.accessoryType = .disclosureIndicator
-            return cell
-        }
-        
-        
-        return UITableViewCell()
     }
     func setUpNavigation() {
         guard let navigationBar = navigationController?.navigationBar else { return }
@@ -166,13 +159,15 @@ extension SettingsViewController: UITableViewDataSource {
 extension SettingsViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.section == 1 && indexPath.row == 1 {
+        let item = presenter.sectionRowAt(indexPath)
+        switch item {
+        case .systemSettings:
             presenter.openSettings()
-        }
-        else if indexPath.section == 1 && indexPath.row == 2 {
+        case .resetPin:
             presenter.didClickedResentPin()
-        }
-        
+        default:
+            break
+        }        
     }
 }
 
@@ -185,6 +180,4 @@ extension SettingsViewController: DocumentNavigationDelegate {
     func presentVC(_ vc: UIViewController) {
         present(vc, animated: true)
     }
-    
-    
 }

@@ -26,9 +26,8 @@ final class LockViewController: UIViewController {
 
     private func authenticate() {
         DeviceAuthenticationService.shared.authenticate(
-            onSuccess: {
-                (UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate)?
-                    .showMainInterface()
+            onSuccess: { [weak self] in
+                self?.dismiss(animated: true)
             },
             onCancel: {
                 // App launch cancel = exit app

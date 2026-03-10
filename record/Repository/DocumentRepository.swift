@@ -27,7 +27,7 @@ class DocumentRepository: DocumentRepositoryProtocol {
     
     func add(document: Document) {
         let columns: [String: Any?] = [
-            Document.nameC: document.name,
+            Document.nameC: document.name.lowercased(),
             Document.numberC: document.number,
             Document.createdAtC: document.createdAt,
             Document.expiryDateC: document.expiryDate,
@@ -71,9 +71,24 @@ class DocumentRepository: DocumentRepositoryProtocol {
         db.toggle(table: Document.databaseTableName, column: Document.isRestrictedC, id: document.id, value: document.isRestricted, lastModified: Date())
 
     }
+    func fetchDocuments(limit: Int, offset: Int, sort: DocumentSortOption, searchText: String?) -> [Document] {
+        let docs = db.fetchDocuments(limit: limit, offset: offset, sort: sort, searchText: searchText?.lowercased())
+        for doc in docs {
+            doc.name = doc.name.capitalized
+        }
+        return docs
+    }
     
     func fetchAll() -> [Document] {
         return db.fetchDocuments()
+    }
+    
+    func fetchDocumentName() -> [String] {
+        var names = db.fetchDistinctValues(table: Document.databaseTableName, column: Document.nameC)
+        names = names.map {
+            $0.capitalized
+        }
+        return names
     }
         
 }

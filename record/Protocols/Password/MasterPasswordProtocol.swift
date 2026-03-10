@@ -12,7 +12,6 @@ protocol MasterPasswordPresenterProtocol {
     func resetPin()
     func didClickClear()
     func viewWillAppear()
-
 }
 
 protocol MasterPasswordViewDelegate: AnyObject {
@@ -24,7 +23,6 @@ protocol MasterPasswordViewDelegate: AnyObject {
     func showLoading()
     func stopLoading()
     func exit()
-
 }
 
 protocol MasterPasswordRouterProtocol {

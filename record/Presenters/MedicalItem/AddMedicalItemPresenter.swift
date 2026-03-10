@@ -100,8 +100,12 @@ class AddMedicalItemPresenter: FormFieldPresenter {
             switch mode {
             case .add:
                 view?.onAdd?(medicalItem)
+                view?.showToastVc(message: "Data added successfully", type: .success)
+
             case .edit:
                 view?.onEdit?(medicalItem)
+                //view?.showToastVc(message: "Data modified successfully", type: .success)
+
             }
             view?.dismiss()
         }

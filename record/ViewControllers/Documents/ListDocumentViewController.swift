@@ -16,6 +16,8 @@ class ListDocumentViewController: CustomSearchBarController {
         //view.contentInsetAdjustmentBehavior = .automatic
         view.contentInsetAdjustmentBehavior = .automatic
         view.backgroundColor = AppColor.background
+//        view.alwaysBounceVertical = false
+//        view.bouncesVertically = false
         return view
     }()
     override var searchScrollingView: UIScrollView? {
@@ -77,11 +79,10 @@ class ListDocumentViewController: CustomSearchBarController {
         NSLayoutConstraint.activate([
             sortView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
             sortView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
-            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.content),
-            
+            sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             
             collectionView.topAnchor.constraint(equalTo: sortView.bottomAnchor,constant: PaddingSize.height),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, ),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -PaddingSize.height),
             collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
             
@@ -89,7 +90,8 @@ class ListDocumentViewController: CustomSearchBarController {
     }
 
     override func performSearch(text: String?) {
-        presenter.search(text: text)
+        let enteredText = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+        presenter.search(text: enteredText)
     }
 
     @objc func openSearch() {
@@ -176,19 +178,26 @@ extension ListDocumentViewController {
             self?.presenter.didSelectSortField(.expiryDate)
         }
         
-        sortView.configure(text: current.field.rawValue, iconName: current.direction == .ascending ? IconName.arrowUp : IconName.arrowDown)
+        sortView.configure(text: current.field.rawValue)
         sortView.button.menu = UIMenu(
             title: "Sort By",
             children: [name, created, updated, expiry]
         )
     }
 
-
 }
 
 
 extension ListDocumentViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
-    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let position = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let frameHeight = scrollView.frame.size.height
+
+        if position > contentHeight - frameHeight - 100 {
+            presenter.loadDocuments(reset: false)
+        }
+    }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return presenter.numberOfRows()
     }
@@ -228,7 +237,7 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
             let delete = UIAction(title: AppConstantData.delete,
                                   image: UIImage(systemName: IconName.trash),
                                   attributes: .destructive) { [weak self] _ in
-                self?.presenter.deleteDocument(at: indexPath.row)
+                self?.presenter.deleteClicked(at: indexPath.row)
             }
             
             return UIMenu(title: "", children: [restrictAction,delete])
@@ -386,6 +395,21 @@ extension ListDocumentViewController: ListDocumentViewDelegate {
     func showToastVC(message: String, type: ToastType) {
         showToast(message: message, type: type)
     }
+    func showAlertOnDelete(at index: Int) {
+        let alert = UIAlertController(
+            title: "Delete?",
+            message: "Are you sure you want to delete?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
+            self?.presenter.deleteDocument(at: index )
+        })
+        present(alert, animated: true)
+    }
+
 }
 
 

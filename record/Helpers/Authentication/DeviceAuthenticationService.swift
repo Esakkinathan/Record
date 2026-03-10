@@ -26,51 +26,71 @@ final class DeviceAuthenticationService {
         return context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
     }
 
+
     func authenticate(
         reason: String = "Unlock your personal data",
         onSuccess: @escaping () -> Void,
         onCancel: (() -> Void)? = nil,
         onFailure: ((AuthenticationError) -> Void)? = nil
     ) {
+        
         let context = LAContext()
         var error: NSError?
-
-        // Check permission first
-        let canUseBiometrics = context.canEvaluatePolicy(
-            .deviceOwnerAuthenticationWithBiometrics,
-            error: &error
-        )
-
-        if !canUseBiometrics, let error {
-            switch error.code {
-            case LAError.biometryNotAvailable.rawValue:
-                onFailure?(.permissionDenied)
+        
+        // Check if device authentication is possible
+        if !context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            
+            if let laError = error as? LAError {
+                switch laError.code {
+                    
+                case .passcodeNotSet:
+                    // No passcode on device → allow access
+                    DispatchQueue.main.async {
+                        onSuccess()
+                    }
+                    return
+                    
+                case .biometryNotAvailable:
+                    // Biometrics not available but passcode might work
+                    break
+                    
+                default:
+                    DispatchQueue.main.async {
+                        onFailure?(.notAvailable)
+                    }
+                    return
+                }
+            } else {
+                DispatchQueue.main.async {
+                    onFailure?(.notAvailable)
+                }
                 return
-            default:
-                break
             }
         }
-
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) else {
-            onFailure?(.notAvailable)
-            return
-        }
-
-        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, error in
+        
+        // Authenticate (Biometrics → fallback to passcode automatically)
+        context.evaluatePolicy(
+            .deviceOwnerAuthentication,
+            localizedReason: reason
+        ) { success, error in
+            
             DispatchQueue.main.async {
+                
                 if success {
                     onSuccess()
                     return
                 }
-
+                
                 guard let laError = error as? LAError else {
                     onFailure?(.failed)
                     return
                 }
-
+                
                 switch laError.code {
+                    
                 case .userCancel, .systemCancel, .appCancel:
                     onCancel?()
+                    
                 default:
                     onFailure?(.failed)
                 }

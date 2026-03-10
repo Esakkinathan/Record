@@ -83,7 +83,24 @@ final class FormDateField: FormFieldCell {
         dp.preferredDatePickerStyle = .compact
         return dp
     }()
+    let buttonView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .secondarySystemBackground
+        view.layer.cornerRadius = PaddingSize.cornerRadius
+        return view
+    }()
 
+    private let dateButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = "None"
+        config.image = UIImage(systemName: "calendar")
+        config.imagePadding = 6
+        config.baseForegroundColor = .label
+        
+        let btn = UIButton(configuration: config)
+        btn.contentHorizontalAlignment = .leading
+        return btn
+    }()
     private let clearButton: UIButton = {
         let btn = UIButton(type: .system)
         btn.setImage(UIImage(systemName: IconName.x), for: .normal)
@@ -93,7 +110,7 @@ final class FormDateField: FormFieldCell {
     }()
 
     var onValueChange: ((Date?) -> String?)?
-
+    var onButtonClicked: ((Date?) -> Void)?
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
@@ -105,40 +122,30 @@ final class FormDateField: FormFieldCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(field: DocumentFormField,isRequired: Bool = false) {
-        super.configure(title: field.label, isRequired: isRequired)
-
-        if let date = field.value as? Date {
-            selectedDate = date
-            datePicker.date = date
-            datePicker.alpha = 1.0
-        } else {
-            selectedDate = nil
-            datePicker.date = Date()
-            datePicker.alpha = 0.4
-        }
-    }
     
     func configure(title: String, date: Date?,isRequired: Bool = false) {
         super.configure(title: title, isRequired: isRequired)
 
         if let newDate = date {
             selectedDate = newDate
-            datePicker.date = newDate
-            datePicker.alpha = 1.0
+            dateButton.configuration?.title = newDate.toString()
+            clearButton.isHidden = false
         } else {
             selectedDate = nil
             //datePicker.date = Date()
-            datePicker.alpha = 0.4
+            //datePicker.alpha = 0.4
+            dateButton.configuration?.title = AppConstantData.none
+            clearButton.isHidden = true
         }
     }
 
-
+/*
     override func setUpContentView() {
         super.setUpContentView()
 
         rightView.add(datePicker)
         rightView.add(clearButton)
+        datePicker.addTarget(self, action: #selector(dateSelected), for: .editingDidEnd)
 
         datePicker.addTarget(self, action: #selector(dateChanged), for: .valueChanged)
         clearButton.addTarget(self, action: #selector(clearDate), for: .touchUpInside)
@@ -159,22 +166,92 @@ final class FormDateField: FormFieldCell {
             errorLabel.bottomAnchor.constraint(equalTo: rightView.bottomAnchor, constant: -FormSpacing.height)
         ])
     }
+ 
+ */
+    override func setUpContentView() {
+        super.setUpContentView()
+        buttonView.add(dateButton)
+        let space: CGFloat = 3
+        NSLayoutConstraint.activate([
+            
+            dateButton.topAnchor.constraint(equalTo: buttonView.topAnchor, constant: space),
+            dateButton.bottomAnchor.constraint(equalTo: buttonView.bottomAnchor, constant: -space),
+            dateButton.leadingAnchor.constraint(equalTo: buttonView.leadingAnchor, constant: space),
+            dateButton.trailingAnchor.constraint(equalTo: buttonView.trailingAnchor, constant: -space),
+            
+        ])
 
-    @objc private func dateChanged() {
-        selectedDate = datePicker.date
+        rightView.add(buttonView)
+        rightView.add(clearButton)
+
+        dateButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
+        clearButton.addTarget(self, action: #selector(clearDate), for: .touchUpInside)
+
+        NSLayoutConstraint.activate([
+            buttonView.topAnchor.constraint(equalTo: rightView.topAnchor, constant: FormSpacing.height),
+            buttonView.bottomAnchor.constraint(equalTo: rightView.bottomAnchor, constant: -FormSpacing.height),
+            buttonView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.width),
+            //dateButton.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -8),
+
+            clearButton.centerYAnchor.constraint(equalTo: buttonView.centerYAnchor),
+            clearButton.leadingAnchor.constraint(equalTo: buttonView.trailingAnchor, constant: FormSpacing.width),
+            clearButton.widthAnchor.constraint(equalToConstant: 20),
+            clearButton.heightAnchor.constraint(equalToConstant: 20),
+        ])
+    }
+    private func setDate(_ date: Date) {
+        selectedDate = date
         clearButton.isHidden = false
-        datePicker.alpha = 1.0
 
-        let error = onValueChange?(selectedDate)
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+
+        dateButton.configuration?.title = formatter.string(from: date)
+
+        let error = onValueChange?(date)
         setErrorLabelText(error)
     }
-
     @objc private func clearDate() {
         selectedDate = nil
         clearButton.isHidden = true
-        datePicker.alpha = 0.4
+        dateButton.configuration?.title = "None"
 
         let error = onValueChange?(nil)
         setErrorLabelText(error)
     }
+    
+    @objc func buttonClicked() {
+        onButtonClicked?(selectedDate)
+    }
+    
+    @objc private func dateSelected() {
+        if selectedDate == nil {
+            selectedDate = datePicker.date
+            clearButton.isHidden = false
+            datePicker.alpha = 1.0
+
+            let error = onValueChange?(selectedDate)
+            setErrorLabelText(error)
+        }
+    }
+    @objc private func dateChanged() {
+        let newDate = datePicker.date
+
+        if selectedDate == nil || selectedDate != newDate {
+            selectedDate = newDate
+            clearButton.isHidden = false
+            datePicker.alpha = 1.0
+        }
+
+        let error = onValueChange?(selectedDate)
+        setErrorLabelText(error)
+    }
+//    @objc private func clearDate() {
+//        selectedDate = nil
+//        clearButton.isHidden = true
+//        datePicker.alpha = 0.4
+//
+//        let error = onValueChange?(nil)
+//        setErrorLabelText(error)
+//    }
 }

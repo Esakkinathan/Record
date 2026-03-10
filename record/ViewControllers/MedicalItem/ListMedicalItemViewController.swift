@@ -67,7 +67,8 @@ class ListMedicalItemViewController: UIViewController {
             self?.presenter.didSelectCategory(text)
         }
         
-        tableView.register(ListMedicalItemViewCell.self, forCellReuseIdentifier: ListMedicalItemViewCell.identifier)
+        tableView.register(AllListMedicalItemViewCell.self, forCellReuseIdentifier: AllListMedicalItemViewCell.identifier)
+        tableView.register(ScheduleListMedicalItemViewCell.self, forCellReuseIdentifier: ScheduleListMedicalItemViewCell.identifier)
         
         NSLayoutConstraint.activate([
             dateNavigator.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
@@ -147,11 +148,20 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let medical = presenter.medicalItemViewModel(at: indexPath.row)
-        let cell = tableView.dequeueReusableCell(withIdentifier: ListMedicalItemViewCell.identifier, for: indexPath) as! ListMedicalItemViewCell
-        cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, canShow: medical.canShowToggle, state: medical.toggled){ [weak self] value in
-            self?.presenter.itemToggledAt(indexPath.row, value: value)
+        let selectedCategory = presenter.selectedSchedule
+        if let _ = selectedCategory {
+            let cell = tableView.dequeueReusableCell(withIdentifier: ScheduleListMedicalItemViewCell.identifier, for: indexPath) as! ScheduleListMedicalItemViewCell
+            cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, canShow: medical.canShowToggle, state: medical.toggled){ [weak self] value in
+                self?.presenter.itemToggledAt(indexPath.row, value: value)
+            }
+            return cell
+
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: AllListMedicalItemViewCell.identifier, for: indexPath) as! AllListMedicalItemViewCell
+            cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, schedules: medical.schedules, taken: medical.takenSchedule)
+            return cell
+
         }
-        return cell
     }
     
     
@@ -168,12 +178,17 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     }
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let markAction = UIContextualAction(style: .normal, title: "Mark as taken") { [weak self] _, _, completion in
-            self?.presenter.markAsTaken(at: indexPath.row)
+        let data = presenter.medicalItemViewModel(at: indexPath.row)
+        let taken = data.schedules.count == data.takenSchedule.count
+        let msg =  taken ? "Mark as not taken" :  "Mark as taken"
+        
+        let markAction = UIContextualAction(style: .normal, title: msg) { [weak self] _, _, completion in
+            self?.presenter.markAsTaken(at: indexPath.row, value: taken)
             completion(true)
         }
 
         markAction.image = UIImage(systemName: IconName.checkmark)
+        markAction.backgroundColor = taken ? .systemRed : .systemGreen
         let swipeAction = UISwipeActionsConfiguration(actions: [markAction])
         swipeAction.performsFirstActionWithFullSwipe = true
         return swipeAction
@@ -230,7 +245,6 @@ extension ListMedicalItemViewController: ListMedicalItemViewDelegate {
         } else {
             tableView.restoreView()
         }
-
     }
     
         

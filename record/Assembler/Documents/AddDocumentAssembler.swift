@@ -12,7 +12,8 @@ class AddDocumentAssembler {
         
         let vc = FormFieldViewController()
         let router = AddDocumentRouter(viewController: vc)
-        let presenter = AddDocumentFormPresenter(view: vc, router: router, mode: mode)
+        let fetchUseCase = FetchDocumentsUseCase(repository: DocumentRepository())
+        let presenter = AddDocumentPresenter(view: vc, router: router, mode: mode, fetchUseCase: fetchUseCase)
         vc.presenter = presenter
         return vc
         

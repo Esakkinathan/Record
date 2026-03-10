@@ -28,16 +28,17 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
     let addRemainderUseCase: AddRemainderUseCaseProtocol
     let fetchRemainderUseCase: FetchRemainderUseCaseProtocol
     let deleteRemainderUseCase: DeleteRemainderUseCaseProtocol
-    
+    let updateUseCase: UpdateDocumentUseCaseProtocol
     var remainders: [Remainder] = []
     
-    init(document: Document, view: DetailDocumentViewDelegate? = nil, router: DetailDocumentRouterProtocol, addRemainderUseCase: AddRemainderUseCaseProtocol, fetchRemainderUseCase: FetchRemainderUseCaseProtocol, deleteRemainderUseCase: DeleteRemainderUseCaseProtocol) {
+    init(document: Document, view: DetailDocumentViewDelegate? = nil, router: DetailDocumentRouterProtocol, addRemainderUseCase: AddRemainderUseCaseProtocol, fetchRemainderUseCase: FetchRemainderUseCaseProtocol, deleteRemainderUseCase: DeleteRemainderUseCaseProtocol, updateUseCase: UpdateDocumentUseCaseProtocol) {
         self.document = document
         self.view = view
         self.router = router
         self.addRemainderUseCase = addRemainderUseCase
         self.fetchRemainderUseCase = fetchRemainderUseCase
         self.deleteRemainderUseCase = deleteRemainderUseCase
+        self.updateUseCase = updateUseCase
     }
     
     func viewDidLoad() {
@@ -46,32 +47,34 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
     }
     
     func updateDocument(_ document: Document) {
-        self.document.update(name: document.name, number: document.number, expiryDate: document.expiryDate, file: document.file)
-        buildSection()
-        view?.reloadData()
+        //self.document.update(name: document.name, number: document.number, expiryDate: document.expiryDate, file: document.file)
+        DispatchQueue.main.async { [weak self] in
+            self?.updateUseCase.execute(document: document)
+            self?.buildSection()
+            self?.view?.reloadData()
+            self?.view?.showToastVC(message: "Data modified successfully", type: .success)
+        }
     }
     
     func editButtonClicked() {
         router.openEditDocumentVC(mode: .edit(document)) { [weak self] document in
             guard let self = self else { return }
             updateDocument(document as! Document)
-            view?.updateDocument(document: document)
+            //view?.updateDocument(document: document)
         }
     }
     
     func viewDocument() {
-        if let filePath = document.file {
-            router.openDocumentViewer(filePath: filePath)
-            view?.configureToOpenDocument(previewUrl: URL(filePath: filePath))
+        if let file = document.file, let path = DocumentThumbnailProvider.fullURL(from: file) {
+            router.openDocumentViewer(filePath: path)
+            view?.configureToOpenDocument(previewUrl: URL(filePath: path))
         }
-        
     }
-    
     
     func updateNotes(text: String?) {
         document.notes = text
         buildSection()
-        view?.reloadData()
+        //view?.reloadData()
     }
     
     func getTitle(for section: Int) -> String? {
@@ -105,8 +108,8 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
             .info(title: "Created At", value: document.createdAt.toString()),
             .info(title: "Last modified", value: document.lastModified.reminderFormatted())
         ]
-        if let file = document.file {
-            infoRows.append(.info(title: "File Size", value: formattedFileSize(from: URL(filePath: file))))
+        if let file = document.file, let path = DocumentThumbnailProvider.fullURL(from: file) {
+            infoRows.append(.info(title: "File Size", value: formattedFileSize(from: URL(filePath: path))))
         }
         if let date = document.expiryDate {
             infoRows.append(.info(title: "Expiry Date", value: date.toString()))
@@ -142,10 +145,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
         isNotesEditing = editing
 
         if !editing {
-            view?.updateDocumentNotes(
-                text: document.notes,
-                id: document.id
-            )
+            updateUseCase.execute(text: document.notes, id: document.id)
         }
 
         buildSection()
@@ -155,43 +155,14 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
     func uploadDocument() {
         router.openDocumentPicker()
     }
-    func saveFileLocally(_ sourceURL: URL, name: String, number: String) -> String? {
 
-        let fileManager = FileManager.default
-        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let govtDocsDir = documentsDir.appendingPathComponent("GovtDocs", isDirectory: true)
-
-        do {
-            if !fileManager.fileExists(atPath: govtDocsDir.path) {
-                try fileManager.createDirectory(at: govtDocsDir,withIntermediateDirectories: true,attributes: nil)
-            }
-
-            let docName = name.replacingOccurrences(of: " ", with: "")
-            let fileName = "\(docName)_\(number).\(sourceURL.pathExtension)"
-            let destinationURL = govtDocsDir.appendingPathComponent(fileName)
-
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
-            }
-
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-
-            return destinationURL.path
-
-        } catch {
-            print("File save failed:", error)
-            return nil
-        }
-    }
-
-    
-    func didPickDocument(url: URL) {
-        let path = saveFileLocally(url, name: document.name, number: document.number)
-        document.file = path
-        buildSection()
-        view?.reloadData()
-        view?.updateDocument(document: document)
-    }
+//    func didPickDocument(url: URL) {
+//        let path = saveFileLocally(url, name: document.name, number: document.number)
+//        document.file = path
+//        buildSection()
+//        view?.reloadData()
+//        view?.updateDocument(document: document)
+//    }
 }
 
 extension DetailDocumentPresenter {

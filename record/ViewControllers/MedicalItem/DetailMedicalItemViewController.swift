@@ -11,6 +11,7 @@ class DetailMedicalItemViewController: UIViewController {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.separatorStyle = .singleLine
         tableView.keyboardDismissMode = .onDrag
+        tableView.backgroundColor = AppColor.background
         return tableView
     }()
     
@@ -39,7 +40,8 @@ class DetailMedicalItemViewController: UIViewController {
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
         tableView.register(DonutChartCell.self, forCellReuseIdentifier: DonutChartCell.identifier)
         tableView.register(FormToggleLabel.self, forCellReuseIdentifier: FormToggleLabel.identifier)
-
+        tableView.register(MissedScheduleCell.self,
+                           forCellReuseIdentifier: MissedScheduleCell.identifier)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -67,6 +69,8 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
         switch field {
         case .info:
             return UITableView.automaticDimension
+        case .missed(_):
+            return 300
         default:
             return 300
         }
@@ -91,6 +95,19 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
             let newCell = tableView.dequeueReusableCell(withIdentifier: DonutChartCell.identifier, for: indexPath) as! DonutChartCell
             newCell.configure(segments: segments)
             cell = newCell
+        case .missed(let data):
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: MissedScheduleCell.identifier,
+                for: indexPath
+            ) as! MissedScheduleCell
+
+            let items = data.map {
+                ($0.date.toString(), $0.schedule.rawValue)
+            }
+
+            cell.configure(data: items)
+
+            return cell
         default:
             cell = UITableViewCell()
         }
@@ -99,6 +116,10 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
 }
 
 extension DetailMedicalItemViewController: DetailMedicalItemViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func reloadData() {
         tableView.reloadData()
     }

@@ -104,7 +104,7 @@ class PdfExportUseCase {
         return medicalItemDict
     }
 
-    func generateMedicalPDF(medical: Medical, includeNotes: Bool) -> Data {
+    func generateMedicalPDF(medical: Medical) -> Data {
 
         let medicalItems = fetchData(medical: medical)
         let medcines = fetchLog(medicalItemDict: medicalItems)
@@ -130,7 +130,7 @@ class PdfExportUseCase {
 
             // MARK: - Title
 
-            let title = "Medical Record"
+            let title = "Health Record"
             let titleAttributes: [NSAttributedString.Key: Any] = [
                 .font: AppFont.heading1
             ]
@@ -174,7 +174,7 @@ class PdfExportUseCase {
             if let doctor = medical.doctor {
                 details.append(.init(title: "Doctor", value: doctor))
             }
-
+            details.append(.init(title: "Status", value: medical.status ? "On Going" : "Completed at \(medical.endDate?.toString() ?? "some day")"))
             for item in details {
 
                 checkForNewPage(requiredHeight: 25)
@@ -202,8 +202,7 @@ class PdfExportUseCase {
 
             // MARK: - Notes
 
-            if includeNotes,
-               let notes = medical.notes,
+            if let notes = medical.notes,
                !notes.isEmpty {
 
                 drawNotes(

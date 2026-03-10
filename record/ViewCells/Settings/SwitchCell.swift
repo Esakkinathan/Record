@@ -19,16 +19,20 @@ final class SwitchCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError() }
     
     private func setup() {
+        selectionStyle = .none
         accessoryView = toggle
         toggle.addTarget(self, action: #selector(valueChanged), for: .valueChanged)
     }
     
     func configure(title: String, isOn: Bool, onChange: @escaping (Bool) -> Void) {
         textLabel?.text = title
-        toggle.isOn = isOn
+        toggle.setOn(isOn, animated: true)
         handler = onChange
     }
-    
+    func setSwitchState(_ isOn: Bool) {
+        toggle.setOn(isOn, animated: true)
+    }
+
     @objc private func valueChanged() {
         handler?(toggle.isOn)
     }

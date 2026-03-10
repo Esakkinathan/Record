@@ -19,6 +19,7 @@ protocol DetailMedicalItemPresenterProtocol {
 }
 
 protocol DetailMedicalItemViewDelegate: AnyObject {
+    func showToastVC(message: String, type: ToastType)
     func reloadData()
     func updateMedicine(_ medicine: Persistable)
 }

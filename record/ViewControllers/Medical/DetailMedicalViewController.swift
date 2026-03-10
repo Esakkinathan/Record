@@ -15,6 +15,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.separatorStyle = .singleLine
         tableView.keyboardDismissMode = .onDrag
+        tableView.backgroundColor = AppColor.background
         return tableView
     }()
     
@@ -67,7 +68,7 @@ class DetailMedicalViewController: KeyboardNotificationViewController {
         tableView.register(ImagePreviewTableViewCell.self, forCellReuseIdentifier: ImagePreviewTableViewCell.identifier)
         tableView.register(ButtonTableViewCell.self, forCellReuseIdentifier: ButtonTableViewCell.identifier)
         tableView.register(DonutChartCell.self, forCellReuseIdentifier: DonutChartCell.identifier)
-        tableView.register(FormToggleLabel.self, forCellReuseIdentifier: FormToggleLabel.identifier)
+        tableView.register(MedicalToggleCell.self, forCellReuseIdentifier: MedicalToggleCell.identifier)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -142,19 +143,23 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
             
             cell = newCell
         case .info(let section):
+//            if section.title == "button" {
+//                let newCell = tableView.dequeueReusableCell(withIdentifier: ButtonTableViewCell.identifier, for: indexPath) as! ButtonTableViewCell
+//                newCell.configure(title: section.value)
+//                newCell.onButtonClicked = { [weak self] in
+//                }
+//                newCell.backgroundColor = .secondarySystemBackground
+//                cell = newCell
+//
+//            }
             if section.title == "button" {
-                let newCell = tableView.dequeueReusableCell(withIdentifier: ButtonTableViewCell.identifier, for: indexPath) as! ButtonTableViewCell
-                newCell.configure(title: section.value)
-                newCell.onButtonClicked = { [weak self] in
-                    self?.presenter.exportDocumentClicked()
-                }
-                newCell.backgroundColor = .secondarySystemBackground
-                cell = newCell
-
-            } else if section.title == "Status" {
-                let newCell = tableView.dequeueReusableCell(withIdentifier: FormToggleLabel.identifier, for: indexPath) as! FormToggleLabel
-                newCell.configure(title: section.title, isRequired: false, status: presenter.status) { [weak self] value in
+                let newCell = tableView.dequeueReusableCell(withIdentifier: MedicalToggleCell.identifier, for: indexPath) as! MedicalToggleCell
+                newCell.configure(status: presenter.status) { [weak self] value in
                     self?.presenter.setStatus(value: !value)
+                }
+                newCell.onButtonClicked1 = { [weak self] in
+                    self?.presenter.exportDocumentClicked()
+
                 }
                 cell = newCell
 
@@ -179,11 +184,15 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
             newCell.textLabel?.text = medicalKind.rawValue
             newCell.imageView?.image = UIImage(systemName: medicalKind.image)
             newCell.accessoryType = .disclosureIndicator
+            newCell.backgroundColor = .secondarySystemBackground
+            newCell.selectionStyle = .none
             cell = newCell
         case .dashBoard(let segments):
             let newCell = tableView.dequeueReusableCell(withIdentifier: DonutChartCell.identifier, for: indexPath) as! DonutChartCell
             newCell.configure(segments: segments)
             cell = newCell
+        default:
+            cell = UITableViewCell()
         }
         return cell
     }
@@ -246,6 +255,10 @@ extension DetailMedicalViewController: QLPreviewControllerDataSource {
 }
 
 extension DetailMedicalViewController: DetailMedicalViewDelegate {
+    func showToastVC(message: String, type: ToastType) {
+        showToast(message: message, type: type)
+    }
+    
     func showAlertToIncludeNotes(completion: @escaping (Bool) -> Void) {
         let alert = UIAlertController(title: "Notes?", message: "Do you want to include notes?", preferredStyle: .alert)
         

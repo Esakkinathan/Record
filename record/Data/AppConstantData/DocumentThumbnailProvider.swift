@@ -8,14 +8,19 @@
 import QuickLookThumbnailing
 import UIKit
 final class DocumentThumbnailProvider {
-    
+    static func fullURL(from relativePath: String) -> String? {
+        FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent(relativePath).path
+    }
     static func generate(
         for url: String,
         size: CGSize = CGSize(width: 80, height: 80),
         scale providedScale: CGFloat? = nil,
         completion: @escaping (UIImage?) -> Void
     ) {
-        let fileUrl = URL(fileURLWithPath: url)
+        let fileUrl = URL(filePath: url)
         let scale: CGFloat
         if let providedScale {
             scale = providedScale
