@@ -20,6 +20,7 @@ class TextViewTableViewCell: UITableViewCell {
         textView.clipsToBounds = true
         textView.autocorrectionType = .no
         textView.contentInset = UIEdgeInsets(top: PaddingSize.content, left: PaddingSize.content, bottom: PaddingSize.content, right: PaddingSize.content)
+        textView.font = AppFont.small
         return textView
     }()
     

@@ -47,7 +47,6 @@ protocol MedicalRepositoryProtocol {
     func fetchActiveMedical() -> [Medical]
     func fetchHospitals() -> [String]
     func fetchDoctors() -> [String]
-    func getHospitals() async -> [String] 
     func setStatus(id: Int,value: Bool, date: Date?)
     func fetchMedical(limit: Int, offset: Int, sort: MedicalSortOption, category: MedicalType?,searchText: String?) -> [Medical]
 }
@@ -60,6 +59,7 @@ protocol MedicineRepositoryProtocol {
     func fetchActiveMedicines() -> [Medicine]
 //    func fetchMedicines(for medicalId: Int) -> [Medicine]
     func setStatus(id: Int,value: Bool, date: Date?)
+    func fetchActiveMedicines(date: Date) -> [Medicine]
 }
 /*
 protocol UtilityRepositoryProtocol {

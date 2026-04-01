@@ -22,7 +22,7 @@ class SettingsViewController: UIViewController {
     func setUpContents() {
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .systemBackground
-        
+        tableView.backgroundColor = AppColor.background
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -114,11 +114,12 @@ extension SettingsViewController: UITableViewDataSource {
 
         case .systemSettings:
             let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
-            cell.textLabel?.text = "Edit app system Settings"
+            cell.textLabel?.text = "Edit App System Settings"
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.lineBreakMode = .byWordWrapping
             cell.accessoryType = .disclosureIndicator
             cell.selectionStyle = .none
+            cell.backgroundColor = .secondarySystemBackground
             return cell
 
         case .resetPin:
@@ -128,16 +129,24 @@ extension SettingsViewController: UITableViewDataSource {
 //            cell.textLabel?.lineBreakMode = .byWordWrapping
             cell.accessoryType = .disclosureIndicator
             cell.selectionStyle = .none
+            cell.backgroundColor = .secondarySystemBackground
             return cell
 
         case .compression:
             let cell = tableView.dequeueReusableCell(withIdentifier: CompresionCell.identifier, for: indexPath) as! CompresionCell
-            cell.configure(text: presenter.compressionLevel.rawValue)
+            cell.configure(text: presenter.compressionLevel)
             cell.handler = { [weak self] level in
                 self?.presenter.updateCompresseion(level:level)
             }
             return cell
-
+        case .medicalShedule:
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier)
+                    ?? UITableViewCell(style: .value1, reuseIdentifier: identifier)
+            cell.textLabel?.text       = "Medicine Remainders"
+            cell.accessoryType         = .disclosureIndicator
+            cell.selectionStyle        = .none
+            cell.backgroundColor       = .secondarySystemBackground
+            return cell
         }
     }
     func setUpNavigation() {
@@ -165,6 +174,8 @@ extension SettingsViewController: UITableViewDelegate {
             presenter.openSettings()
         case .resetPin:
             presenter.didClickedResentPin()
+        case .medicalShedule:
+            presenter.didClickedRemainderPage()
         default:
             break
         }        

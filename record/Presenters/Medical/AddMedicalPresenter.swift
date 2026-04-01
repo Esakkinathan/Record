@@ -19,7 +19,7 @@ class AddMedicalPresenter: FormFieldPresenter {
         self.mode = mode
         self.fetchUseCase = fetchUseCase
         doctors = fetchUseCase.fetchDoctors()
-        
+        hospitals = fetchUseCase.fetchHospitals()
         fileManager = AppFileManager()
         super.init(view: view)
         doctors.insert(AppConstantData.none)
@@ -41,10 +41,10 @@ class AddMedicalPresenter: FormFieldPresenter {
         
         fields = [
             FormField(label: "Type", type: .select, validators: [.required], gotoNextField: false, value: existing?.type.rawValue ?? MedicalType.checkup.rawValue),
-            FormField(label: "Title", type: .text, validators: [.required, .maxLength(30)], gotoNextField: true, placeholder: "Enter Title", value: existing?.title,returnType: .next,),
-            FormField(label: "Hospital", type: .select, validators: [.maxLength(100), .alphanumeric], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
-            FormField(label: "Doctor", type: .select, validators: [.maxLength(30), .alphabetic], gotoNextField: false, value: existing?.doctor ?? AppConstantData.none, returnType: .done),
-            FormField(label: "Recorded At", type: .date, validators: [.required], gotoNextField: false, value: existing?.date),
+            FormField(label: "Title", type: .text, validators: [.required, .maxLength(50)], gotoNextField: false, placeholder: "Enter Title", value: existing?.title,returnType: .next,),
+            FormField(label: "Diagonsed At", type: .date, validators: [.required], gotoNextField: false, value: existing?.date),
+            FormField(label: "Hospital", type: .select, validators: [.maxLength(100), .singleAlphanumberAllowed], gotoNextField: true, value: existing?.hospital ?? AppConstantData.none, returnType: .next),
+            FormField(label: "Doctor", type: .select, validators: [.maxLength(50), .singleAlphanumberAllowed], gotoNextField: false, value: existing?.doctor ?? AppConstantData.none, returnType: .done),
             FormField(label: "Medical Reciept", type: .fileUpload, validators: [], gotoNextField: false, value: existing?.receipt),
         ]
     }
@@ -53,13 +53,6 @@ class AddMedicalPresenter: FormFieldPresenter {
     }
     
     override func viewDidLoad() {
-        
-        Task { @MainActor in
-            view?.showLoading()
-            self.hospitals = await fetchUseCase.fetchHospitals()
-            view?.stopLoading()
-        }
-
         buildFields()
     }
     
@@ -67,11 +60,11 @@ class AddMedicalPresenter: FormFieldPresenter {
         let type = field(at: 0).value as? String ?? MedicalType.defaultValue.rawValue
         let title = field(at: 1).value as? String ?? MedicalType.defaultValue.rawValue
         let medicalType = MedicalType(rawValue: type) ?? MedicalType.defaultValue
-        let hospitalData = field(at: 2).value as? String
+        let recordDate = field(at: 2).value as? Date ?? Date()
+        let hospitalData = field(at: 3).value as? String
         let hospital: String? = hospitalData == AppConstantData.none ? nil : hospitalData
-        let doctorData = field(at: 3).value as? String
+        let doctorData = field(at: 4).value as? String
         let doctor: String? = doctorData == AppConstantData.none ? nil : doctorData
-        let recordDate = field(at: 4).value as? Date ?? Date()
         var file: String?
         let date = Date().timeIntervalSince1970
         if let path = field(of: .fileUpload)?.value as? String {
@@ -103,18 +96,33 @@ class AddMedicalPresenter: FormFieldPresenter {
     }
     
     override func processFile(urls: [URL]) {
+        view?.stopLoading()
         let merger = PDFMergerService()
-        do {
-            let data = try merger.mergePDFs(from: urls)
-            saveFile(pdfData: data)
-        } catch {
-            view?.showError(error.localizedDescription)
+        Task {
+            do {
+                let data = try await merger.mergePDFs(from: urls) { [weak self] url in
+                    guard let self else { return nil }
+                    return await self.view?.askPDFPassword(fileName: url.lastPathComponent)
+                }
+                guard let data else {
+                    view?.showError("No valid PDF selected")
+                    self.view?.stopLoading()
+                    return
+                }
+
+                saveFile(pdfData: data)
+            } catch {
+                view?.showError(error.localizedDescription)
+            }
+            self.view?.stopLoading()
+
         }
     }
 
     override func processImages(from images: [UIImage]) {
         view?.showLoading()
         guard !images.isEmpty else {
+            view?.stopLoading()
             return
         }
         let data = PDFService().generatePDF(from: images)
@@ -134,7 +142,6 @@ class AddMedicalPresenter: FormFieldPresenter {
             case .edit:
                 view?.onEdit?(medical)
                 view?.showToastVc(message: "Data modified successfully", type: .success)
-
             }
             view?.dismiss()
         }
@@ -152,11 +159,11 @@ class AddMedicalPresenter: FormFieldPresenter {
             } else {
                 let value = field.value as? String ?? AppConstantData.none
                 addExtra = true
-                if index == 2 {
+                if index == 3 {
                     hospitals.insert(value)
                     options = Array(hospitals)
                    selected = value
-               } else if index == 3 {
+               } else if index == 4 {
                    doctors.insert(value)
                    options = Array(doctors)
                    selected = value

@@ -13,12 +13,26 @@ struct ActiveTreatement {
 
 import Foundation
 class ListMedicalPresenter: ListMedicalPresenterProtocol {
-        
-    var title: String {
-        "Health Records"
+    func dateChangedForOverview(date: Date? = nil) {
+        if let date = date {
+            dashBoardSelectedDate = date
+        }
+        print("at presenter \(dashBoardSelectedDate.toString())")
+
+        let data = ActiveMedicalUseCase().execute(date: dashBoardSelectedDate)
+        view?.showOverviewSummary(data: data, date: dashBoardSelectedDate)
     }
     
-        
+    var total: Int {
+        return allMedicals.count
+    }
+    var title: String {
+        "Health Record"
+    }
+    var isSelectionMode = false
+    var selectedIndexes: Set<Int> = []
+
+    var dashBoardSelectedDate: Date = Date()
     weak var view: ListMedicalViewDelegate?
     let router: ListMedicalRouterProtocol
     
@@ -70,10 +84,10 @@ class ListMedicalPresenter: ListMedicalPresenterProtocol {
         loadMedical()
     }
     
-    func getActiveSummary() -> DashboardViewModel {
-        let summary = ActiveMedicalUseCase().execute()
-        return summary
-    }
+//    func getActiveSummary() -> DashboardViewModel {
+//        let summary = ActiveMedicalUseCase().execute()
+//        return summary
+//    }
     
     func numberOfRows() -> Int {
         return allMedicals.count
@@ -105,6 +119,7 @@ extension ListMedicalPresenter {
         }
         NotificationManager.shared.syncMedicalNotifications()
         loadMedical()
+        view?.reloadSumary()
         view?.showToastVC(message: "Data deleted successfully", type: .success)
     }
     
@@ -189,7 +204,45 @@ extension ListMedicalPresenter {
     }
 
 }
+extension ListMedicalPresenter {
+    func toggleSelection(at index: Int) {
+        let medicalId = medical(at: index).id
+        if selectedIndexes.contains(medicalId) {
+            selectedIndexes.remove(medicalId)
+        } else {
+            selectedIndexes.insert(medicalId)
+        }
+    }
+    
+    func clearSelection() {
+        selectedIndexes.removeAll()
+        //isSelectionMode = false
+    }
+    func deleteMedical(_ medical: Medical) {
+        deleteUseCase.execute(id: medical.id)
+    }
+    func deleteMultiple() {
+        if selectedIndexes.isEmpty {
+            view?.showToastVC(message: "No records selected", type: .error)
+            return
+        }
+        let medicals = selectedMedicals()
+        if medicals.isEmpty {
+            view?.showToastVC(message: "No records selected", type: .error)
+            return
+        }
+        view?.showAlertOnDelete(medicals)
+        
+        //medicals.forEach { self.deleteMedical($0) }
+        //self.clearSelection()
+    }
 
+    func selectedMedicals() -> [Medical] {
+        return allMedicals.filter { selectedIndexes.contains($0.id) }
+    }
+
+
+}
 /*
  var sortComparator: (Medical, Medical) -> Bool {
      return { lhs, rhs in

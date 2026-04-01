@@ -6,7 +6,6 @@
 //
 
 import UIKit
-
 class TabBarController: UITabBarController {
 
     override func viewDidLoad() {
@@ -14,9 +13,24 @@ class TabBarController: UITabBarController {
         super.viewDidLoad()
         setUpContents()
     }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        if let nav = selectedViewController as? UINavigationController,
+           nav.topViewController is MasterPasswordViewController {
+            return .portrait
+        }
+        return .all
+    }
+
+    override var shouldAutorotate: Bool {
+        if let nav = selectedViewController as? UINavigationController,
+           nav.topViewController is MasterPasswordViewController {
+            return false
+        }
+        return true
+    }
 
     func setUpContents() {
-        let document = UITab(title: "Documents", image: DocumentConstantData.docImage, identifier: "document"){ tab in
+        let document = UITab(title: "Document", image: DocumentConstantData.docImage, identifier: "document"){ tab in
             return UINavigationController(rootViewController: ListDocumentAssembler.make())
         }
         
@@ -34,10 +48,6 @@ class TabBarController: UITabBarController {
         selectedTab = document
         mode = .automatic
         tabBar.tintColor = AppColor.primaryColor
-        tabBarMinimizeBehavior = .onScrollDown
-
+        tabBarMinimizeBehavior = .automatic
     }
-    
-
-
 }

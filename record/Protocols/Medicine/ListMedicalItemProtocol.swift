@@ -27,6 +27,7 @@ protocol ListMedicalItemPresenterProtocol {
     func updateEndDate(at index: Int)
     func markAsTaken(at index: Int, value: Bool)
     func didSelectRow(at index: Int)
+    func changeLogStatus(at index: Int, logStatus: LogStatus)
     var isEmpty: Bool { get }
     var selectedSchedule: MedicalSchedule? { get }
 }
@@ -37,7 +38,7 @@ protocol ListMedicalItemViewDelegate: AnyObject {
 }
 
 protocol ListMedicalItemRouterProtocol {
-    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical)
+    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical, date: Date)
     func openAddMedicalItemVC(mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind, startDate: Date,onAdd: @escaping (Persistable) -> Void)
 
 }

@@ -16,10 +16,11 @@ class ListMedicalViewController: CustomSearchBarController {
         view.estimatedRowHeight = 100
         return view
     }()
-    
-    
-    //let activeTreatementView = InfoCardView()
-    let todayMedicineView = InfoCardView()
+    private let selectionToolbar = SelectionToolbarView()
+
+    var selectButton: UIBarButtonItem!
+
+    let overview = OverviewCard()
     let categorySelector: CategorySelectorView =  {
         let view = CategorySelectorView(frame: .zero, options: MedicalType.getList(), images: MedicalType.getImage())
         return view
@@ -27,6 +28,7 @@ class ListMedicalViewController: CustomSearchBarController {
     let sortView = SortHeaderView()
 
     var presenter: ListMedicalPresenterProtocol!
+    var collectionBottomConstraint: NSLayoutConstraint!
 
     let identifier = "ListMedicalTabelViewCell"
     var searchButton: UIBarButtonItem!
@@ -50,8 +52,9 @@ class ListMedicalViewController: CustomSearchBarController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         presenter.viewDidLoad()
-        let summary = presenter.getActiveSummary()
-        todayMedicineView.configure(dashboard: summary,icon: UIImage(systemName: "list.clipboard.fill"), subtitle: DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none,), iconTint: SettingsManager.shared.accent.color)
+        //let summary = presenter.getActiveSummary()
+        presenter.dateChangedForOverview(date: nil)
+//        overview.infoCardView.configure(dashboard: summary,icon: UIImage(systemName: "list.clipboard.fill"), subtitle: DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none,), iconTint: SettingsManager.shared.accent.color)
         categorySelector.applyTint()
         //activeTreatementView.configure(section: summary.row2)
 
@@ -59,11 +62,13 @@ class ListMedicalViewController: CustomSearchBarController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+
     }
-    
+
     func setUpNavigationBar() {
         title = presenter.title
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonClicked))
+        selectButton =  UIBarButtonItem(title: "Select", style: .plain, target: self, action: #selector(selectButtonClicked))
 
         let spacer = UIBarButtonItem(
             barButtonSystemItem: .fixedSpace,
@@ -83,6 +88,7 @@ class ListMedicalViewController: CustomSearchBarController {
         navigationController?.navigationBar.isTranslucent = false
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
+        navigationItem.leftBarButtonItem = selectButton
     }
     
     
@@ -90,27 +96,42 @@ class ListMedicalViewController: CustomSearchBarController {
         view.add(tableView)
         tableView.dataSource = self
         tableView.delegate = self
-
+        selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+        
         categorySelector.onSelect = { [weak self] text in
             self?.presenter.didSelectCategory(text)
         }
-        todayMedicineView.onBadgeTapped = { [weak self] rowModel, segment in
+        overview.dateNavigator.delegate = self
+        overview.infoCardView.onBadgeTapped = { [weak self] rowModel, segment in
             guard let self else { return }
-            let medicines = segment == .completed ? rowModel.completed : rowModel.remaining
+            
             let popup = MedicinePopupViewController(
                 scheduleName: rowModel.schedule.rawValue,
                 segment: segment,
-                medicines: medicines
+                rowModel: rowModel
             )
             //popup.modalPresentationStyle = .
             self.present(popup, animated: true)
         }
+        view.add(selectionToolbar)
+        selectionToolbar.isHidden = true
+
+        NSLayoutConstraint.activate([
+            selectionToolbar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width * 2),
+            selectionToolbar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width * 2),
+            selectionToolbar.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -PaddingSize.height),
+            selectionToolbar.heightAnchor.constraint(equalToConstant: 72),
+        ])
+        collectionBottomConstraint = tableView.bottomAnchor.constraint(
+            equalTo: view.bottomAnchor,
+            constant: -PaddingSize.height
+        )
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -PaddingSize.height),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            collectionBottomConstraint
         ])
     }
     private var dashboardTopConstraint: NSLayoutConstraint?
@@ -119,13 +140,13 @@ class ListMedicalViewController: CustomSearchBarController {
         let padding = PaddingSize.width
 
         dashboardContainer.clipsToBounds = true
-        if todayMedicineView.superview == nil {
-            dashboardContainer.add(todayMedicineView)
+        if overview.superview == nil {
+            dashboardContainer.add(overview)
             NSLayoutConstraint.activate([
-                todayMedicineView.topAnchor.constraint(equalTo: dashboardContainer.topAnchor),
-                todayMedicineView.leadingAnchor.constraint(equalTo: dashboardContainer.leadingAnchor),
-                todayMedicineView.trailingAnchor.constraint(equalTo: dashboardContainer.trailingAnchor),
-                todayMedicineView.bottomAnchor.constraint(equalTo: dashboardContainer.bottomAnchor)
+                overview.topAnchor.constraint(equalTo: dashboardContainer.topAnchor),
+                overview.leadingAnchor.constraint(equalTo: dashboardContainer.leadingAnchor),
+                overview.trailingAnchor.constraint(equalTo: dashboardContainer.trailingAnchor),
+                overview.bottomAnchor.constraint(equalTo: dashboardContainer.bottomAnchor)
             ])
         }
 
@@ -199,7 +220,7 @@ class ListMedicalViewController: CustomSearchBarController {
         dashboardHeightConstraint.constant = 0
 
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-            self.todayMedicineView.alpha = 0
+            self.overview.alpha = 0
             self.headerWrapper.layoutIfNeeded()
             self.invalidateHeaderLayout()
         }
@@ -210,7 +231,7 @@ class ListMedicalViewController: CustomSearchBarController {
         dashboardHeightConstraint.isActive = false
 
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-            self.todayMedicineView.alpha = 1
+            self.overview.alpha = 1
             self.headerWrapper.layoutIfNeeded()
             self.invalidateHeaderLayout()
         } 
@@ -233,12 +254,72 @@ class ListMedicalViewController: CustomSearchBarController {
     }
     override func searchDidShow() {
         searchButton.isEnabled = false
+        selectButton.isEnabled = false
         collapseDashboard()
     }
     override func searchDidHide() {
         searchButton.isEnabled = true
+        selectButton.isEnabled = true
+
         expandDashboard()
     }
+
+}
+
+extension ListMedicalViewController {
+    @objc func selectButtonClicked() {
+        presenter.isSelectionMode.toggle()
+        
+        if presenter.isSelectionMode {
+            searchButton.isEnabled = false
+            navigationItem.leftBarButtonItem?.title = "Cancel"
+            tableView.allowsMultipleSelection = true
+            showBottomToolbar()
+            tableView.reloadData()
+        } else {
+            navigationItem.leftBarButtonItem?.title = "Select"
+            searchButton.isEnabled = true
+            tableView.allowsMultipleSelection = false
+            presenter.clearSelection()
+            hideBottomToolbar()
+            clearSelectedRow()
+            tableView.reloadData()
+        }
+
+    }
+    func showBottomToolbar() {
+        updateToolbar()
+        tabBarController?.tabBar.isHidden = true
+        selectionToolbar.show(in: view, bottomConstraint: collectionBottomConstraint)
+    }
+
+    func hideBottomToolbar() {
+        tabBarController?.tabBar.isHidden = false
+        selectionToolbar.hide(in: view, bottomConstraint: collectionBottomConstraint, defaultOffset: -PaddingSize.height)
+    }
+
+    func updateToolbar() {
+
+        var buttons: [UIButton] = []
+        let delete = makeToolbarButton(image: IconName.trash, action: #selector(deleteSelected))
+
+        buttons.append(delete)
+
+        selectionToolbar.setButtons(buttons)
+    }
+    @objc func deleteSelected() {
+        presenter.deleteMultiple()
+    }
+    func makeToolbarButton(image: String, action: Selector) -> UIButton {
+        var config = UIButton.Configuration.clearGlass()
+        config.image = UIImage(systemName: image)
+        let button = UIButton(configuration: config)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
+
+
 
 }
 
@@ -263,10 +344,25 @@ extension ListMedicalViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let medical = presenter.medical(at: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
+        let isSelected = presenter.selectedIndexes.contains(medical.id)
+
         cell.textLabel?.text = medical.title
         cell.detailTextLabel?.text = "From \(medical.date.toString())"
-        cell.accessoryType = .disclosureIndicator
-        cell.backgroundColor = .secondarySystemBackground
+        if presenter.isSelectionMode {
+            if isSelected {
+                cell.accessoryType = .checkmark
+                cell.backgroundColor = AppColor.primaryColor.withAlphaComponent(0.3)
+            } else {
+                cell.accessoryType = .none
+                cell.backgroundColor = .secondarySystemBackground
+            }
+
+        } else {
+            cell.accessoryType = .disclosureIndicator
+            cell.backgroundColor = .secondarySystemBackground
+
+        }
+        //cell.backgroundColor = .secondarySystemBackground
         cell.selectionStyle = .none
         cell.imageView?.image = UIImage(systemName: medical.type.image)
         return cell
@@ -288,15 +384,59 @@ extension ListMedicalViewController: UITableViewDataSource {
         swipeAction.performsFirstActionWithFullSwipe = true
         return swipeAction
     }
+    func clearSelectedRow() {
+        for indexPath in tableView.indexPathsForSelectedRows ?? [] {
+            tableView.deselectRow(at: indexPath, animated: false)
+        }
+    }
+
 }
 
 extension ListMedicalViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        presenter.didSelectedRow(at: indexPath.row)
+        if presenter.isSelectionMode {
+            presenter.toggleSelection(at: indexPath.row)
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+            selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+
+            updateToolbar()
+        } else {
+            presenter.didSelectedRow(at: indexPath.row)
+        }
     }
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        presenter.toggleSelection(at: indexPath.row)
+        
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+        selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+
+        updateToolbar()
+
+    }
+
 }
 
 extension ListMedicalViewController: ListMedicalViewDelegate {
+    func reloadSumary() {
+        presenter.dateChangedForOverview(date: nil)
+    }
+    func exitSelectionMode() {
+        presenter.isSelectionMode = false
+        navigationItem.leftBarButtonItem?.title = "Select"
+        searchButton.isEnabled = true
+        tableView.allowsMultipleSelection = false
+        hideBottomToolbar()
+        clearSelectedRow()
+        presenter.clearSelection()
+        tableView.reloadData()
+
+    }
+
+    func showOverviewSummary(data: DashboardViewModel, date: Date) {
+        print("at configuration stage")
+        overview.infoCardView.configure(dashboard: data, icon: UIImage(systemName: "list.clipboard.fill"), subtitle: date.toString(), iconTint: SettingsManager.shared.accent.color)
+    }
+    
     func showToastVC(message: String, type: ToastType) {
         showToast(message: message, type: type)
     }
@@ -315,6 +455,26 @@ extension ListMedicalViewController: ListMedicalViewDelegate {
         
         alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
             self?.presenter.deleteMedical(at: index )
+        })
+        present(alert, animated: true)
+    }
+    func showAlertOnDelete(_ medicals: [Medical]) {
+        let alert = UIAlertController(
+            title: "Delete?",
+            message: "Are you sure you want to delete \(medicals.count) items?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
+            for medical in medicals {
+                self?.presenter.deleteMedical(medical)
+            }
+            self?.presenter.loadMedical(reset: true)
+            self?.exitSelectionMode()
+
+            //self?.presenter.deleteMedical(at: index )
         })
         present(alert, animated: true)
     }
@@ -341,14 +501,16 @@ extension ListMedicalViewController: ListMedicalViewDelegate {
                 tableView.setHeaderEmptyView(
                     image: "tray.full",
                     title: "No Matching Health Record Found",
-                    subtitle: "Search with title, hospital and doctor name"
+                    subtitle: "Search with title, hospital or doctor name"
                 )
             }
         } else {
             tableView.restoreFooter()
             setupTableHeader()
         }
+
     }
+    
 
     /*
     func reloadData() {
@@ -422,11 +584,11 @@ extension ListMedicalViewController {
         }
 
         let created = UIAction(
-            title: "Recorded At",
+            title: "Diagonsed At",
             subtitle: subtitle(
                 field: .createdAt,
-                asc: "Newest to Oldest",
-                desc: "Oldest to Newest"
+                asc: "Oldest to Newest",
+                desc: "Newest to Oldest"
             ),
             state: current.field == .createdAt ? .on : .off
         ) { [weak self] _ in
@@ -434,11 +596,11 @@ extension ListMedicalViewController {
         }
 
         let updated = UIAction(
-            title: "Updated At",
+            title: "Recent",
             subtitle: subtitle(
                 field: .updatedAt,
-                asc: "Newest to Oldest",
-                desc: "Oldest to Newest"
+                asc: "Oldest to Newest",
+                desc: "Newest to Oldest"
             ),
             state: current.field == .updatedAt ? .on : .off
         ) { [weak self] _ in
@@ -450,5 +612,41 @@ extension ListMedicalViewController {
             title: "Sort By",
             children: [name, created, updated]
         )
+    }
+}
+extension ListMedicalViewController: DateNavigatorViewDelegate {
+    func dateNavigator(_ navigator: DateNavigatorView, didChange date: Date) {
+        print("data change \(date.toString())")
+        presenter.dateChangedForOverview(date: date)
+    }
+    
+    func dateNavigatorRequestedPicker(_ navigator: DateNavigatorView, current: Date) {
+        let datePickerVC = DatePickerPopoverViewController()
+        datePickerVC.modalPresentationStyle = .popover
+        datePickerVC.datePicker.minimumDate = AppConstantData.minDate
+        datePickerVC.datePicker.date = current
+        datePickerVC.datePicker.maximumDate = Date()
+        // Done button action
+        datePickerVC.onDone = { [weak navigator] date in
+            navigator?.setDate(date)
+        }
+
+        if let popover = datePickerVC.popoverPresentationController {
+            popover.sourceView = overview.dateNavigator
+            popover.sourceRect = overview.dateNavigator.bounds
+            popover.permittedArrowDirections = .any
+            popover.delegate = self
+        }
+
+        present(datePickerVC, animated: true)
+
+
+    }
+
+    
+}
+extension ListMedicalViewController: UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none
     }
 }

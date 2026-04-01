@@ -21,7 +21,7 @@ class CompresionCell: UITableViewCell {
         return button
 
     }()
-    
+    var selectedLevel: PDFCompressionLevel = .default
     var handler: ((PDFCompressionLevel) -> Void)?
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -38,9 +38,10 @@ class CompresionCell: UITableViewCell {
     }()
 
     func setUpContentView() {
+        backgroundColor = .secondarySystemBackground
         buttonView.add(button)
         let space: CGFloat = 3
-        textLabel?.text = "Select Pdf Compression Level"
+        textLabel?.text = "PDF Compression Level"
         selectionStyle = .none
         NSLayoutConstraint.activate([
             
@@ -58,30 +59,29 @@ class CompresionCell: UITableViewCell {
             buttonView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height)
         ])
         
-        buildMenu()
+        //buildMenu()
     }
     
     func buildMenu() {
-        let lowAction = UIAction(title: "Low") { [weak self] _ in
+        let lowAction = UIAction(title: "Low", state: selectedLevel == .low  ? .on : .off) { [weak self] _ in
             //self?.configure(text: "Low")
             self?.handler?(.low)
         }
-        let mediumAction = UIAction(title: "Medium") { [weak self] _ in
+        let mediumAction = UIAction(title: "Medium", state: selectedLevel == .medium  ? .on : .off) { [weak self] _ in
             //self?.configure(text: "Medium")
 
             self?.handler?(.medium)
         }
-        let highAction = UIAction(title: "High") { [weak self] _ in
+        let highAction = UIAction(title: "High", state: selectedLevel == .high  ? .on : .off) { [weak self] _ in
             //self?.configure(text: "High")
             self?.handler?(.high)
         }
         button.menu = UIMenu(title: "",children: [lowAction, mediumAction, highAction])
-
-
     }
     
-    func configure(text: String) {
-        button.configuration?.title = text
+    func configure(text: PDFCompressionLevel) {
+        selectedLevel = text
+        buildMenu()
     }
 
 }

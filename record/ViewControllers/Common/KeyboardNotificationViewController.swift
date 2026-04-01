@@ -8,7 +8,7 @@
 import UIKit
 
 
-class KeyboardNotificationViewController: UIViewController {
+class KeyboardNotificationViewController: PasswordSessionAwareViewController {
 
     var keyboardScrollableView: UIScrollView? { nil }
     var scrollToIndexPathOnKeyboardShow: IndexPath? { nil }

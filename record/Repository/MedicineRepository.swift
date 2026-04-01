@@ -50,6 +50,10 @@ class MedicineRepository: MedicineRepositoryProtocol {
     func fetchActiveMedicines() -> [Medicine] {
         return db.fetchActiveMedicines()
     }
+    
+    func fetchActiveMedicines(date: Date) -> [Medicine] {
+        return db.fetchActiveMedicines(date: date)
+    }
     func setStatus(id: Int,value: Bool, date: Date?) {
         db.setStaus(table: Medicine.databaseTableName, column: Medicine.statusC, id: id, value: value, endDate: date)
     }

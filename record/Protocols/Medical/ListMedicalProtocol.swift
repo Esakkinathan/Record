@@ -6,6 +6,7 @@
 //
 import VTDB
 protocol ListMedicalPresenterProtocol {
+    var total: Int { get }
     var title: String { get }
     var currentSort: MedicalSortOption { get }
     func numberOfRows() -> Int
@@ -19,19 +20,29 @@ protocol ListMedicalPresenterProtocol {
     func didSelectSortField(_ field: MedicalSortField)
     func viewDidLoad()
     func didSelectCategory(_ text: String)
-    func getActiveSummary() -> DashboardViewModel
     func deleteClicked(at index: Int)
     var isEmpty: Bool { get }
     var isSearching: Bool { get }
     func loadMedical(reset: Bool)
+    func dateChangedForOverview(date: Date?)
+    func deleteMultiple()
+    var selectedIndexes: Set<Int> { get }
+    var isSelectionMode: Bool { get set }
+    func clearSelection()
+    func toggleSelection(at index: Int)
+    func deleteMedical(_ medical: Medical)
 
 }
 
 protocol ListMedicalViewDelegate: AnyObject {
+    func reloadSumary()
     func showAlertOnDelete(at index: Int)
+    func showAlertOnDelete(_ medicals: [Medical])
     func reloadData()
     func refreshSortMenu()
     func showToastVC(message: String, type: ToastType)
+    func showOverviewSummary(data: DashboardViewModel, date: Date)
+    func exitSelectionMode()
 }
 protocol ListMedicalRouterProtocol {
     func openAddMedicalVC(mode: MedicalFormMode, onAdd: @escaping (Persistable) -> Void)

@@ -7,6 +7,7 @@
 import UIKit
 import VTDB
 class DetailMedicalItemViewController: UIViewController {
+    
     var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.separatorStyle = .singleLine
@@ -17,17 +18,22 @@ class DetailMedicalItemViewController: UIViewController {
     
     var presenter: DetailMedicalItemPresenterProtocol!
     var onEdit: ((Persistable) -> Void)?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        presenter.viewDidLoad()
         setUpContent()
         setUpNavigationBar()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewDidLoad()
+    }
+    
     func setUpNavigationBar() {
         title = presenter.title
         navigationItem.backButtonDisplayMode = .minimal
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(editMedicineClicked))
-
         navigationItem.largeTitleDisplayMode = .never
     }
     func setUpContent() {
@@ -40,6 +46,7 @@ class DetailMedicalItemViewController: UIViewController {
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
         tableView.register(DonutChartCell.self, forCellReuseIdentifier: DonutChartCell.identifier)
         tableView.register(FormToggleLabel.self, forCellReuseIdentifier: FormToggleLabel.identifier)
+        tableView.register(ScheduleTableViewCell.self, forCellReuseIdentifier: ScheduleTableViewCell.identifier)
         tableView.register(MissedScheduleCell.self,
                            forCellReuseIdentifier: MissedScheduleCell.identifier)
         NSLayoutConstraint.activate([
@@ -71,6 +78,8 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
             return UITableView.automaticDimension
         case .missed(_):
             return 300
+        case .logStatus:
+            return 100
         default:
             return 300
         }
@@ -91,6 +100,7 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
                 newCell.configure(title: section.title, text: section.value)
                 cell = newCell
             }
+        
         case .dashBoard(let segments):
             let newCell = tableView.dequeueReusableCell(withIdentifier: DonutChartCell.identifier, for: indexPath) as! DonutChartCell
             newCell.configure(segments: segments)
@@ -108,6 +118,21 @@ extension DetailMedicalItemViewController: UITableViewDataSource, UITableViewDel
             cell.configure(data: items)
 
             return cell
+        case .logStatus:
+            let logStatus: [LogStatus] = presenter.logStatus
+            let date = presenter.selectedDate
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: ScheduleTableViewCell.identifier,
+                for: indexPath
+            ) as! ScheduleTableViewCell
+            cell.configure(logStatus: logStatus,date: date)
+            cell.onStateChanged = { [weak self] logStatus in
+                print("viewcontroller")
+
+                self?.presenter.changeLogStatus(logStatus)
+            }
+            return cell
+
         default:
             cell = UITableViewCell()
         }
@@ -126,11 +151,10 @@ extension DetailMedicalItemViewController: DetailMedicalItemViewDelegate {
     func updateMedicine(_ medicine: Persistable) {
         onEdit?(medicine)
     }
-
-    
 }
 
 extension DetailMedicalItemViewController: DocumentNavigationDelegate {
+    
     func push(_ vc: UIViewController) {
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -138,6 +162,4 @@ extension DetailMedicalItemViewController: DocumentNavigationDelegate {
     func presentVC(_ vc: UIViewController) {
         present(vc, animated: true)
     }
-    
-    
 }

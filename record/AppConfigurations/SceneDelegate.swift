@@ -39,6 +39,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
     func sceneWillResignActive(_ scene: UIScene) {
+        
     }
 
     func showLockScreen() {
@@ -104,7 +105,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = accent.color
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
@@ -145,10 +146,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func sceneDidEnterBackground(_ scene: UIScene) {
         backgroundDate = Date()
+        PrivacyProtection.shared.enable()
     }
-    
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        PrivacyProtection.shared.disable()
+    }
     func sceneDidBecomeActive(_ scene: UIScene) {
-
+        
         guard SettingsManager.shared.faceId else { return }
 
         if let backgroundDate = backgroundDate {

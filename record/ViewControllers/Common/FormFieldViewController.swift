@@ -152,7 +152,7 @@ class FormFieldViewController: KeyboardNotificationViewController {
     func showExitAlert() {
         let alert = UIAlertController(
             title: "Discard Changes?",
-            message: "You have unsaved changes. Are you sure you want to leave?",
+            message: "You have unsaved changes. Are you sure you want to exit?",
             preferredStyle: .alert
         )
         
@@ -177,7 +177,7 @@ extension FormFieldViewController: VNDocumentCameraViewControllerDelegate {
         restoreNavigationAppearance()
         var images: [UIImage] = []
 
-        for i in 0..<min(scan.pageCount, 10) {
+        for i in 0..<min(scan.pageCount, AppConstantData.maxImageFiles) {
             images.append(scan.imageOfPage(at: i))
         }
         presenter.processImages(from: images)
@@ -296,12 +296,40 @@ extension FormFieldViewController: UIDocumentPickerDelegate {
         guard !urls.isEmpty else {
             return
         }
-        guard urls.count <= presenter.maxFiles else {
-            showError("Maximum of \(presenter.maxFiles) allowed")
+        guard urls.count <= AppConstantData.maxFiles else {
+            showError("Maximum of \(AppConstantData.maxFiles) allowed")
             return
         }
         presenter.processFile(urls: urls)
     }
+    
+    func askPDFPassword(fileName: String) async -> String? {
+        await withCheckedContinuation { continuation in
+
+            let alert = UIAlertController(
+                title: "PDF Locked",
+                message: "Enter password for \(fileName)",
+                preferredStyle: .alert
+            )
+
+            alert.addTextField {
+                $0.placeholder = "Password"
+                $0.isSecureTextEntry = true
+            }
+
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+                continuation.resume(returning: nil)
+            })
+
+            alert.addAction(UIAlertAction(title: "Unlock", style: .default) { _ in
+                let password = alert.textFields?.first?.text
+                continuation.resume(returning: password)
+            })
+
+            self.present(alert, animated: true)
+        }
+    }
+    
     func askForPassword(name: String,completion: @escaping (String, Bool) -> Void) {
 
         let alert = UIAlertController(
@@ -392,9 +420,14 @@ extension FormFieldViewController: UIImagePickerControllerDelegate, UINavigation
 }
 
 extension FormFieldViewController: UIAdaptivePresentationControllerDelegate {
-    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
-        return false
-    }
+//    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
+//        if presentationController is UIPopoverPresentationController {
+//            return true  // ← Allow popover to dismiss on tap outside
+//        }
+//        return false  // ← Block the form sheet from swiping away
+//
+//        //return false
+//    }
 }
 //extension FormFieldViewController: FormTextFieldDelegate {
 //    
@@ -484,18 +517,16 @@ extension FormFieldViewController {
 
     func dateFieldCell(_ indexPath: IndexPath, _ field: FormField) -> FormDateField {
         let cell = tableView.dequeueReusableCell(withIdentifier: FormDateField.identifier, for: indexPath) as! FormDateField
-        print("I am getting reloading")
         cell.configure(title: field.label, date: field.value as? Date,isRequired: isFieldRequired(field: field))
         
         cell.onButtonClicked = { [weak self] date in
-            self?.openDatePicker(at: indexPath.row, selectedDate: date, futureDate: field.gotoNextField)
+            guard let currentCell = self?.tableView.cellForRow(at: indexPath) as? FormDateField else { return }
+            self?.openDatePicker(at: indexPath.row, selectedDate: date, futureDate: field.gotoNextField, sourceView: currentCell)
         }
         
         if !field.gotoNextField {
             cell.datePicker.maximumDate = Date()
         }
-        
-        
         cell.onValueChange = { [weak self] date in
             self?.presenter.updateValue(date, at: indexPath.row)
             return nil
@@ -503,36 +534,33 @@ extension FormFieldViewController {
         return cell
 
     }
-    func openDatePicker(at index: Int, selectedDate: Date?, futureDate: Bool) {
-        let picker = UIDatePicker()
-        picker.datePickerMode = .date
-        picker.preferredDatePickerStyle = .compact
-
+    func openDatePicker(at index: Int, selectedDate: Date?, futureDate: Bool, sourceView: UIView) {
+        let datePickerVC = DatePickerPopoverViewController()
+        datePickerVC.modalPresentationStyle = .popover
+        datePickerVC.datePicker.minimumDate = AppConstantData.minDate
         if let selectedDate {
-            picker.date = selectedDate
+            datePickerVC.datePicker.date = selectedDate
         }
-        
+
         if !futureDate {
-            picker.maximumDate = Date()
+            datePickerVC.datePicker.maximumDate = Date()
+        } else {
+            datePickerVC.datePicker.maximumDate = AppConstantData.maxDate
         }
-         
-        let alert = UIAlertController(title: "Select Date\n\n", message: nil, preferredStyle: .actionSheet)
 
-        alert.view.addSubview(picker)
+        // Done button action
+        datePickerVC.onDone = { [weak self] date in
+            self?.presenter.updateValueAt(date, at: index)
+        }
 
-        picker.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
-            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 40)
-        ])
+        if let popover = datePickerVC.popoverPresentationController {
+            popover.sourceView = sourceView
+            popover.sourceRect = sourceView.bounds
+            popover.permittedArrowDirections = .any
+            popover.delegate = self
+        }
 
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
-        alert.addAction(UIAlertAction(title: "Done", style: .default) { [weak self] _ in
-            self?.presenter.updateValueAt(picker.date, at: index)
-        })
-
-        present(alert, animated: true)
+        present(datePickerVC, animated: true)
     }
 
     
@@ -621,4 +649,12 @@ extension FormFieldViewController {
         return cell
     }
 
+}
+extension FormFieldViewController: UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none // Prevents fullscreen on iPhone
+    }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        //print("Popover dismissed by tapping outside")
+    }
 }

@@ -56,7 +56,14 @@ class MasterPasswordViewController: UIViewController {
             stack.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait
+        
+    }
     
+    override var shouldAutorotate: Bool {
+        return true
+    }
     func showLoading() {
         
         let overlay = LoadingOverlayView()
@@ -103,7 +110,7 @@ class MasterPasswordViewController: UIViewController {
                     btn.addTarget(self, action: #selector(deleteTapped), for: .touchUpInside)
                     rowStack.addArrangedSubview(btn)
                 } else if item.isEmpty {
-                    let btn = PinButton(number: "clear")
+                    let btn = PinButton(number: "Clear")
                     btn.addTarget(self, action: #selector(clearClicked), for: .touchUpInside)
                     rowStack.addArrangedSubview(btn)
 

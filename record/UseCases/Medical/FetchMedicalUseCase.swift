@@ -8,7 +8,7 @@
 protocol FetchMedicalUseCaseProtocol {
     func execute() -> [Medical]
     func fetchDoctors() -> Set<String>
-    func fetchHospitals() async -> Set<String>
+    func fetchHospitals() -> Set<String>
     func fetchMedical(limit: Int, offset: Int, sort: MedicalSortOption, category: MedicalType?,searchText: String?) -> [Medical]
 }
 
@@ -33,8 +33,8 @@ class FetchMedicalUseCase: FetchMedicalUseCaseProtocol {
         return Set(repository.fetchDoctors())
     }
     
-    func fetchHospitals() async -> Set<String> {
-        let hospitals = await repository.getHospitals()
+    func fetchHospitals() -> Set<String> {
+        let hospitals = repository.fetchHospitals()
         return Set(hospitals)
     }
     func fetchMedical(limit: Int, offset: Int, sort: MedicalSortOption, category: MedicalType?,searchText: String?) -> [Medical] {

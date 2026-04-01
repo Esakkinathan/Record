@@ -28,9 +28,8 @@ class ListMedicaItemRouter: ListMedicalItemRouterProtocol {
         viewController?.presentVC(navVc)
 
     }
-    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical
-    ) {
-        let vc = DetailMedicalItemAssembler.make(medicalItem: medicalItem, medical: medical)
+    func openDetailMedicalItemVc(medicalItem: Medicine, medical: Medical, date: Date) {
+        let vc = DetailMedicalItemAssembler.make(medicalItem: medicalItem, medical: medical, date: date)
         viewController?.push(vc)
     }
 

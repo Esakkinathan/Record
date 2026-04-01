@@ -8,6 +8,8 @@ import UIKit
 import VTDB
 protocol DetailMedicalItemPresenterProtocol {
     var title: String { get }
+    var logStatus: [LogStatus] { get }
+    var selectedDate: Date { get }
     func numberOfSection() -> Int
     func numberOfSectionRows(at section: Int) -> Int
     func section(at indexPath: IndexPath) -> DetailMedicalRow
@@ -16,6 +18,7 @@ protocol DetailMedicalItemPresenterProtocol {
     var status: Bool { get }
     func setStatus(value: Bool)
     func editButtonClicked()
+    func changeLogStatus(_ logStatus: LogStatus)
 }
 
 protocol DetailMedicalItemViewDelegate: AnyObject {

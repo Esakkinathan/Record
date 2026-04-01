@@ -139,5 +139,6 @@ protocol FormFieldViewDelegate: AnyObject {
     func showToastVc(message: String, type: ToastType)
     func showYesNoAlert(completion: @escaping (Bool) -> Void)
     func askForPassword(name: String,completion: @escaping (String, Bool) -> Void)
+    func askPDFPassword(fileName: String) async -> String?
     //var previewurl: URL? {get}
 }

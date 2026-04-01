@@ -19,6 +19,7 @@ final class SwitchCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError() }
     
     private func setup() {
+        backgroundColor = .secondarySystemBackground
         selectionStyle = .none
         accessoryView = toggle
         toggle.addTarget(self, action: #selector(valueChanged), for: .valueChanged)

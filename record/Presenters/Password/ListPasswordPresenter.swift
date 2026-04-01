@@ -17,7 +17,12 @@ class ListPasswordPresenter: ListPasswordProtocol {
     let fetchUseCase: FetchPasswordUseCase
     let updateNotesUseCase: UpdatePasswordNotesUseCase
     let toggleFavouriteUseCase: ToggleFavouriteUseCase
-    
+    var total: Int {
+        return currentPassword().count
+    }
+    var isSelectionMode = false
+    var selectedIndexes: Set<Int> = []
+
     var currentSort: PasswordSortOption
     var passwordList: [Password] = []
     var filteredRecords: [Password] = []
@@ -27,9 +32,9 @@ class ListPasswordPresenter: ListPasswordProtocol {
         return currentPassword().isEmpty
     }
     
-    var uiTimer: Timer?
+    //var uiTimer: Timer?
     var autoExitTimer: Timer?
-    var remainingTime: Int = AppConstantData.passwordSession
+    //var remainingTime: Int = AppConstantData.passwordSession
     var sessionManager = PasswordSessionManager.shared
     var isFavoriteSelected = false
     
@@ -47,9 +52,15 @@ class ListPasswordPresenter: ListPasswordProtocol {
     }
     
     
-    func toggleFavorite(_ password: Password) {
+    func toggleFavoritePassword(_ password: Password) {
         password.toggleFavorite()
         toggleFavouriteUseCase.execute(password)
+        loadPasswords()
+        didSelectedFavourite(reset: false)
+        //view?.reloadData()
+    }
+    func toggleFavorite(_ password: Password) {
+        toggleFavoritePassword(password)
         loadPasswords()
         didSelectedFavourite(reset: false)
         //view?.reloadData()
@@ -111,11 +122,10 @@ extension ListPasswordPresenter {
     }
     
     func configureSession() {
-        sessionManager.onSessionExpired = { [weak self] in
-            self?.stopUITimer()
-            self?.view?.showExitPrompt(expired: true)
-            self?.startAutoExitTimer()
+        sessionManager.onTickUpdate = { [weak self] timeString in
+            self?.view?.updateTimer(timeString)
         }
+
     }
     
     func startAutoExitTimer() {
@@ -129,34 +139,34 @@ extension ListPasswordPresenter {
         autoExitTimer?.invalidate()
         autoExitTimer = nil
     }
-    func stopUITimer() {
-        uiTimer?.invalidate()
-        uiTimer = nil
-    }
+//    func stopUITimer() {
+//        uiTimer?.invalidate()
+//        uiTimer = nil
+//    }
     
     func viewDidLoad() {
         configureSession()
-        startUITimer()
+//        startUITimer()
 
     }
     func viewWillAppear() {
         loadPasswords()
     }
     
-    func startUITimer() {
-        remainingTime = Int(AppConstantData.passwordSession)
-        uiTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] _ in
-            self?.isExpired()
-        }
-    }
+//    func startUITimer() {
+//        remainingTime = Int(AppConstantData.passwordSession)
+//        uiTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] _ in
+//            self?.isExpired()
+//        }
+//    }
     
-    func isExpired() {
-        guard remainingTime > 0 else { return }
-        remainingTime -= 1
-        let min = remainingTime / 60
-        let sec = remainingTime % 60
-        view?.updateTimer(String(format: "%02d:%02d", min, sec))
-    }
+//    func isExpired() {
+//        guard remainingTime > 0 else { return }
+//        remainingTime -= 1
+//        let min = remainingTime / 60
+//        let sec = remainingTime % 60
+//        view?.updateTimer(String(format: "%02d:%02d", min, sec))
+//    }
 
     func exitPassoword() {
         stopAutoExitTimer()
@@ -167,7 +177,7 @@ extension ListPasswordPresenter {
     func extendSession() {
         stopAutoExitTimer()
         sessionManager.extendSession()
-        startUITimer()
+        //startUITimer()
     }
 
 }
@@ -175,7 +185,7 @@ extension ListPasswordPresenter {
     func gotoAddPasswordScreen() {
         router.openAddPasswordVC(mode: .add) { [weak self] newPassword in
             self?.addPassword(newPassword as! Password)
-            self?.view?.showToastVC(message: "Data modified successfully", type: .success)
+            self?.view?.showToastVC(message: "Data added successfully", type: .success)
         }
     }
 
@@ -234,11 +244,12 @@ extension ListPasswordPresenter {
             view?.refreshSortMenu()
             view?.reloadData()
         } else {
-            applySort()
+            applySort(reset: true)
         }
     }
 
-    func applySort() {
+    func applySort(reset: Bool =  false) {
+        isFavoriteSelected = false
         
         visibleRecords = passwordList
         
@@ -273,5 +284,69 @@ extension ListPasswordPresenter {
         view?.reloadData()
 
     }
+
+}
+
+extension ListPasswordPresenter {
+    func toggleSelection(at index: Int) {
+        let passwordId = password(at: index).id
+        if selectedIndexes.contains(passwordId) {
+            selectedIndexes.remove(passwordId)
+        } else {
+            selectedIndexes.insert(passwordId)
+        }
+    }
+    func clearSelection() {
+        selectedIndexes.removeAll()
+        //isSelectionMode = false
+    }
+    func deletePassword(_ password: Password) {
+        deleteUseCase.execute(id: password.id)
+    }
+    func deleteMultiple() {
+        let passwords = selectedPasswords()
+        if passwords.isEmpty {
+            view?.showToastVC(message: "No passwords selected", type: .error)
+            return
+        }
+        view?.showAlertOnDelete(passwords)
+    }
+    
+    func selectedPasswords() -> [Password] {
+        return visibleRecords.filter { selectedIndexes.contains($0.id) }
+    }
+    
+    func updateFavouriteForSelected(lock: Bool) {
+        let passwords = selectedPasswords()
+        for password in passwords {
+            if lock && !password.isFavorite {
+                self.toggleFavoritePassword(password)
+            } else if !lock && password.isFavorite {
+                self.toggleFavoritePassword(password)
+            }
+        }
+        loadPasswords()
+        view?.exitSelectionMode()
+    }
+    
+    func selectionState() -> SelectionRestrictionState {
+        let docs = selectedPasswords()
+        
+        guard !docs.isEmpty else { return .none }
+        
+        let lockedCount = docs.filter { $0.isFavorite }.count
+        
+        if lockedCount == docs.count {
+            return .allLocked
+        } else if lockedCount == 0 {
+            return .allUnlocked
+        } else {
+            return .mixed
+        }
+    }
+
+
+
+
 
 }

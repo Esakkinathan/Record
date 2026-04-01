@@ -13,13 +13,14 @@ class AddMedicalItemPresenter: FormFieldPresenter {
     let medical: Medical
     let kind: MedicalKind
     var startDate: Date
-    
+    var instructionOptions: Set<String>
     init(view: FormFieldViewDelegate? = nil, router: AddMedicalItemRouterProtocol,mode: MedicalItemFormMode, medical: Medical, kind: MedicalKind, startDate: Date) {
         self.router = router
         self.mode = mode
         self.medical = medical
         self.kind = kind
         self.startDate = startDate
+        instructionOptions = Set(MedicalInstruction.getList())
         super.init(view: view)
 
     }
@@ -39,9 +40,9 @@ class AddMedicalItemPresenter: FormFieldPresenter {
         let existing = existing()
         
         fields = [
-            FormField(label: "Name", type: .text, validators: [.required,.maxLength(40), .singleAlphanumberAllowed], gotoNextField: false, placeholder: "Enter Name", value: existing?.name, returnType: .next),
-            FormField(label: "Instruction", type: .select, validators: [.required, .maxLength(40), .singleAlphanumberAllowed], gotoNextField: false, value: existing?.instruction.value ?? MedicalInstruction.beforeFood.value),
-            FormField(label: "Dosage", type: .text, validators: [.required, .maxLength(40), .alphanumberAllowed], gotoNextField: false, placeholder: "Enter Dosage", value: existing?.dosage,returnType: .next),
+            FormField(label: "Name", type: .text, validators: [.required,.maxLength(50), .singleAlphanumberAllowed], gotoNextField: false, placeholder: "Enter Name", value: existing?.name, returnType: .next),
+            FormField(label: "Instruction", type: .select, validators: [.required, .maxLength(50), .singleAlphanumberAllowed], gotoNextField: false, value: existing?.instruction.value ?? MedicalInstruction.beforeFood.value),
+            FormField(label: "Dosage", type: .text, validators: [.required, .maxLength(50), .alphanumberAllowed], gotoNextField: false, placeholder: "Enter Dosage", value: existing?.dosage,returnType: .next),
             FormField(label: "Schedule", type: .select, validators: [.required], gotoNextField: false, value: existing?.shedule.dbValue ?? MedicalSchedule.morning.rawValue)
         ]
         
@@ -54,9 +55,9 @@ class AddMedicalItemPresenter: FormFieldPresenter {
     override func selectClicked(at index: Int ) {
         let field = field(at: index)
         if index == 1 {
-            let options = MedicalInstruction.getList()
             let selected = field.value as? String ?? MedicalInstruction.beforeFood.value
-            router.openSelectVC(options: options, selected: selected, addExtra: true, validator: field.validators) { [weak self] value in
+            instructionOptions.insert(selected)
+            router.openSelectVC(options: Array(instructionOptions), selected: selected, addExtra: true, validator: field.validators) { [weak self] value in
                 self?.didSelectOption(at: index,value)
             }
         } else if index == 3 {

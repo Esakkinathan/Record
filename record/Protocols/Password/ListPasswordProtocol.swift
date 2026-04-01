@@ -7,6 +7,7 @@
 import VTDB
 
 protocol ListPasswordProtocol {
+    var total: Int { get }
     var isFavoriteSelected: Bool {get}
     var currentSort: PasswordSortOption { get }
     func numberOfPasswords() -> Int
@@ -27,6 +28,15 @@ protocol ListPasswordProtocol {
     var isSearching: Bool { get }
     func stopAutoExitTimer()
     func viewWillAppear()
+    func deleteMultiple()
+    func updateFavouriteForSelected(lock: Bool)
+    var selectedIndexes: Set<Int> { get }
+    var isSelectionMode: Bool { get set }
+    func selectionState() -> SelectionRestrictionState
+    func clearSelection()
+    func toggleSelection(at index: Int)
+    func deletePassword(_ password: Password)
+    func loadPasswords()
 
 }
 
@@ -38,7 +48,9 @@ protocol ListPasswordViewDelegate: AnyObject {
     func dismiss()
     func refreshSortMenu()
     func showAlertOnDelete(at index: Int)
+    func showAlertOnDelete(_ passwords: [Password])
     func showToastVC(message: String, type: ToastType)
+    func exitSelectionMode()
 }
 
 protocol ListPasswordRouterProtocol {

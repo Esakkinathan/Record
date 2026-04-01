@@ -50,9 +50,27 @@ class DatabaseAdapter: DatabaseProtocol {
         databaseName = DatabaseAdapter.getPath()
 
         registerCollation()
+        //executeQuery()
         createTable()
+        
     }
-    
+    func executeQuery() {
+        let sql = """
+        UPDATE \(Medical.databaseTableName)
+        SET \(Medical.titleC) = 'fever'
+        WHERE \(Medical.titleC) = 'Fever';
+        """
+        do {
+            try database.write { db in
+                try db.execute(sql)
+            }
+
+        } catch {
+            print(error)
+        }
+
+    }
+
     func dropTable(table name: String) {
         let sql = "DROP TABLE \(name) ;"
         do {
@@ -66,9 +84,9 @@ class DatabaseAdapter: DatabaseProtocol {
 
     }
     func createTable() {
-//        dropTable(table: Document.databaseTableName)
+ //       dropTable(table: Document.databaseTableName)
  //       dropTable(table: "MedicalItem")
-//        dropTable(table: Password.databaseTableName)
+ //       dropTable(table: Password.databaseTableName)
 //        dropTable(table: Medical.databaseTableName)
 //        dropTable(table: Medicine.databaseTableName)
 //        dropTable(table: MedicineIntakeLog.databaseTableName)
@@ -185,9 +203,151 @@ class DatabaseAdapter: DatabaseProtocol {
         } catch {
             print(error)
         }
+        //createEmptyData()
 
     }
     
+    func add(medical: Medical) {
+        let columns: [String: Any?] = [
+            Medical.titleC: medical.title.lowercased(),
+            Medical.typeC: medical.type.rawValue,
+            Medical.hospitalC: medical.hospital,
+            Medical.doctorC: medical.doctor,
+            Medical.dateC: medical.date,
+            Medical.createdAtC: medical.createdAt,
+            Medical.lastModifiedC: medical.lastModified,
+            Medical.notesC: medical.notes,
+            Medical.receiptC: medical.receipt,
+            Medical.endDateC: medical.endDate,
+            Medical.statusC: medical.status,
+        ]
+        
+        insertInto(tableName: Medical.databaseTableName, values: columns)
+    }
+    func randomDateLastYear() -> Date {
+        Date().addingTimeInterval(-Double.random(in: 0...31536000))
+    }
+
+    func createEmptyData() {
+        let d3 = randomDateLastYear()
+        let d4 = randomDateLastYear()
+        let d5 = randomDateLastYear()
+        let d6 = randomDateLastYear()
+        let d7 = randomDateLastYear()
+
+        let d8 = randomDateLastYear()
+
+        let d9 = randomDateLastYear()
+
+        let d10 = randomDateLastYear()
+
+        let d11 = randomDateLastYear()
+
+        let d12 = randomDateLastYear()
+
+        let d13 = randomDateLastYear()
+
+        let d14 = randomDateLastYear()
+
+        let d15 = randomDateLastYear()
+
+        let d16 = randomDateLastYear()
+        let d17 = randomDateLastYear()
+
+        let d18 = randomDateLastYear()
+
+        let d19 = randomDateLastYear()
+
+        let d20 = randomDateLastYear()
+
+        let d21 = randomDateLastYear()
+
+        let d22 = randomDateLastYear()
+
+        let d23 = randomDateLastYear()
+
+        let d24 = randomDateLastYear()
+
+        let d25 = randomDateLastYear()
+
+        let d26 = randomDateLastYear()
+
+        let d27 = randomDateLastYear()
+
+        let d28 = randomDateLastYear()
+        let d29 = randomDateLastYear()
+
+
+        let d30 = randomDateLastYear()
+
+        let records: [Medical] = [
+
+            Medical(
+                id: 1,
+                title: "Fever",
+                type: .checkup,
+                hospital: "Apollo Hospital",
+                doctor: "Dr. Kumar",
+                date: Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 1))!,
+                createdAt: Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!,
+                lastModified: Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!,
+                status: true,
+                notes: "High temperature observed",
+                receipt: nil,
+                endDate: nil
+            ),
+
+            Medical(
+                id: 2,
+                title: "Diabetes",
+                type: .chronic,
+                hospital: "Fortis Hospital",
+                doctor: "Dr. Priya",
+                date: Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!,
+                createdAt: Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!,
+                lastModified: Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!,
+                status: true,
+                notes: "Blood sugar monitoring started",
+                receipt: nil,
+                endDate: nil
+            ),
+
+            Medical(id: 3, title: "Migraine", type: .chronic, hospital: "MIOT International", doctor: "Dr. Rajesh", date: d3, createdAt: d3, lastModified: d3.addingTimeInterval(86400*2), status: false, notes: "Pain medication prescribed", receipt: nil, endDate: d3.addingTimeInterval(86400*5)),
+
+            Medical(id: 4, title: "Asthma", type: .chronic, hospital: "Global Health City", doctor: "Dr. Anitha", date: d4, createdAt: d4, lastModified: d4.addingTimeInterval(86400*2), status: false, notes: "Inhaler recommended", receipt: nil, endDate: d4.addingTimeInterval(86400*5)),
+
+            Medical(id: 5, title: "Cold", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Suresh", date: d5, createdAt: d5, lastModified: d5.addingTimeInterval(86400*2), status: false, notes: "Rest advised", receipt: nil, endDate: d5.addingTimeInterval(86400*5)),
+
+            Medical(id: 6, title: "Stomach Pain", type: .emergency, hospital: "Fortis Hospital", doctor: "Dr. Kumar", date: d6, createdAt: d6, lastModified: d6.addingTimeInterval(86400*2), status: false, notes: "Possible gastritis", receipt: nil, endDate: d6.addingTimeInterval(86400*5)),
+
+            Medical(id: 7, title: "Food Poisoning", type: .emergency, hospital: "MIOT International", doctor: "Dr. Priya", date: d7, createdAt: d7, lastModified: d7.addingTimeInterval(86400*2), status: false, notes: "IV fluids given", receipt: nil, endDate: d7.addingTimeInterval(86400*5)),
+            Medical(id: 8, title: "Back Pain", type: .checkup, hospital: "Global Health City", doctor: "Dr. Rajesh", date: d8, createdAt: d8, lastModified: d8.addingTimeInterval(86400*2), status: false, notes: "Physiotherapy suggested", receipt: nil, endDate: d8.addingTimeInterval(86400*5)),
+            Medical(id: 9, title: "Knee Pain", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Anitha", date: d9, createdAt: d9, lastModified: d9.addingTimeInterval(86400*2), status: false, notes: "Joint inflammation", receipt: nil, endDate: d9.addingTimeInterval(86400*5)),
+            Medical(id: 10, title: "Eye Infection", type: .checkup, hospital: "Fortis Hospital", doctor: "Dr. Suresh", date: d10, createdAt: d10, lastModified: d10.addingTimeInterval(86400*2), status: false, notes: "Eye drops prescribed", receipt: nil, endDate: d10.addingTimeInterval(86400*5)),
+            Medical(id: 11, title: "Ear Infection", type: .checkup, hospital: "MIOT International", doctor: "Dr. Kumar", date: d11, createdAt: d11, lastModified: d11.addingTimeInterval(86400*2), status: false, notes: "Antibiotics given", receipt: nil, endDate: d11.addingTimeInterval(86400*5)),
+            Medical(id: 12, title: "Tooth Pain", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Priya", date: d12, createdAt: d12, lastModified: d12.addingTimeInterval(86400*2), status: false, notes: "Dental cavity", receipt: nil, endDate: d12.addingTimeInterval(86400*5)),
+            Medical(id: 13, title: "Hypertension", type: .chronic, hospital: "Fortis Hospital", doctor: "Dr. Rajesh", date: d13, createdAt: d13, lastModified: d13.addingTimeInterval(86400*2), status: false, notes: "BP monitoring", receipt: nil, endDate: d13.addingTimeInterval(86400*5)),
+            Medical(id: 14, title: "Allergy", type: .chronic, hospital: "Global Health City", doctor: "Dr. Anitha", date: d14, createdAt: d14, lastModified: d14.addingTimeInterval(86400*2), status: false, notes: "Antihistamine prescribed", receipt: nil, endDate: d14.addingTimeInterval(86400*5)),
+            Medical(id: 15, title: "Skin Rash", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Suresh", date: d15, createdAt: d15, lastModified: d15.addingTimeInterval(86400*2), status: false, notes: "Ointment prescribed", receipt: nil, endDate: d15.addingTimeInterval(86400*5)),
+            Medical(id: 16, title: "Fracture", type: .surgery, hospital: "MIOT International", doctor: "Dr. Kumar", date: d16, createdAt: d16, lastModified: d16.addingTimeInterval(86400*2), status: false, notes: "Arm cast applied", receipt: nil, endDate: d16.addingTimeInterval(86400*5)),
+
+            Medical(id: 17, title: "Sprain", type: .emergency, hospital: "Fortis Hospital", doctor: "Dr. Priya", date: d17, createdAt: d17, lastModified: d17.addingTimeInterval(86400*2), status: false, notes: "Rest and ice therapy", receipt: nil, endDate: d17.addingTimeInterval(86400*5)),
+            Medical(id: 18, title: "Thyroid", type: .chronic, hospital: "Global Health City", doctor: "Dr. Rajesh", date: d18, createdAt: d18, lastModified: d18.addingTimeInterval(86400*2), status: false, notes: "Hormone therapy started", receipt: nil, endDate: d18.addingTimeInterval(86400*5)),
+            Medical(id: 19, title: "Bronchitis", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Anitha", date: d19, createdAt: d19, lastModified: d19.addingTimeInterval(86400*2), status: false, notes: "Cough medication", receipt: nil, endDate: d19.addingTimeInterval(86400*5)),
+            Medical(id: 20, title: "Pneumonia", type: .emergency, hospital: "Fortis Hospital", doctor: "Dr. Suresh", date: d20, createdAt: d20, lastModified: d20.addingTimeInterval(86400*2), status: false, notes: "Hospital observation", receipt: nil, endDate: d20.addingTimeInterval(86400*5)),
+            Medical(id: 21, title: "Appendicitis", type: .surgery, hospital: "MIOT International", doctor: "Dr. Kumar", date: d21, createdAt: d21, lastModified: d21.addingTimeInterval(86400*2), status: false, notes: "Appendix removed", receipt: nil, endDate: d21.addingTimeInterval(86400*5)),
+            Medical(id: 22, title: "Ulcer", type: .chronic, hospital: "Apollo Hospital", doctor: "Dr. Priya", date: d22, createdAt: d22, lastModified: d22.addingTimeInterval(86400*2), status: false, notes: "Diet restrictions advised", receipt: nil, endDate: d22.addingTimeInterval(86400*5)),
+            Medical(id: 23, title: "Malaria", type: .emergency, hospital: "Fortis Hospital", doctor: "Dr. Rajesh", date: d23, createdAt: d23, lastModified: d23.addingTimeInterval(86400*2), status: true, notes: "Antimalarial medication", receipt: nil, endDate: d23.addingTimeInterval(86400*5)),
+            Medical(id: 24, title: "Dengue", type: .emergency, hospital: "Global Health City", doctor: "Dr. Anitha", date: d24, createdAt: d24, lastModified: d24.addingTimeInterval(86400*2), status: false, notes: "Platelet monitoring", receipt: nil, endDate: d24.addingTimeInterval(86400*5)),
+            Medical(id: 25, title: "Typhoid", type: .checkup, hospital: "Apollo Hospital", doctor: "Dr. Suresh", date: d25, createdAt: d25, lastModified: d25.addingTimeInterval(86400*2), status: false, notes: "Antibiotic course", receipt: nil, endDate: d25.addingTimeInterval(86400*5)),
+            Medical(id: 26, title: "Sinusitis", type: .chronic, hospital: "Fortis Hospital", doctor: "Dr. Kumar", date: d26, createdAt: d26, lastModified: d26.addingTimeInterval(86400*2), status: false, notes: "Nasal spray recommended", receipt: nil, endDate: d26.addingTimeInterval(86400*5)),
+            Medical(id: 27, title: "Vertigo", type: .checkup, hospital: "MIOT International", doctor: "Dr. Priya", date: d27, createdAt: d27, lastModified: d27.addingTimeInterval(86400*2), status: false, notes: "Balance exercises suggested", receipt: nil, endDate: d27.addingTimeInterval(86400*5)),
+            Medical(id: 28, title: "Anemia", type: .chronic, hospital: "Apollo Hospital", doctor: "Dr. Rajesh", date: d28, createdAt: d28, lastModified: d28.addingTimeInterval(86400*2), status: false, notes: "Iron supplements", receipt: nil, endDate: d28.addingTimeInterval(86400*5)),
+            Medical(id: 29, title: "Kidney Stone", type: .emergency, hospital: "Fortis Hospital", doctor: "Dr. Anitha", date: d29, createdAt: d29, lastModified: d29.addingTimeInterval(86400*2), status: false, notes: "Pain management", receipt: nil, endDate: d29.addingTimeInterval(86400*5)),
+            Medical(id: 30, title: "Flu", type: .checkup, hospital: "Global Health City", doctor: "Dr. Suresh", date: d30, createdAt: d30, lastModified: d30.addingTimeInterval(86400*2), status: true, notes: "Rest and hydration", receipt: nil, endDate: d30.addingTimeInterval(86400*5))        ]
+        records.forEach { add(medical: $0) }
+    }
+
     func registerCollation() {
         do {
             try database.create(collation: DatabaseAdapter.collatioName) {l, h in
@@ -562,10 +722,18 @@ extension DatabaseAdapter: MasterPasswordDatabaseProtocol {
 
 extension DatabaseAdapter: MedicalDatabaseProtocol {
     func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?) {
+        
         do {
             try database.writeInTransaction { db in
-                let sql = "UPDATE \(name) SET \(column) = ?, \(Medical.endDateC) = ? WHERE id = ?"
-                try db.execute(sql, [value,endDate,id])
+                if name == Medical.databaseTableName {
+                    let sql = "UPDATE \(name) SET \(column) = ?, \(Medical.endDateC) = ?, \(Medical.lastModifiedC) = ? WHERE id = ?"
+                    try db.execute(sql, [value,endDate,Date(),id])
+
+                } else {
+                    let sql = "UPDATE \(name) SET \(column) = ?, \(Medical.endDateC) = ?  WHERE id = ?"
+                    try db.execute(sql, [value,endDate,id])
+
+                }
                 return .commit
             }
         } catch {
@@ -681,12 +849,41 @@ extension DatabaseAdapter: MedicineDatabaseProtocol {
         return medicalItems
 
     }
-    
     func fetchActiveMedicines() -> [Medicine] {
         var medicalItems: [Medicine] = []
         do {
+            let sql = """
+            SELECT *
+            FROM \(Medicine.databaseTableName)
+            WHERE \(Medicine.statusC) = ?
+            """
+
             try database.read { db in
-                let rows = try Row.fetchAll(db, sql: "SELECT * FROM \(Medicine.databaseTableName) WHERE  \(Medicine.statusC)  = ? ;",parameters: [true])
+                let rows = try Row.fetchAll(db, sql: sql,parameters: [true])
+                for row in rows {
+                    medicalItems.append(makeRowToMedicine(row))
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return medicalItems
+
+    }
+
+    func fetchActiveMedicines(date: Date) -> [Medicine] {
+        var medicalItems: [Medicine] = []
+        do {
+            let sql = """
+            SELECT *
+            FROM \(Medicine.databaseTableName)
+            WHERE \(Medicine.statusC) = ?
+            AND \(Medicine.startDateC) <= ?
+            AND (\(Medicine.endDateC) IS NULL OR \(Medicine.endDateC) >= ?)
+            """
+
+            try database.read { db in
+                let rows = try Row.fetchAll(db, sql: sql,parameters: [true, date, date])
                 for row in rows {
                     medicalItems.append(makeRowToMedicine(row))
                 }

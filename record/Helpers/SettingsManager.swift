@@ -95,7 +95,7 @@ class SettingsManager {
     static let accentKey = "accent"
     static let themeKey = "theme"
     static let faceIdKey = "faceIdEnabled"
-    static let compressionKey = "pdf_compression_level"
+    static let compressionKey = "pdfCompressionLevel"
     var accent: AppAccent {
         get {
             let value = UserDefaults.standard.string(forKey: SettingsManager.accentKey) ?? AppAccent.blue.rawValue
@@ -141,4 +141,23 @@ class SettingsManager {
             UserDefaults.standard.set(newValue.rawValue, forKey: SettingsManager.compressionKey)
         }
     }
+}
+
+extension SettingsManager {
+    func scheduleTime(for schedule: MedicalSchedule) -> MedicalScheduleTime {
+        let defaults = UserDefaults.standard
+        let hour   = defaults.object(forKey: schedule.hourKey)   as? Int ?? schedule.defaultHour
+        let minute = defaults.object(forKey: schedule.minuteKey) as? Int ?? 0
+        return MedicalScheduleTime(schedule: schedule, hour: hour, minute: minute)
+    }
+ 
+    func allScheduleTime() -> [MedicalScheduleTime] {
+        MedicalSchedule.allCases.map { scheduleTime(for: $0) }
+    }
+ 
+    func saveScheduleTime(_ medicalSchedule: MedicalScheduleTime) {
+        UserDefaults.standard.set(medicalSchedule.hour,   forKey: medicalSchedule.schedule.hourKey)
+        UserDefaults.standard.set(medicalSchedule.minute, forKey: medicalSchedule.schedule.minuteKey)
+    }
+
 }

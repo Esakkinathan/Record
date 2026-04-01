@@ -14,7 +14,8 @@ class FormTextView: FormFieldCell {
     static let identifier = "FormTextView"
     let textView: UITextView = {
         let view = UITextView()
-        view.backgroundColor = AppColor.background
+        view.backgroundColor = .secondarySystemBackground
+        view.layer.cornerRadius = PaddingSize.cornerRadius
         view.textColor = .label
         view.isEditable = true
         view.isScrollEnabled = true
@@ -48,9 +49,9 @@ class FormTextView: FormFieldCell {
         rightView.add(textView)
         
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: rightView.topAnchor),
-            textView.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor),
-            textView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor),
+            textView.topAnchor.constraint(equalTo: rightView.topAnchor, constant: PaddingSize.height),
+            textView.bottomAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: -PaddingSize.height),
+            textView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: PaddingSize.width),
             textView.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width),
             textView.heightAnchor.constraint(equalToConstant: 100)
         ])
@@ -60,10 +61,24 @@ class FormTextView: FormFieldCell {
 }
 extension FormTextView: UITextViewDelegate {
     
+    func textView(_ textView: UITextView,
+                  shouldChangeTextIn range: NSRange,
+                  replacementText text: String) -> Bool {
+        
+        let currentText = textView.text ?? ""
+        
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        
+        return updatedText.count <= 1000
+    }
+
     func textViewDidEndEditing(_ textView: UITextView) {
         let error = onValueChange?(textView.text)
         setErrorLabelText(error)
     }
+
 }
 /*
  class FormTextFieldPickerField: FormFieldCell {

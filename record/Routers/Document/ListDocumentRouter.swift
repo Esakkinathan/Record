@@ -15,7 +15,11 @@ class ListDocumentRouter: ListDocumentRouterProtocol {
         self.viewController = viewController
     }
 
-    
+    func openShareMultipleDocumentsVC(filePaths: [String]) {
+        let urls = filePaths.map { URL(fileURLWithPath: $0) }
+        let vc = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+        viewController?.presentVC(vc)
+    }
     func openShareDocumentVC(filePath: String) {
         let activityVc = UIActivityViewController(activityItems: [URL(filePath:filePath)], applicationActivities: nil)
         activityVc.modalPresentationStyle = .pageSheet

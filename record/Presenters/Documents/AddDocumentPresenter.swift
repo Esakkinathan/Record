@@ -68,7 +68,7 @@ class AddDocumentPresenter: FormFieldPresenter {
             FormField(
                 label: "Name",
                 type: .select,
-                validators: [.required, .maxLength(30), .alphanumeric],
+                validators: [.required, .maxLength(50), .alphanumeric],
                 gotoNextField: false,
                 value: name
             ),
@@ -150,7 +150,7 @@ class AddDocumentPresenter: FormFieldPresenter {
     func saveFileLocally(_ sourceURL: URL, name: String, number: String) -> String? {
 
         var fileName = name.replacingOccurrences(of: " ", with: "")
-        fileName = "\(name)_\(number)"
+        fileName = "\(fileName)_\(number)_\(UUID().uuidString)"
         let path = fileManager.saveFileLocally(sourceURL: sourceURL, directory: .docs, name: fileName)
         return path
         
@@ -206,7 +206,7 @@ class AddDocumentPresenter: FormFieldPresenter {
     }
     
     override func didSelectOption(at index: Int,_ value: String) {
-        fields[index].value = value
+        updateValue(value, at: index)
         buildFields()
         view?.reloadData()
     }
@@ -245,7 +245,10 @@ class AddDocumentPresenter: FormFieldPresenter {
             if value {
                 Task {
                     do {
-                        let model = try await DocumentOCRService().process(urls: urls)
+                        let model = try await DocumentOCRService().process(urls: urls) { [weak self] url in
+                            guard let self else { return nil }
+                            return await self.view?.askPDFPassword(fileName: url.lastPathComponent)
+                        }
                         print("updating teh value")
                         self.updateValues(model: model)
                         self.view?.stopLoading()
@@ -260,13 +263,25 @@ class AddDocumentPresenter: FormFieldPresenter {
                 }
 
             } else {
-                do {
-                    let pdfData = try PDFMergerService().mergePDFs(from: urls)
-                    self.saveFile(pdfData: pdfData)
-                } catch {
-                    self.view?.showError(error.localizedDescription)
+                Task {
+                    do {
+                        let pdfData = try await PDFMergerService().mergePDFs(from: urls) { [weak self] url in
+                            guard let self else { return nil }
+                            return await self.view?.askPDFPassword(fileName: url.lastPathComponent)
+                        }
+                        guard let pdfData else {
+                            self.view?.showError("No valid PDF selected")
+                            self.view?.stopLoading()
+                            return
+                        }
+
+                        self.saveFile(pdfData: pdfData)
+                    } catch {
+                        self.view?.showError(error.localizedDescription)
+                    }
+                    self.view?.stopLoading()
+
                 }
-                self.view?.stopLoading()
             }
         }
         

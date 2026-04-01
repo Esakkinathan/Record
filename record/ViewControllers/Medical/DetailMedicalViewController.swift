@@ -170,7 +170,6 @@ extension DetailMedicalViewController: UITableViewDataSource, UITableViewDelegat
                 cell = newCell
 
             }
-            
         case .notes(let text, let isEditable):
             let newCell = tableView.dequeueReusableCell(withIdentifier: TextViewTableViewCell.identifier, for: indexPath) as! TextViewTableViewCell
             newCell.configure(text: text, value: isEditable)
@@ -313,7 +312,6 @@ extension DetailMedicalViewController: DetailMedicalViewDelegate {
     func stopLoading() {
         loadingOverlay?.removeFromSuperview()
         loadingOverlay = nil
-
     }
 
     

@@ -7,6 +7,39 @@
 import UIKit
 
 
+
+class OverviewCard: UIView {
+    let infoCardView: InfoCardView
+    let dateNavigator: DateNavigatorView
+    init() {
+        self.infoCardView = InfoCardView()
+        self.dateNavigator = DateNavigatorView()
+        super.init(frame: .zero)
+        setUpContents()
+    }
+    
+    func setUpContents() {
+        add(dateNavigator)
+        add(infoCardView)
+        dateNavigator.maximumDate = Date()
+        NSLayoutConstraint.activate([
+            dateNavigator.topAnchor.constraint(equalTo: topAnchor, constant: PaddingSize.height),
+            dateNavigator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
+            dateNavigator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.width),
+            
+            infoCardView.topAnchor.constraint(equalTo: dateNavigator.bottomAnchor, constant: PaddingSize.height),
+            infoCardView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
+            infoCardView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.width),
+            
+            infoCardView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -PaddingSize.height)
+        ])
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 struct MedicineDetail {
     let medicineName: String   // Medicine.name  e.g. "Paracetamol"
     let medicalTitle: String
@@ -28,10 +61,9 @@ struct DashboardViewModel {
 
 class InfoCardView: UIView {
 
-    // Callback: (tapped row view, schedule row data, tapped segment: .completed | .remaining)
     var onBadgeTapped: ((ScheduleRowViewModel, BadgeSegment) -> Void)?
 
-    enum BadgeSegment { case completed, remaining }
+    enum BadgeSegment { case completed, remaining, all }
 
     private let headerStack  = UIStackView()
     private let iconView     = UIImageView()
@@ -66,10 +98,10 @@ class InfoCardView: UIView {
             iconView.heightAnchor.constraint(equalToConstant: 28),
         ])
 
-        titleLabel.font       = .systemFont(ofSize: 17, weight: .bold)
+        titleLabel.font       = AppFont.heading3
         titleLabel.textColor  = .label
 
-        subtitleLabel.font    = .systemFont(ofSize: 13, weight: .regular)
+        subtitleLabel.font    = AppFont.body
         subtitleLabel.textColor = .tertiaryLabel
         subtitleLabel.isHidden  = true
 
@@ -105,7 +137,7 @@ class InfoCardView: UIView {
 
     func configure(
         dashboard: DashboardViewModel,
-        title: String       = "Today's Overview",
+        title: String       = "Medicine Overview",
         icon: UIImage?      = nil,
         subtitle: String?   = nil,
         iconTint: UIColor   = .systemBlue
@@ -160,8 +192,13 @@ class InfoCardView: UIView {
         scheduleLabel.textColor     = .secondaryLabel
         scheduleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         scheduleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
+        
         // Completed badge
+        
+        let scheduleBadge = makeBadge(text: model.schedule.rawValue, style: .normal, segment: .all, rowModel: model)
+        scheduleBadge.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        scheduleBadge.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
         let completedBadge = makeBadge(
             text:    completedLabel(model.completedCount),
             style:   model.completedCount > 0 ? .success : .normal,
@@ -176,19 +213,32 @@ class InfoCardView: UIView {
             segment: .remaining,
             rowModel: model
         )
+        let container = UIView()
 
-        let badgeStack       = UIStackView(arrangedSubviews: [completedBadge, remainingBadge])
-        badgeStack.axis      = .horizontal
-        badgeStack.spacing   = 6
-        badgeStack.alignment = .center
+        container.add(scheduleBadge)
+        container.add(completedBadge)
+        container.add(remainingBadge)
 
-        let rowStack         = UIStackView(arrangedSubviews: [scheduleLabel, badgeStack])
-        rowStack.axis        = .horizontal
-        rowStack.alignment   = .center
-        rowStack.spacing     = 8
-        rowStack.distribution = .fill
+        NSLayoutConstraint.activate([
+            // Schedule badge — left, stretches to fill
+            scheduleBadge.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            scheduleBadge.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            scheduleBadge.topAnchor.constraint(equalTo: container.topAnchor),
+            scheduleBadge.bottomAnchor.constraint(equalTo: container.bottomAnchor),
 
-        return rowStack
+            // Remaining badge — pinned to right
+            remainingBadge.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            remainingBadge.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+
+            // Completed badge — sits just left of remaining
+            completedBadge.trailingAnchor.constraint(equalTo: remainingBadge.leadingAnchor, constant: -6),
+            completedBadge.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+
+            // Schedule badge must not overlap completed badge
+            scheduleBadge.trailingAnchor.constraint(lessThanOrEqualTo: completedBadge.leadingAnchor, constant: -8),
+        ])
+
+        return container
     }
 
     private func completedLabel(_ count: Int) -> String {
@@ -214,8 +264,6 @@ class InfoCardView: UIView {
         label.text          = text
         label.font          = .systemFont(ofSize: 13, weight: .semibold)
         label.textColor     = colors.text
-        label.setContentHuggingPriority(.required, for: .horizontal)
-        label.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let pill            = BadgePillView()          // subclass that stores context
         pill.backgroundColor  = colors.background
@@ -223,6 +271,8 @@ class InfoCardView: UIView {
         pill.layer.cornerCurve  = .continuous
         pill.rowModel  = rowModel
         pill.segment   = segment
+        pill.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        pill.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
         pill.addSubview(label)
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -249,7 +299,15 @@ class InfoCardView: UIView {
         else { return }
 
         // Skip tapping if list is empty
-        let list = segment == .completed ? model.completed : model.remaining
+        let list: [MedicineDetail]
+        switch segment {
+        case .completed:
+            list = model.completed
+        case .remaining:
+            list = model.remaining
+        case .all:
+            list = model.completed + model.remaining
+        }
         guard !list.isEmpty else { return }
 
         animatePillPress(pill)
@@ -325,6 +383,7 @@ class InfoCardView: UIView {
 private class BadgePillView: UIView {
     var rowModel: ScheduleRowViewModel?
     var segment: InfoCardView.BadgeSegment?
+
 }
 
 
@@ -334,11 +393,22 @@ class MedicinePopupViewController: UIViewController {
     private let scheduleName: String
     private let segment: InfoCardView.BadgeSegment
     private let medicines: [MedicineDetail]
-
-    init(scheduleName: String, segment: InfoCardView.BadgeSegment, medicines: [MedicineDetail]) {
+    private let rowModel: ScheduleRowViewModel
+    init(scheduleName: String, segment: InfoCardView.BadgeSegment, rowModel: ScheduleRowViewModel) {
         self.scheduleName = scheduleName
         self.segment      = segment
-        self.medicines    = medicines
+        self.rowModel = rowModel
+        self.medicines = {
+            switch segment {
+            case .completed:
+                return rowModel.completed
+            case .remaining:
+                return rowModel.remaining
+            case .all:
+                return rowModel.completed +  rowModel.remaining
+            }
+        }()
+        
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle   = .crossDissolve
@@ -391,7 +461,7 @@ class MedicinePopupViewController: UIViewController {
         card.layer.cornerCurve  = .continuous
 
         // Header
-        let stateText = segment == .completed ? "Completed" : "Remaining"
+        let stateText = segment == .completed ? "Completed" : segment == .remaining ? "Remaining" : ""
 
         let titleLabel           = UILabel()
         titleLabel.text          = "\(scheduleName) · \(stateText)"
@@ -459,37 +529,25 @@ class MedicinePopupViewController: UIViewController {
     }
 
     private func makeMedicineRow(_ detail: MedicineDetail, index: Int) -> UIView {
-        // Circle index badge
-//        let indexLabel           = UILabel()
-//        indexLabel.text          = "\(index + 1)"
-//        indexLabel.font          = .systemFont(ofSize: 12, weight: .semibold)
-//        indexLabel.textColor     = .white
-//        indexLabel.textAlignment = .center
-//
-//        let circle               = UIView()
-//        circle.backgroundColor   = segment == .completed ? .systemGreen : .systemRed
-//        circle.layer.cornerRadius = 12
-//        circle.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            circle.widthAnchor.constraint(equalToConstant: 24),
-//            circle.heightAnchor.constraint(equalToConstant: 24),
-//        ])
-//        circle.addSubview(indexLabel)
-//        indexLabel.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            indexLabel.centerXAnchor.constraint(equalTo: circle.centerXAnchor),
-//            indexLabel.centerYAnchor.constraint(equalTo: circle.centerYAnchor),
-//        ])
         
         let iconView: UIImageView = {
-            let view = UIImageView(image: UIImage(systemName:detail.kind.image))
+            let tintColor: UIColor
+            switch segment {
+            case .completed:
+                tintColor = .systemGreen
+            case .remaining:
+                tintColor = .systemRed
+            case .all:
+                tintColor = index < (medicines.count - rowModel.remainingCount ) ? .systemGreen : .systemRed
+            }
+
+            let view = UIImageView(image: UIImage(systemName: detail.kind.image))
             view.contentMode = .scaleAspectFit
-            view.tintColor = segment == .completed ? .systemGreen : .systemRed
+            view.tintColor = tintColor
             view.heightAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize).isActive = true
             view.widthAnchor.constraint(equalToConstant: PaddingSize.copyButtonSize).isActive = true
             return view
         }()
-        
         // Medicine name + reason
         let nameLabel            = UILabel()
         nameLabel.text           = detail.medicineName
@@ -524,53 +582,7 @@ extension MedicinePopupViewController: UIGestureRecognizerDelegate {
         _ gestureRecognizer: UIGestureRecognizer,
         shouldReceive touch: UITouch
     ) -> Bool {
-        // Only dismiss when touching the dim background, not the card
         return touch.view == self.view
     }
 }
 
-
-// MARK: - Usage in your ViewController
-/*
-
-class TodayViewController: UIViewController {
-
-    private let card = InfoCardView()
-    private let useCase = ActiveMedicineUseCase()
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Layout card ...
-        view.addSubview(card)
-        // ... your constraints here ...
-
-        // Wire up the popup callback
-        card.onBadgeTapped = { [weak self] rowModel, segment in
-            guard let self else { return }
-            let medicines = segment == .completed ? rowModel.completed : rowModel.remaining
-            let popup = MedicinePopupViewController(
-                scheduleName: rowModel.schedule.rawValue,
-                segment: segment,
-                medicines: medicines
-            )
-            self.present(popup, animated: true)
-        }
-
-        loadDashboard()
-    }
-
-    private func loadDashboard() {
-        // Pass your Medical array here
-        let medicals: [Medical] = /* fetch from your repo */
-        let dashboard = useCase.execute(medicals: medicals)
-        card.configure(
-            dashboard: dashboard,
-            title: "Today's Overview",
-            icon: UIImage(systemName: "cross.case.fill"),
-            subtitle: DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none),
-            iconTint: .systemBlue
-        )
-    }
-}
-*/

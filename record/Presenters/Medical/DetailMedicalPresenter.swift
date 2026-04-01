@@ -54,7 +54,7 @@ extension DetailMedicalPresenter {
         }
         infoRows.append(.info(.init(title: "Diagoned at", value: medical.date.toString())))
         infoRows.append(.info(.init(title: "Created At", value: medical.createdAt.toString())))
-        infoRows.append(.info(.init(title: "Last modified", value: medical.lastModified.reminderFormatted())))
+        infoRows.append(.info(.init(title: "Last Modified", value: medical.lastModified.reminderFormatted())))
         if let endDate = medical.endDate {
             infoRows.append(.info(.init(title: "Completed At", value: endDate.toString())))
         }
@@ -86,8 +86,8 @@ extension DetailMedicalPresenter {
             sections.append(.init(title: "Reciept Preview", rows: [.image(path: receipt)]))
         }
         sections.append(.init(title: "Info", rows: infoRows))
-        sections.append(.init(title: "Medicines", rows: chartRow))
-        sections.append(.init(title: "Medical Items", rows: itemRow))
+        sections.append(.init(title: "Medicines Count", rows: chartRow))
+        sections.append(.init(title: "Medicines", rows: itemRow))
         sections.append(.init(title: "Notes", rows: [.notes(text: medical.notes, isEditable: isNotesEditing)]))
     }
     
@@ -176,7 +176,7 @@ extension DetailMedicalPresenter {
     
     func didSelectRowAt(indexPath: IndexPath) {
         let section = sections[indexPath.section]
-        if section.title == "Medical Items" {
+        if section.title == "Medicines" {
             let kind = MedicalKind.allCases[indexPath.row]
             
             router.openListMedicalItemVC(kind: kind, medical: medical)

@@ -44,14 +44,12 @@ final class DeviceAuthenticationService {
                 switch laError.code {
                     
                 case .passcodeNotSet:
-                    // No passcode on device → allow access
                     DispatchQueue.main.async {
                         onSuccess()
                     }
                     return
                     
                 case .biometryNotAvailable:
-                    // Biometrics not available but passcode might work
                     break
                     
                 default:

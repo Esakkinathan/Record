@@ -14,6 +14,11 @@ class ListDocumentPresenter: ListDocumentPresenterProtocol {
         
     weak var view: ListDocumentViewDelegate?
     let router: ListDocumentRouterProtocol
+    var total: Int {
+        return documentList.count
+    }
+    var isSelectionMode = false
+    var selectedIndexes: Set<Int> = []
     
     let addUseCase: AddDocumentUseCaseProtocol
     let updateUseCase: UpdateDocumentUseCaseProtocol
@@ -81,20 +86,24 @@ extension ListDocumentPresenter {
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 1)
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 2)
         NotificationManager.shared.removeRemainderNotification(documentId: document.id,remainderId: 3)
-        loadDocuments()
-        view?.showToastVC(message: "Data deleted successfully", type: .success)
     }
     func deleteDocument(at index: Int) {
         let document = document(at: index)
         if document.isRestricted {
             DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
                 self?.deleteDocument(document)
+                self?.view?.showToastVC(message: "Data deleted successfully", type: .success)
+                self?.loadDocuments()
+
             },onFailure: { [weak self] error in
                 self?.handleAuthError(error: error)
             })
 
         } else {
             deleteDocument(document)
+            view?.showToastVC(message: "Data deleted successfully", type: .success)
+            loadDocuments()
+
         }
     }
     
@@ -123,7 +132,8 @@ extension ListDocumentPresenter {
     func toggleRestricterd(_ document: Document) {
         document.toggleFavorite()
         updateUseCase.toggleRestricted(document: document)
-        view?.reloadData()
+        //view?.reloadData()
+        //view?.reloadData()
     }
 }
 
@@ -186,7 +196,7 @@ extension ListDocumentPresenter {
     func handleAuthError(error: AuthenticationError) {
         switch error {
         case .permissionDenied:
-            view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+            view?.showToastVC(message: "Enable face ID in settings", type: .error)
         case .notAvailable:
             view?.showToastVC(message: "No lock screen set up on this device", type: .error)
         default:
@@ -252,6 +262,7 @@ extension ListDocumentPresenter {
         let document = document(at: index)
         DeviceAuthenticationService.shared.authenticate(onSuccess: { [weak self] in
             self?.toggleRestricterd(document)
+            self?.view?.reloadField(at: index)
         },onFailure: { [weak self] error in
             self?.handleAuthError(error: error)
         })
@@ -268,5 +279,137 @@ extension ListDocumentPresenter {
             view?.showAlertOnShare(indexPath)
         }
     }
+}
 
+extension ListDocumentPresenter {
+    
+    func toggleSelection(at index: Int) {
+        let docId = document(at: index).id
+        if selectedIndexes.contains(docId) {
+            selectedIndexes.remove(docId)
+        } else {
+            selectedIndexes.insert(docId)
+        }
+    }
+    
+    func clearSelection() {
+        selectedIndexes.removeAll()
+        //isSelectionMode = false
+    }
+    func deleteMultiple() {
+        let docs = selectedDocuments()
+        if docs.isEmpty {
+            view?.showToastVC(message: "No documents selected", type: .error)
+            return
+        }
+        let hasRestricted = docs.contains { $0.isRestricted }
+        
+        let performDeletion = { [weak self] in
+            guard let self = self else { return }
+            self.view?.showAlertOnDelete(docs)
+        }
+        
+        if hasRestricted {
+            DeviceAuthenticationService.shared.authenticate(
+                onSuccess: {
+                    performDeletion()
+                    
+                },
+                onFailure: { [weak self] error in
+                    self?.handleAuthError(error: error)
+                }
+            )
+        } else {
+            performDeletion()
+        }
+    }
+    
+    func shareMultiple() {
+        let docs = selectedDocuments()
+        
+        let hasRestricted = docs.contains { $0.isRestricted }
+        let filePaths: [String] = docs.compactMap {
+            guard let path = $0.file,
+                  let full = DocumentThumbnailProvider.fullURL(from: path)
+            else { return nil }
+            return full
+        }
+        if filePaths.isEmpty {
+            view?.showToastVC(message: "No files to share", type: .error)
+            return
+        }
+
+        let performShare = { [weak self] in
+            guard let self = self else { return }
+            
+            self.router.openShareMultipleDocumentsVC(filePaths: filePaths)
+            
+            view?.exitSelectionMode()
+        }
+        if hasRestricted {
+            DeviceAuthenticationService.shared.authenticate(
+                onSuccess: {
+                    performShare()
+                },
+                onFailure: { [weak self] error in
+                    self?.handleAuthError(error: error)
+                }
+            )
+        } else {
+            performShare()
+        }
+    }
+    func updateRestrictionForSelected(lock: Bool) {
+        let docs = selectedDocuments()
+        
+        let performUpdate = { [weak self] in
+            guard let self = self else { return }
+            
+            for doc in docs {
+                if lock && !doc.isRestricted {
+                    self.toggleRestricterd(doc)
+                } else if !lock && doc.isRestricted {
+                    self.toggleRestricterd(doc)
+                }
+            }
+            
+            //self.clearSelection()
+            self.loadDocuments()
+            view?.exitSelectionMode()
+        }
+        
+        // 🔐 Only require auth if ANY doc is restricted OR you're unlocking
+        let needsAuth = docs.contains { $0.isRestricted } || !lock
+        
+        if needsAuth {
+            DeviceAuthenticationService.shared.authenticate(
+                onSuccess: {
+                    performUpdate()
+                },
+                onFailure: { [weak self] error in
+                    self?.handleAuthError(error: error)
+                }
+            )
+        } else {
+            performUpdate()
+        }
+    }
+    func selectionState() -> SelectionRestrictionState {
+        let docs = selectedDocuments()
+        
+        guard !docs.isEmpty else { return .none }
+        
+        let lockedCount = docs.filter { $0.isRestricted }.count
+        
+        if lockedCount == docs.count {
+            return .allLocked
+        } else if lockedCount == 0 {
+            return .allUnlocked
+        } else {
+            return .mixed
+        }
+    }
+    func selectedDocuments() -> [Document] {
+        return documentList.filter { selectedIndexes.contains($0.id) }
+    }
 }

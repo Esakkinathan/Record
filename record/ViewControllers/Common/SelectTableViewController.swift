@@ -16,7 +16,8 @@ class SelectionViewController: UIViewController {
     
     let searchController = UISearchController(searchResultsController: nil)
     let notFoundView = NotFoundView()
-    
+    let maxCount = 30
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavigationBar()
@@ -114,7 +115,18 @@ extension SelectionViewController: UITextFieldDelegate {
 
 extension SelectionViewController: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
-        guard let text = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) else {return}
+        guard var text = searchController.searchBar.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+
+        if text.count > maxCount {
+            let endIndex = text.index(text.startIndex, offsetBy: maxCount)
+            text = String(text[..<endIndex])
+            searchController.searchBar.text = text
+
+            showToast(message: "Enter maximum of \(maxCount) characters", type: .warning)
+            return
+        }
+
         presenter.search(text: text)
     }
 

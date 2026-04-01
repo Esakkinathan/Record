@@ -61,6 +61,7 @@ class DetailPasswordViewController: KeyboardNotificationViewController {
         
         tableView.register(FormLabel.self, forCellReuseIdentifier: FormLabel.identifier)
         tableView.register(FormSelectField.self, forCellReuseIdentifier: FormSelectField.identifier)
+        tableView.register(FormURlLabel.self, forCellReuseIdentifier: FormURlLabel.identifier)
         tableView.register(FormCopyLabel.self, forCellReuseIdentifier: FormCopyLabel.identifier)
         tableView.register(FormPasswordCopyLabel.self, forCellReuseIdentifier: FormPasswordCopyLabel.identifier)
         tableView.register(TextViewTableViewCell.self, forCellReuseIdentifier: TextViewTableViewCell.identifier)
@@ -143,12 +144,9 @@ extension DetailPasswordViewController: UITableViewDataSource, UITableViewDelega
                 }
                 cell = newCell
             case .url:
-                let newCell = tableView.dequeueReusableCell(withIdentifier: FormSelectField.identifier, for: indexPath) as! FormSelectField
-                newCell.configure(title: section.title, text: section.value)
-                newCell.valueLabel.textColor = .link
-                newCell.valueLabel.textAlignment = .left
-                newCell.stack.distribution = .equalSpacing
-                newCell.stack.leadingAnchor.constraint(equalTo: newCell.rightView.leadingAnchor, constant: FormSpacing.width).isActive = true
+                let newCell = tableView.dequeueReusableCell(withIdentifier: FormURlLabel.identifier, for: indexPath) as! FormURlLabel
+                newCell.configure(title: section.title, url: section.value)
+                //newCell.valueLabel.textColor = .link
                 newCell.rightView.backgroundColor = .secondarySystemBackground
                 newCell.onSelectClicked = { [weak self] in
                     self?.presenter.openUrl()

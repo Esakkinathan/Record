@@ -47,10 +47,10 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
     
     func validateText(text: String, index: Int, rules: [ValidationRules]) -> ValidationResult {
         isEdited = true
+        
+        updateValue(text, at: index)
         let result = Validator.Validate(input: text, rules: rules)
-        if result.isValid {
-            updateValue(text, at: index)
-        }
+        
         return result
     }
     func recognizeText(from image: UIImage){}
@@ -61,7 +61,6 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
         } else {
             exitScreen()
         }
-        
     }
     
     func exitScreen() {
@@ -78,13 +77,13 @@ class FormFieldPresenter: FormFieldPresenterProtocol {
                 let input = field.value as? Date
                 let result = Validator.Validate(input: input?.toString() ?? "" , rules: field.validators)
                 if !result.isValid {
-                    view?.showError( "\(field.label) \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
+                    view?.showError( "\(field.label): \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
                     return result.isValid
                 }
             } else {
                 let result = Validator.Validate(input: field.value as? String ?? "" , rules: field.validators)
                 if !result.isValid {
-                    view?.showError( "\(field.label) \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
+                    view?.showError( "\(field.label): \(result.errorMessage?.replacingOccurrences(of: "This", with: "") ?? "")")
                     return result.isValid
                 }
             }

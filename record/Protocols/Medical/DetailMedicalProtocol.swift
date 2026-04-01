@@ -58,7 +58,14 @@ enum DetailMedicalRow {
     case medicalItem(MedicalKind)
     case dashBoard([ChartSegment])
     case missed([MedicineLog])
+    case logStatus
 }
+
+struct LogStatus {
+    let schedule: MedicalSchedule
+    var taken: Bool
+}
+
 enum DetailMedicineRow {
     case image(path: String)
     case info(DetailMedicalTextSectionRow)

@@ -13,8 +13,8 @@ enum MedicalItemFormMode: FormMode {
     
     var navigationTitle: String {
         switch self {
-        case .add: return "Add Medical Item"
-        case .edit: return "Edit Medical Item"
+        case .add: return "Add Medicine"
+        case .edit: return "Edit Medicine"
         }
     }
 
@@ -95,6 +95,65 @@ enum MedicalSchedule: String, CaseIterable, Hashable {
     static func getImage() -> [String] {
         return ["sunrise.fill","sun.max.fill","sunset.fill","moon"]
     }
+    var defaultHour: Int {
+        switch self {
+        case .morning:   return 7
+        case .afternoon: return 12
+        case .evening:   return 17  // 5 PM
+        case .night:     return 19  // 7 PM
+        }
+    }
+ 
+    var minTime: Int {
+        switch self {
+        case .morning:   return 7
+        case .afternoon: return 12
+        case .evening:   return 16  // 5 PM
+        case .night:     return 19  // 7 PM
+        }
+
+    }
+    
+    var maxTime: Int {
+        switch self {
+        case .morning:   return 10
+        case .afternoon: return 15
+        case .evening:   return 18  // 5 PM
+        case .night:     return 22  // 7 PM
+        }
+
+    }
+    
+    var hourKey: String   { "reminder_\(rawValue)_hour" }
+    var minuteKey: String { "reminder_\(rawValue)_minute" }
+
+
+    var image: String {
+        switch self {
+        case .morning:
+            "sunrise.fill"
+        case .afternoon:
+            "sun.max.fill"
+        case .evening:
+            "sunset.fill"
+        case .night:
+            "moon"
+        }
+    }
+}
+
+struct MedicalScheduleTime {
+    let schedule: MedicalSchedule
+    var hour: Int
+    var minute: Int
+ 
+    var timeString: String {
+        let h    = hour % 12 == 0 ? 12 : hour % 12
+        let m    = String(format: "%02d", minute)
+        let ampm = hour < 12 ? "AM" : "PM"
+        return "\(h):\(m) \(ampm)"
+    }
+
 }
 
 enum DurationType: String, CaseIterable {

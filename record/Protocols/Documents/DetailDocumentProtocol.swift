@@ -20,9 +20,16 @@ protocol DetailDocumentPresenterProtocol {
     func toggleNotesEditing(_ editing: Bool)
     var isNotesEditing: Bool {get}
     func uploadDocument()
+    func uploadDocument(at index: Int, type: DocumentType)
+    func openCameraClicked()
     //func didPickDocument(url: URL)
     func viewDidLoad()
     func addRemainderClicked()
+    
+    func processImages(from images: [UIImage])
+    func processFile(urls: [URL])
+
+    
     func addRemainder(date: Date)
     func canEditAt(_ indexPath: IndexPath) -> Bool
     func deleteRemainder(index: Int)
@@ -35,12 +42,21 @@ protocol DetailDocumentViewDelegate: AnyObject {
     func showAlertOnAddRemainder()
     func configureToOpenDocument(previewUrl: URL)
     func showTimePicker(baseDate: Date)
+    func showLoading()
+    func stopLoading()
+    func askPDFPassword(fileName: String) async -> String?
+
+
 }
 
 protocol DetailDocumentRouterProtocol {
     func openDocumentPicker()
     func openEditDocumentVC(mode: DocumentFormMode, onEdit: @escaping (Persistable) -> Void)
     func openDocumentViewer(filePath: String)
+    func openDocumentScanner()
+    func openGallery()
+    func openDocumentPicker(type: DocumentType)
+
 }
 
 enum DetailDocumentRow {

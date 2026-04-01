@@ -28,7 +28,7 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
     }
     
     func updatePassword(_ password: Password) {
-        self.password.update(title: password.title, username: password.username, password: password.password)
+        self.password.update(title: password.title, username: password.username, password: password.password, url: password.url)
         DispatchQueue.global().async { [weak self] in
             self?.updateUseCase.execute(password: password)
         }
@@ -79,9 +79,9 @@ class DetailPasswordPresenter: DetailPasswordPresenterProtocol {
             .info(.init(title: "Username", value: password.username, type: .copyLabel)),
             .info(.init(title: "Password", value: password.password, date: password.lastCopiedDate,type: .passwordLabel)),
             .info(.init(title: "Created At", value: password.createdAt.toString(), type: .text)),
-            .info(.init(title: "Last modified", value: password.lastModified.reminderFormatted(), type: .text))
+            .info(.init(title: "Last Modified", value: password.lastModified.reminderFormatted(), type: .text))
         ]
-        if let url = password.url {
+        if let url = password.url, !url.isEmpty {
             infoRows.append(.info(.init(title: "Url", value: url, type: .url)))
         }
         

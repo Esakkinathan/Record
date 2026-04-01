@@ -55,14 +55,13 @@ class ResetPasswordPresenter: MasterPasswordPresenterProtocol {
         let hashed = HashManager.hash(for: enteredPin)
         let exisitingPin = KeychainManager.shared.getPin()
         if hashed == exisitingPin {
-            view?.showToastVC(message: "The new PIN is the same as the old PIN. No changes were made. Exiting.", type: .warning) { [weak self] in
+            view?.showToastVC(message: "The new PIN is the same as the old PIN. No changes. Exiting.", type: .warning) { [weak self] in
                 self?.view?.exit()
             }
         }
     }
     func confirmPin(_ firstPin: String) {
         if enteredPin == firstPin {
-        //keyChain.savePin(enteredPin)
             checkForSimilarity(enteredPin)
             view?.showLoading()
             DispatchQueue.main.async { [weak self] in
@@ -78,7 +77,7 @@ class ResetPasswordPresenter: MasterPasswordPresenterProtocol {
             view?.showToastVC(message: "PINs do not match. Try again.", type: .error, completion: nil)
             flow = .createFirst
             resetPin()
-            view?.showInfo("Create new PIN")
+            view?.showInfo("Reset PIN")
         }
     }
 
@@ -102,5 +101,4 @@ class ResetPasswordPresenter: MasterPasswordPresenterProtocol {
     func didClickClear() {
         resetPin()
     }
-    
 }

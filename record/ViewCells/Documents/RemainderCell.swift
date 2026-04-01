@@ -71,8 +71,20 @@ class RemainderTableViewCell: UITableViewCell {
             contentView.backgroundColor = UIColor.systemGray6
             badgeLabel.backgroundColor = .systemGray
         } else {
-            contentView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
-            badgeLabel.backgroundColor = .systemGreen
+            UNUserNotificationCenter.current().getNotificationSettings { settings in
+                DispatchQueue.main.async { [weak self] in
+                    if settings.authorizationStatus != .authorized {
+                        self?.badgeLabel.text = " No Permission "
+                        self?.contentView.backgroundColor = UIColor.systemRed.withAlphaComponent(0.15)
+                        self?.badgeLabel.backgroundColor = .systemRed
+                    }
+                    else {
+                        self?.contentView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
+                        self?.badgeLabel.backgroundColor = .systemGreen
+                        
+                    }
+                }
+            }
         }
     }
 }

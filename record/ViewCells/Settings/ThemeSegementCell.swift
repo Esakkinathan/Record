@@ -27,7 +27,7 @@ class ThemeSegmentCell: UITableViewCell {
         
         titleLabel.text = "Theme"
         titleLabel.font = .systemFont(ofSize: 16)
-        
+        backgroundColor = .secondarySystemBackground
         segmented.addTarget(self, action: #selector(valueChanged), for: .valueChanged)
         
         let stack = UIStackView(arrangedSubviews: [titleLabel, segmented])

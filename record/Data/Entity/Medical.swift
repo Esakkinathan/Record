@@ -9,10 +9,9 @@ import VTDB
 
 enum MedicalType: String, CaseIterable {
     case checkup = "Check Up"
-    case chronic = "Chrnoic"
+    case chronic = "Chronic"
     case vaccination = "Vaccination"
     case surgery = "Surgery"
-
     case emergency = "Emergency"
     
     static var defaultValue: MedicalType {
@@ -161,8 +160,8 @@ enum MedicalFormMode: FormMode {
     
     var navigationTitle: String {
         switch self {
-        case .add: return "Add Medical CheckUp"
-        case .edit: return "Edit Medical CheckUp"
+        case .add: return "Add Health Record"
+        case .edit: return "Edit Health Record"
         }
     }
 
@@ -170,7 +169,7 @@ enum MedicalFormMode: FormMode {
 /*
  
 enum BillFormMode {
-    case add
+    case adddiagn
     case edit(Bill)
     
     func title(type: BillType) -> String {

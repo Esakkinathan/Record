@@ -18,7 +18,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
         return document.expiryDate
     }
 
-    
+    let fileManager: AppFileManager
     var document: Document
     weak var view: DetailDocumentViewDelegate?
     let router: DetailDocumentRouterProtocol
@@ -39,6 +39,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
         self.fetchRemainderUseCase = fetchRemainderUseCase
         self.deleteRemainderUseCase = deleteRemainderUseCase
         self.updateUseCase = updateUseCase
+        fileManager = AppFileManager()
     }
     
     func viewDidLoad() {
@@ -79,7 +80,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
     
     func getTitle(for section: Int) -> String? {
         let title = sections[section].title
-        if title == "Notes" || title == "Remainder" {
+        if title == "Notes" || title == "Remainders" {
             return nil
         }
         return title
@@ -101,12 +102,13 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
                 rows: [.image(path: document.file)]
             )
         )
+
         
         var infoRows: [DetailDocumentRow] = [
             .info(title: "Name", value: document.name),
             .info(title: "Number", value: document.number),
             .info(title: "Created At", value: document.createdAt.toString()),
-            .info(title: "Last modified", value: document.lastModified.reminderFormatted())
+            .info(title: "Last Modified", value: document.lastModified.reminderFormatted())
         ]
         if let file = document.file, let path = DocumentThumbnailProvider.fullURL(from: file) {
             infoRows.append(.info(title: "File Size", value: formattedFileSize(from: URL(filePath: path))))
@@ -128,7 +130,7 @@ class DetailDocumentPresenter: DetailDocumentPresenterProtocol {
                 if remainderRow.isEmpty {
                     remainderRow.append(.remainder(count: 1, nil))
                 }
-                sections.append(.init(title: "Remainder", rows: remainderRow))
+                sections.append(.init(title: "Remainders", rows: remainderRow))
             }
         }
     }
@@ -171,7 +173,7 @@ extension DetailDocumentPresenter {
         if remainders.count < 3 {
             view?.showAlertOnAddRemainder()
         } else {
-            view?.showToastVC(message: "Maximum 3 Remainders only", type: .info)
+            view?.showToastVC(message: "Maximum 3 remainders only", type: .info)
         }
     }
     
@@ -198,7 +200,8 @@ extension DetailDocumentPresenter {
     }
     
     func canEditAt(_ indexPath: IndexPath) -> Bool {
-        if indexPath.section == 3 {
+        let section = section(at: indexPath.section)
+        if section.title == "Remainders" {
             return true
         }
         return false
@@ -234,4 +237,84 @@ extension DetailDocumentPresenter {
         
         return "0 KB"
     }
+    
+    func processFile(urls: [URL]) {
+        view?.showLoading()
+        Task {
+            do {
+                let pdfData = try await PDFMergerService().mergePDFs(from: urls) { [weak self] url in
+                    guard let self else {
+                        self?.view?.stopLoading()
+                        return nil
+                        
+                    }
+                    return await self.view?.askPDFPassword(fileName: url.lastPathComponent)
+                }
+                guard let pdfData else {
+                    self.view?.showToastVC(message: "No valid PDF selected", type: .error)
+                    self.view?.stopLoading()
+                    return
+                }
+
+                self.saveFile(pdfData: pdfData)
+            } catch {
+                self.view?.showToastVC(message: error.localizedDescription, type: .error)
+            }
+            self.view?.stopLoading()
+
+        }
+        
+    }
+
+    
+    func processImages(from images: [UIImage]) {
+        guard !images.isEmpty else { return }
+        
+        view?.showLoading()
+        
+        Task { [weak self] in
+            guard let self else {
+                self?.view?.stopLoading()
+                return
+            }
+            let data = PDFService().generatePDF(from: images)
+            await MainActor.run {
+                self.saveFile(pdfData: data)
+                self.view?.stopLoading()
+            }
+        }
+    }
+    func saveFile(pdfData: Data) {
+        var fileName = document.name.replacingOccurrences(of: " ", with: "")
+        fileName = "\(fileName)_\(document.number)"
+        let sourceUrl = fileManager.saveFile(pdfData: pdfData)
+        if let url = sourceUrl {
+            let path = fileManager.saveFileLocally(sourceURL: url, directory: .docs, name: fileName)
+            updateFile(url: path)
+        }
+        //return path
+    }
+    func updateFile(url: String?) {
+        document.file = url
+        updateUseCase.execute(document: document)
+        buildSection()
+        view?.reloadData()
+        //view?.reloadField(at: index)
+    }
+    
+    func openCameraClicked(){
+        router.openDocumentScanner()
+    }
+    func uploadDocument(at index: Int, type: DocumentType) {
+        switch type {
+        case .pdf:
+            router.openDocumentPicker(type: type)
+        case .image:
+            router.openGallery()
+        }
+        
+    }
+
+
+
 }

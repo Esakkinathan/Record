@@ -25,7 +25,41 @@ class FormFileUpload: FormFieldCell {
         view.widthAnchor.constraint(equalToConstant: 30).isActive = true
         return view
     }()
-    
+    private let infoContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.systemGray.withAlphaComponent(0.08)
+        view.layer.cornerRadius = 10
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.systemGray.withAlphaComponent(0.25).cgColor
+        return view
+    }()
+
+    private let infoIcon: UIImageView = {
+        let iv = UIImageView(image: UIImage(systemName: "info.circle.fill"))
+        iv.tintColor = .systemGray
+        iv.contentMode = .scaleAspectFit
+        iv.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        iv.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        return iv
+    }()
+
+    private let infoLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+        label.text = "Max \(AppConstantData.maxFiles) file / \(AppConstantData.maxImageFiles) images allowed. Files will be merged into a one."
+        label.textAlignment = .justified
+        return label
+    }()
+
+    private lazy var infoStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [infoIcon, infoLabel])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.alignment = .center
+        return stack
+    }()
     let addLabel: UILabel = {
         let label = UILabel()
         label.labelSetUp()
@@ -45,7 +79,7 @@ class FormFileUpload: FormFieldCell {
         stack.spacing = 2
         stack.layer.borderWidth = 2
         stack.layer.borderColor = AppColor.primaryColor.cgColor
-        stack.layer.cornerRadius = 12
+        stack.layer.cornerRadius = PaddingSize.cornerRadius
         stack.clipsToBounds = true
         stack.backgroundColor = .systemGray6.withAlphaComponent(0.6)
         stack.isUserInteractionEnabled = false
@@ -101,13 +135,15 @@ class FormFileUpload: FormFieldCell {
         
         rightView.add(fileImagePreview)
         rightView.add(previewButton)
-        
+        rightView.add(infoContainer)
+        infoContainer.add(infoStack)
         uploadView.insertArrangedSubview(documentImage, at: 0)
         uploadView.insertArrangedSubview(addLabel, at: 1)
                 
         
                 
         let previewSize: CGFloat = 110
+        let space: CGFloat = 6
         NSLayoutConstraint.activate([
                         
             uploadView.leadingAnchor.constraint(equalTo: rightView.leadingAnchor, constant: FormSpacing.height),
@@ -130,6 +166,15 @@ class FormFileUpload: FormFieldCell {
             previewButton.trailingAnchor.constraint(equalTo: fileImagePreview.trailingAnchor),
             previewButton.topAnchor.constraint(equalTo: fileImagePreview.topAnchor),
             previewButton.bottomAnchor.constraint(equalTo: fileImagePreview.bottomAnchor),
+            
+            infoContainer.leadingAnchor.constraint(equalTo: uploadView.trailingAnchor, constant: PaddingSize.width),
+            infoContainer.trailingAnchor.constraint(equalTo: rightView.trailingAnchor, constant: -FormSpacing.width),
+            infoContainer.centerYAnchor.constraint(equalTo: uploadView.centerYAnchor),
+            
+            infoStack.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor, constant: space),
+            infoStack.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor, constant: -space),
+            infoStack.topAnchor.constraint(equalTo: infoContainer.topAnchor, constant: space),
+            infoStack.bottomAnchor.constraint(equalTo: infoContainer.bottomAnchor, constant: -space)
 
         ])
         updateMenus()
@@ -142,10 +187,10 @@ class FormFileUpload: FormFieldCell {
         let pickPdfAction = UIAction(title: "Upload Pdf", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
             self?.onUploadDocument?(.pdf)
         }
-        let pickImageAction = UIAction(title: "Upload Images", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+        let pickImageAction = UIAction(title: "Upload Images", image: UIImage(systemName: IconName.photoAdd)) { [weak self] _ in
             self?.onUploadDocument?(.image)
         }
-        let cameraAction = UIAction(title: "Take Picture", image: UIImage(systemName: IconName.photoAdd)) { [weak self] _ in
+        let cameraAction = UIAction(title: "Take Picture", image: UIImage(systemName: IconName.camera)) { [weak self] _ in
             self?.onOpenCamera?()
         }
         let uploadMenu = UIMenu(title: "Upload", children: [pickPdfAction, pickImageAction, cameraAction])
@@ -170,6 +215,7 @@ class FormFileUpload: FormFieldCell {
         uploadButton.isHidden = hasDocument
         fileImagePreview.isHidden = !hasDocument
         previewButton.isHidden = !hasDocument
+        infoContainer.isHidden = hasDocument
         if let path = fileUrl {
             DocumentThumbnailProvider.generate(for: path) { [weak self] image in
                 self?.fileImagePreview.image = image ?? DocumentConstantData.docImage

@@ -52,7 +52,7 @@ final class DocumentOCRService {
     }
     */
     func process(images: [UIImage]) async throws -> ExtractedDocumentModel {
-        let limitedImages = Array(images.prefix(10))
+        let limitedImages = Array(images.prefix(AppConstantData.maxImageFiles))
         
         // Process all images concurrently
         let texts = try await withThrowingTaskGroup(of: (Int, String).self) { group in
@@ -73,6 +73,7 @@ final class DocumentOCRService {
         let fullText = texts.joined(separator: "\n")
         let detectedType = detect(from: fullText)
         let number = extractNumber(from: fullText, type: detectedType)
+        print(number ?? "nothing found")
         let expiry = extractMaxDate(from: fullText, type: detectedType)
         let pdfData = pdfGenerateService.generatePDF(from: limitedImages)
         
@@ -84,42 +85,103 @@ final class DocumentOCRService {
             pdfData: pdfData
         )
     }
-    func process(urls: [URL], ) async throws -> ExtractedDocumentModel {
+    
+    func validateFileSize(fileURL: URL) throws {
+        let resourceValues = try fileURL.resourceValues(forKeys: [.fileSizeKey])
+        
+        if let fileSize = resourceValues.fileSize {
+            if fileSize > AppConstantData.maxFileSize {
+                throw PDFMergerService.PDFMergeError.fileTooLarge
+            }
+        }
+    }
+
+    func process(
+        urls: [URL],
+        passwordProvider: ((URL) async -> String?)?
+    ) async throws -> ExtractedDocumentModel {
+
         var extractedText: String = ""
         let mergedDocument = PDFDocument()
         var pageIndex = 0
+        var addedPages = false
 
         for url in urls {
-            guard let pdf = PDFDocument(url: url) else { continue }
             
+            try validateFileSize(fileURL: url)
+
+            
+            let access = url.startAccessingSecurityScopedResource()
+            defer {
+                if access { url.stopAccessingSecurityScopedResource() }
+            }
+
+            guard let pdf = PDFDocument(url: url) else {
+                throw PDFMergerService.PDFMergeError.invalidPDF
+            }
+
+            if pdf.isEncrypted {
+
+                guard let passwordProvider else {
+                    throw PDFMergerService.PDFMergeError.passwordRequired
+                }
+
+                let password = await passwordProvider(url)
+
+                // user cancelled → skip file
+                guard let password else {
+                    continue
+                }
+
+                if !pdf.unlock(withPassword: password) {
+                    throw PDFMergerService.PDFMergeError.wrongPassword
+                }
+            }
+            guard pdf.pageCount <= AppConstantData.maxPdfPage else {
+                throw PDFMergerService.PDFMergeError.tooHuge
+            }
+
             for index in 0..<pdf.pageCount {
+
                 guard let page = pdf.page(at: index) else { continue }
-                if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+
+                if let text = page.string,
+                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+
                     extractedText += "\n" + text
+
                 } else {
+
                     extractedText += await extractTextFromPDFPage(page: page)
                 }
+
                 mergedDocument.insert(page, at: pageIndex)
-                pageIndex+=1
+                pageIndex += 1
+                addedPages = true
             }
         }
-        let detectedType = self.detect(from: extractedText)
-        print("detected type:", detectedType)
-        
-        let number = self.extractNumber(from: extractedText, type: detectedType)
-        let expiry = self.extractMaxDate(from: extractedText, type: detectedType)
-        guard let data = mergedDocument.dataRepresentation() else {
-            throw PDFMergeError.failedToGenerateData
+
+        guard addedPages else {
+            throw PDFMergerService.PDFMergeError.emptyInput
         }
-        
-        let model = ExtractedDocumentModel(
+
+        let detectedType = detect(from: extractedText)
+        print("detected type:", detectedType)
+
+        let number = extractNumber(from: extractedText, type: detectedType)
+        let expiry = extractMaxDate(from: extractedText, type: detectedType)
+
+        guard let data = mergedDocument.dataRepresentation() else {
+            throw PDFMergerService.PDFMergeError.failedToGenerateData
+        }
+
+        return ExtractedDocumentModel(
             detectedType: detectedType,
             documentNumber: number,
             expiryDate: expiry,
             fullText: extractedText,
             pdfData: data
         )
-        return model
     }
     
     func extractTextFromPDFPage(page: PDFPage) async -> String {
@@ -246,20 +308,21 @@ private extension DocumentOCRService {
     func detect(from text: String) -> DefaultDocument {
         let rules: [(type: DefaultDocument, keywords: [String])] = [
             (.adhar, ["aadhaar"]),
-            (.pan, ["income tax department", "permanent"]),
+            (.pan, ["income tax department", "permanent account"]),
             (.voterId, ["voter", "election", "elector"]),
+            (.vehicleRegistrationCertificate, ["certificate of registration"]),
             (.passport, ["republic", "passport"]),
             (.drivingLicense, ["driving", "license"]),
             (.rationCard, ["ration", "family card", "civil supplies"]),
-            (.birthCertificate, ["birth"]),
-            (.deathCertificate, ["death"]),
-            (.vehicleRegistrationCertificate, ["registration"]),
+            (.nativityCertificate, ["nativity"]),
+            (.disabilityCertificate, ["disability"]),
             (.incomeCertificate, ["income certificate"]),
             (.marriageCertificate, ["marriage"]),
-            (.nativityCertificate, ["nativity"]),
             (.communityCertificate, ["community"]),
-            (.disabilityCertificate, ["disability"]),
-            (.firstGraduateCertificate, ["first graduate"])
+            (.firstGraduateCertificate, ["first graduate"]),
+            (.birthCertificate, ["birth", "birth certificate"]),
+            (.deathCertificate, ["death", "death certificate"]),
+
         ]
         let lower = text.lowercased()
         
@@ -284,8 +347,11 @@ private extension DocumentOCRService {
         switch type {
             
         case .adhar:
-            data = match("\\d{4}\\s\\d{4}\\s\\d{4}", in: text)
-            
+            data = match("\\b\\d{4}\\s\\d{4}\\s\\d{4}\\b", in: text)
+            if data == nil {
+                data = match("\\b\\d{12}\\b", in: text)
+            }
+
         case .pan:
             data = match("[A-Z]{5}[0-9]{4}[A-Z]", in: text.uppercased())
             
@@ -304,14 +370,13 @@ private extension DocumentOCRService {
             }
             data = value
         case .vehicleRegistrationCertificate:
-            data = match("^[A-Z]{2}\\s?\\d{1,2}\\s?[A-Z]{1,2}\\s?\\d{1,4}$", in: text.uppercased())
+            data = match("\\b[A-Z]{2}\\s?\\d{1,2}\\s?[A-Z]{1,2}\\s?\\d{1,4}\\b", in: text.uppercased())
         case .rationCard:
             data = match("\\d{12}", in: text)
         case .firstGraduateCertificate, .incomeCertificate, .nativityCertificate:
             data = match("TN-\\d{10,15}", in: text.uppercased())
         case .disabilityCertificate:
-            
-            data = match("^[a-zA-Z0-9]{2}[- ]?[a-zA-Z0-9]{15}$", in: text.uppercased())
+            data = match("\\b[A-Z]{2}[- ]?[0-9]{16}\\b", in: text.uppercased())
         case .communityCertificate:
             var value = match("TN-\\d{10,15}", in: text.uppercased())
             if value == nil {

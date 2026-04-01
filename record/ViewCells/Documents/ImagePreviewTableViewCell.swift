@@ -11,7 +11,7 @@ import UIKit
 class NoImagePreview: UIView {
     let imageView:  UIImageView = {
         let view = UIImageView()
-        view.image = UIImage(systemName: "arrow.up.document.fill")
+        view.image = DocumentConstantData.docImage
         view.tintColor = AppColor.primaryColor
         view.contentMode = .scaleAspectFit
         return view
@@ -21,8 +21,8 @@ class NoImagePreview: UIView {
         let label = UILabel()
         label.text = "No Document Uploaded"
         label.labelSetUp()
-        label.textColor = AppColor.primaryColor
-        label.font =  AppFont.heading3
+        label.textColor = .secondaryLabel
+        label.font =  AppFont.body
         label.textAlignment = .center
         return label
     }()
@@ -34,7 +34,7 @@ class NoImagePreview: UIView {
         label.textColor = .secondaryLabel
 
         label.textAlignment = .center
-        label.font =  AppFont.heading2
+        label.font =  AppFont.heading3
         label.numberOfLines = 2
         label.lineBreakMode = .byWordWrapping
         return label
@@ -42,8 +42,9 @@ class NoImagePreview: UIView {
     
     let button: AppButton = {
         let button = AppButton(type: .system)
-        button.setTitle("Upload Document", for: .normal)
+        button.setTitle("Upload PDF or Image", for: .normal)
         button.enableDialPadEffect()
+        button.showsMenuAsPrimaryAction = true
         return button
     }()
     
@@ -66,20 +67,20 @@ class NoImagePreview: UIView {
     func setUpContents() {
         add(imageView)
         add(label1)
-        add(label2)
-        //add(button)
+        //add(label2)
+        add(button)
         let topSpacer = UIView()
         let bottomSpacer = UIView()
         
-        add(topSpacer)
-        add(bottomSpacer)
+        //add(topSpacer)
+        //add(bottomSpacer)
         
         NSLayoutConstraint.activate([
 
-            topSpacer.topAnchor.constraint(equalTo: topAnchor),
-            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.15),
+//            topSpacer.topAnchor.constraint(equalTo: topAnchor),
+//            topSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.1),
 
-            imageView.topAnchor.constraint(equalTo: topSpacer.bottomAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: PaddingSize.height),
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             imageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.3),
             imageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.3),
@@ -87,20 +88,20 @@ class NoImagePreview: UIView {
             label1.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: PaddingSize.height),
             label1.centerXAnchor.constraint(equalTo: centerXAnchor),
 
-            label2.topAnchor.constraint(equalTo: label1.bottomAnchor, constant: PaddingSize.height),
-            label2.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PaddingSize.width),
-            label2.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -PaddingSize.width),
-
+            button.centerXAnchor.constraint(equalTo: centerXAnchor,),
+            button.bottomAnchor.constraint(equalTo: bottomAnchor,constant: -PaddingSize.height),
+            button.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.75)
 //            button.topAnchor.constraint(equalTo: label2.bottomAnchor, constant: PaddingSize.height),
 //            button.centerXAnchor.constraint(equalTo: centerXAnchor),
 //            button.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.7),
 //            button.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.2),
 
-            bottomSpacer.topAnchor.constraint(equalTo: label2.bottomAnchor),
-            bottomSpacer.bottomAnchor.constraint(equalTo: bottomAnchor),
-            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.15)
+//            bottomSpacer.topAnchor.constraint(equalTo: label2.bottomAnchor),
+//            bottomSpacer.bottomAnchor.constraint(equalTo: bottomAnchor),
+//            bottomSpacer.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.15)
         ])
     }
+    
 }
 
 
@@ -122,7 +123,11 @@ class ImagePreviewTableViewCell: UITableViewCell {
         let view = NoImagePreview()
         return view
     }()
-    
+    var onUploadDocument: ((DocumentType) -> Void)?
+    var onOpenCamera: (() -> Void)?
+    var onRemoveDocument: (() -> Void)?
+    var onViewDocument: (() -> Void)?
+
     var onUploadButtonClicked: (() -> Void)?
     
     var onShow: (() -> Void)?
@@ -177,8 +182,21 @@ class ImagePreviewTableViewCell: UITableViewCell {
             uploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             uploadView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
+        updateMenu()
     }
-    
+    func updateMenu() {
+        let pickPdfAction = UIAction(title: "Upload Pdf", image: UIImage(systemName: IconName.folder)) { [weak self] _ in
+            self?.onUploadDocument?(.pdf)
+        }
+        let pickImageAction = UIAction(title: "Upload Images", image: UIImage(systemName: IconName.photoAdd)) { [weak self] _ in
+            self?.onUploadDocument?(.image)
+        }
+        let cameraAction = UIAction(title: "Take Picture", image: UIImage(systemName: IconName.camera)) { [weak self] _ in
+            self?.onOpenCamera?()
+        }
+        let uploadMenu = UIMenu(title: "Upload", children: [pickPdfAction, pickImageAction, cameraAction])
+        uploadView.button.menu = uploadMenu
+    }
     @objc func uploadButtonClicked() {
         //onUploadButtonClicked?()
     }

@@ -32,10 +32,38 @@ enum FormSpacing {
 }
 
 enum AppConstantData {
+    static let minDate: Date? = {
+        var components = DateComponents()
+        components.year = 1900
+        components.month = 1
+        components.day = 1
+
+        let calendar = Calendar.current
+        let minDate = calendar.date(from: components)
+        return minDate
+    }()
+    static let maxDate: Date? = {
+        var components = DateComponents()
+        components.year = 2100
+        components.month = 12
+        components.day = 31
+
+        let calendar = Calendar.current
+        let maxDate = calendar.date(from: components)
+        return maxDate
+    }()
+    
+    static let maxFiles: Int = 5
+    
+    static let maxImageFiles: Int = 10
+    
+    static let maxPdfPage: Int = 50
+    
+    static let maxFileSize: Int64 = 20 * 1024 * 1024
     
     static let autoExitTime: Int = 10
     
-    static let passwordSession: Int = 300
+    static let passwordSession: Int = 180
     
     static let apply = "Apply"
     
@@ -82,7 +110,7 @@ enum IconName {
     static let starFill = "star.fill"
     
     static let share = "square.and.arrow.up"
-    
+    static let camera = "camera"
     static let cancel = "xmark"
     
     static let copy = "square.on.square"

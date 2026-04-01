@@ -85,7 +85,7 @@ class Validator {
                 let regex = #"^(https?:\/\/)([A-Za-z0-9-]+\.)+[A-Za-z]{2,}(\/.*)?$"#
 
                 if !NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: value) {
-                    return .init(isValid: false, errorMessage: "Enter a valid URL (http or https)")
+                    return .init(isValid: false, errorMessage: "Enter a valid URL")
                 }
             case .regex(let pattern, let message):
                 if !NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: value) {

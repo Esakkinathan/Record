@@ -35,7 +35,6 @@ final class RemainderScheduler {
                     scheduleCount[schedule, default: 0] += 1
                 }
             }
-            print("fetching medicines")
             
             for (schedule, count) in scheduleCount where count > 0 {
                 scheduleNotification(date: date, schedule: schedule, count: count)
@@ -59,18 +58,9 @@ final class RemainderScheduler {
         
         var components = calendar.dateComponents([.year, .month, .day], from: date)
         
-        switch schedule {
-        case .morning:
-            components.hour = AppConstantData.morningRemainder
-        case .afternoon:
-            components.hour = AppConstantData.afternoonRemainder
-        case .evening:
-            components.hour = AppConstantData.eveningRemainder
-        case .night:
-            components.hour = AppConstantData.nightRemainder
-        }
-        print("scheduling medicines")
-        components.minute = 0
+        let reminder = SettingsManager.shared.scheduleTime(for: schedule)
+        components.hour   = reminder.hour
+        components.minute = reminder.minute
         
         guard let triggerDate = calendar.date(from: components),
               triggerDate > Date() else { return } // prevent past notifications
@@ -82,7 +72,7 @@ final class RemainderScheduler {
         
         let content = UNMutableNotificationContent()
         content.title = "\(schedule.rawValue) Reminder"
-        content.body = "You have \(count) medicines to take."
+        content.body  = "You have \(count) medicines to take."
         content.sound = .default
         
         let identifier = "medical_\(date.timeIntervalSince1970)_\(schedule.rawValue)"
@@ -94,8 +84,6 @@ final class RemainderScheduler {
         )
         
         UNUserNotificationCenter.current().add(request)
-        print("scheduled succefully")
     }
-
 
 }

@@ -87,12 +87,12 @@ enum DefaultDocument: String, CaseIterable {
     case vehicleRegistrationCertificate = "Vehicle Registration Certificate"
     case incomeCertificate = "Income Certificate"
     case marriageCertificate = "Marriage Certificate"
-    case nativityCertificate = "Nativity certificate"
+    case nativityCertificate = "Nativity Certificate"
     case communityCertificate = "Community Certificate"
     case disabilityCertificate = "Disability Certificate"
     case firstGraduateCertificate = "First Graduate Certificate"
     
-    case custom
+    case custom = "Custom"
     
     static func getList() -> [String] {
         var list: [String] = []

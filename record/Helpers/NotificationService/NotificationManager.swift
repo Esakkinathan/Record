@@ -21,8 +21,16 @@ final class NotificationManager {
     
         
     private func clearMedicalNotifications() {
-        UNUserNotificationCenter.current()
-            .removeAllPendingNotificationRequests()
+        
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            
+            let medicalIds = requests
+                .map { $0.identifier }
+                .filter { $0.hasPrefix("medical_") }
+            
+            UNUserNotificationCenter.current()
+                .removePendingNotificationRequests(withIdentifiers: medicalIds)
+        }
     }
     func setRemainderNotification(document: Document, remainderId: Int,date: Date) {
         let content = UNMutableNotificationContent()
@@ -45,7 +53,6 @@ final class NotificationManager {
         )
 
         UNUserNotificationCenter.current().add(request)
-        print("Notification Added")
     }
     
     func removeRemainderNotification(documentId: Int,remainderId: Int) {

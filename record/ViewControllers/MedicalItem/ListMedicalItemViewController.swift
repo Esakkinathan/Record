@@ -61,7 +61,13 @@ class ListMedicalItemViewController: UIViewController {
         
         dateNavigator.delegate = self
         dateNavigator.minimumDate = presenter.startDate
-        dateNavigator.maximumDate = Date()
+        let endDate = presenter.endDate
+        if let endDate {
+            dateNavigator.maximumDate =  endDate
+        } else {
+            dateNavigator.maximumDate = Date()
+        }
+        //dateNavigator.maximumDate = Date()
         
         categorySelector.onSelect = { [weak self] text in
             self?.presenter.didSelectCategory(text)
@@ -72,12 +78,12 @@ class ListMedicalItemViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             dateNavigator.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: PaddingSize.height),
-            dateNavigator.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-            dateNavigator.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            dateNavigator.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
+            dateNavigator.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
             
             categorySelector.topAnchor.constraint(equalTo: dateNavigator.bottomAnchor, constant: PaddingSize.height),
-            categorySelector.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: PaddingSize.width),
-            categorySelector.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -PaddingSize.width),
+            categorySelector.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
+            categorySelector.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
             
             tableView.topAnchor.constraint(equalTo: categorySelector.bottomAnchor,constant: PaddingSize.height),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -99,41 +105,39 @@ extension ListMedicalItemViewController: DateNavigatorViewDelegate {
     }
     
     func dateNavigatorRequestedPicker(_ navigator: DateNavigatorView, current: Date) {
-
-        let picker = UIDatePicker()
-        picker.datePickerMode = .date
-        picker.preferredDatePickerStyle = .compact
-        picker.minimumDate = presenter.startDate
+        let datePickerVC = DatePickerPopoverViewController()
+        datePickerVC.modalPresentationStyle = .popover
+        datePickerVC.datePicker.minimumDate = presenter.startDate
+        datePickerVC.datePicker.date = current
         let endDate = presenter.endDate
         if let endDate = endDate {
-            picker.maximumDate =  endDate
+            datePickerVC.datePicker.maximumDate =  endDate
         } else {
-            picker.maximumDate =  Date()
+            datePickerVC.datePicker.maximumDate =  Date()
         }
-        picker.date = current
 
-        let alert = UIAlertController(
-            title: "Select Date",
-            message: "\n\n",
-            preferredStyle: .alert
-        )
+        datePickerVC.onDone = { [weak navigator] date in
+            navigator?.setDate(date)
+        }
 
-        alert.view.addSubview(picker)
-        picker.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            picker.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
-            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 50)
-        ])
+        if let popover = datePickerVC.popoverPresentationController {
+            popover.sourceView = dateNavigator
+            popover.sourceRect = dateNavigator.bounds
+            popover.permittedArrowDirections = .any
+            popover.delegate = self
+        }
 
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Select", style: .default) { _ in
-            navigator.setDate(picker.date)
-        })
+        present(datePickerVC, animated: true)
 
-        present(alert, animated: true)
+
     }
 
     
+}
+extension ListMedicalItemViewController: UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none 
+    }
 }
 
 extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDelegate {
@@ -158,7 +162,11 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
 
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: AllListMedicalItemViewCell.identifier, for: indexPath) as! AllListMedicalItemViewCell
-            cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, schedules: medical.schedules, taken: medical.takenSchedule)
+            cell.configure(text1: medical.text1, text2: medical.text2, text3: medical.text3, schedules: medical.schedules, taken: medical.takenSchedule, enabled: medical.enabledSchedules)
+            cell.onStateChanged = { [weak self] logStatus in
+                print("vc executing")
+                self?.presenter.changeLogStatus(at: indexPath.row, logStatus: logStatus)
+            }
             return cell
 
         }
@@ -179,17 +187,37 @@ extension ListMedicalItemViewController: UITableViewDataSource, UITableViewDeleg
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let data = presenter.medicalItemViewModel(at: indexPath.row)
-        let taken = data.schedules.count == data.takenSchedule.count
-        let msg =  taken ? "Mark as not taken" :  "Mark as taken"
         
-        let markAction = UIContextualAction(style: .normal, title: msg) { [weak self] _, _, completion in
-            self?.presenter.markAsTaken(at: indexPath.row, value: taken)
+        if data.enabledSchedules.count == 0 {
+            return nil
+        }
+        
+        
+        let takenAction = UIContextualAction(style: .normal, title: "Mark as taken") { [weak self] _, _, completion in
+            self?.presenter.markAsTaken(at: indexPath.row, value: true)
             completion(true)
         }
+        let notTakenAction = UIContextualAction(style: .normal, title: "Mark as not taken") { [weak self] _, _, completion in
+            self?.presenter.markAsTaken(at: indexPath.row, value: false)
+            completion(true)
+        }
+        
 
-        markAction.image = UIImage(systemName: IconName.checkmark)
-        markAction.backgroundColor = taken ? .systemRed : .systemGreen
-        let swipeAction = UISwipeActionsConfiguration(actions: [markAction])
+        takenAction.image = UIImage(systemName: IconName.checkmark)
+        notTakenAction.image = UIImage(systemName: IconName.checkmark)
+        takenAction.backgroundColor = .systemGreen
+        notTakenAction.backgroundColor =  .systemRed
+        var actions: [UIContextualAction] = []
+
+        if data.takenSchedule.isEmpty {
+            actions.append(takenAction)
+        } else if data.takenSchedule.count == data.schedules.count {
+            actions.append(notTakenAction)
+        } else {
+            actions.append(takenAction)
+            actions.append(notTakenAction)
+        }
+        let swipeAction = UISwipeActionsConfiguration(actions: actions)
         swipeAction.performsFirstActionWithFullSwipe = true
         return swipeAction
 

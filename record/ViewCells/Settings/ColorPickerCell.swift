@@ -27,7 +27,7 @@ final class ColorPickerCell: UITableViewCell {
         
         titleLabel.text = "Color Style"
         titleLabel.font = .systemFont(ofSize: 16)
-        
+        backgroundColor = .secondarySystemBackground
         stack.axis = .horizontal
         stack.spacing = 12
         stack.alignment = .center

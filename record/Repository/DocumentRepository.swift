@@ -43,7 +43,7 @@ class DocumentRepository: DocumentRepositoryProtocol {
     func update(document: Document) {
         let columns: [String: Any?] = [
             Document.idC: document.id,
-            Document.nameC: document.name,
+            Document.nameC: document.name.lowercased(),
             Document.numberC: document.number,
             Document.createdAtC: document.createdAt,
             Document.expiryDateC: document.expiryDate,

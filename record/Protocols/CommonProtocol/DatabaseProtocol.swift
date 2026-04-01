@@ -57,6 +57,7 @@ protocol MedicineDatabaseProtocol: DatabaseProtocol {
     func fetchActiveMedicines(_ medicalId: Int) -> [Medicine]
     func fetchActiveMedicines() -> [Medicine]
     func setStaus(table name: String, column: String,id: Int, value: Bool,endDate: Date?)
+    func fetchActiveMedicines(date: Date) -> [Medicine]
 }
 /*
 

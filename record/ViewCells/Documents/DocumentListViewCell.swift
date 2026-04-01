@@ -20,14 +20,26 @@ class ListDocumentViewCell: UICollectionViewCell {
         return label
         
     }()
-    
+    let selectionOverlay: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+        view.layer.cornerRadius = PaddingSize.cornerRadius
+        view.isHidden = true
+        return view
+    }()
+
+    let checkmarkView: UIImageView = {
+        let img = UIImageView()
+        img.image = UIImage(systemName: "checkmark.circle.fill")
+        img.tintColor = AppColor.primaryColor
+        img.backgroundColor = .white
+        img.layer.cornerRadius = 12
+        img.clipsToBounds = true
+        img.isHidden = true
+        img.translatesAutoresizingMaskIntoConstraints = false
+        return img
+    }()
     let copyLabel = CopyTextLabel()
-//    let lockCopyLabel: UILabel = {
-//       let label = UILabel()
-//        label.text = "Unlock to view"
-//        label.font = AppFont.verysmall
-//        return label
-//    }()
     let dateLabel: UILabel = {
         let label = UILabel()
         label.font = AppFont.caption
@@ -79,7 +91,7 @@ class ListDocumentViewCell: UICollectionViewCell {
         let view2: UIView = {
             let view = UIView()
             view.layer.cornerRadius = PaddingSize.cornerRadius
-            view.backgroundColor = AppColor.background
+            view.backgroundColor = .secondarySystemBackground
             return view
         }()
 
@@ -89,7 +101,8 @@ class ListDocumentViewCell: UICollectionViewCell {
             return view
         }()
         
-        
+        contentView.add(selectionOverlay)
+        contentView.add(checkmarkView)
         
         view2.add(view1)
         view2.add(copyLabel)
@@ -101,7 +114,17 @@ class ListDocumentViewCell: UICollectionViewCell {
         contentView.add(shareButton)
         //contentView.add(view1)
         contentView.add(view2)
-
+        NSLayoutConstraint.activate([
+            selectionOverlay.topAnchor.constraint(equalTo: contentView.topAnchor),
+            selectionOverlay.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            selectionOverlay.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            selectionOverlay.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            checkmarkView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            checkmarkView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
+            checkmarkView.widthAnchor.constraint(equalToConstant: 24),
+            checkmarkView.heightAnchor.constraint(equalToConstant: 24)
+        ])
         view2.bringSubviewToFront(view1)
         
         NSLayoutConstraint.activate([
@@ -142,12 +165,8 @@ class ListDocumentViewCell: UICollectionViewCell {
             
             copyLabel.topAnchor.constraint(equalTo: view1.bottomAnchor, constant: PaddingSize.content),
             copyLabel.bottomAnchor.constraint(equalTo: view2.bottomAnchor, constant: -PaddingSize.content),
-            copyLabel.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content),
+            copyLabel.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content-4),
             copyLabel.trailingAnchor.constraint(equalTo: view2.trailingAnchor, constant: -PaddingSize.content),
-//            lockCopyLabel.topAnchor.constraint(equalTo: view1.bottomAnchor, constant: PaddingSize.content),
-//            lockCopyLabel.bottomAnchor.constraint(equalTo: view2.bottomAnchor, constant: -PaddingSize.content),
-//            lockCopyLabel.leadingAnchor.constraint(equalTo: view2.leadingAnchor, constant: PaddingSize.content),
-//            lockCopyLabel.trailingAnchor.constraint(equalTo: view2.trailingAnchor, constant: -PaddingSize.content),
         ])
 
         shareButton.addTarget(self, action: #selector(shareButtonClicked), for: .touchUpInside)
@@ -161,17 +180,21 @@ class ListDocumentViewCell: UICollectionViewCell {
     @objc func shareButtonClicked() {
         onShareButtonClicked?()
     }
-    func configure(document: Document) {
+    func configure(document: Document, isSelected: Bool, isSelectionMode: Bool) {
+        
         nameLabel.text = document.name
         copyLabel.setText(document.number)
         dateLabel.text = document.createdAt.toString()
-        shareButton.isHidden = document.file == nil
+        shareButton.isHidden = document.file == nil || isSelectionMode
+        
         copyLabel.configure(canCopy: !document.isRestricted)
+        
         if document.isRestricted {
             filePreview.image = UIImage(systemName: IconName.documentLock)
             copyLabel.text = "Unlock to view"
         } else {
-            if let file = document.file, let filePath =  DocumentThumbnailProvider.fullURL(from: file) {
+            if let file = document.file,
+               let filePath = DocumentThumbnailProvider.fullURL(from: file) {
                 DocumentThumbnailProvider.generate(for: filePath) { [weak self] image in
                     if let img = image {
                         self?.filePreview.image = img
@@ -181,8 +204,20 @@ class ListDocumentViewCell: UICollectionViewCell {
                 filePreview.image = DocumentConstantData.docImage
             }
         }
+        
+        if isSelectionMode {
+            selectionOverlay.isHidden = false
+            checkmarkView.isHidden = !isSelected
+            
+            layer.borderWidth = isSelected ? 2 : 0
+            layer.borderColor = AppColor.primaryColor.cgColor
+            
+        } else {
+            selectionOverlay.isHidden = true
+            checkmarkView.isHidden = true
+            layer.borderWidth = 0
+        }
     }
-    
     override func prepareForReuse() {
         super.prepareForReuse()
         filePreview.image = DocumentConstantData.docImage
@@ -191,6 +226,11 @@ class ListDocumentViewCell: UICollectionViewCell {
         copyLabel.setText("")
         shareButton.isHidden = false
         copyLabel.configure(canCopy: false)
+        selectionOverlay.isHidden = true
+        checkmarkView.isHidden = true
+        layer.borderWidth = 0
+        checkmarkView.tintColor = AppColor.primaryColor
+
     }
     
 }

@@ -5,7 +5,12 @@
 //  Created by Esakkinathan B on 25/01/26.
 //
 import UIKit
-
+enum SelectionRestrictionState {
+    case allLocked
+    case allUnlocked
+    case mixed
+    case none
+}
 class ListDocumentViewController: CustomSearchBarController {
     
     let collectionView: UICollectionView = {
@@ -23,12 +28,15 @@ class ListDocumentViewController: CustomSearchBarController {
     override var searchScrollingView: UIScrollView? {
         return collectionView
     }
-
-    var presenter: ListDocumentPresenterProtocol!
     
+    var collectionBottomConstraint: NSLayoutConstraint!
+    
+    var presenter: ListDocumentPresenterProtocol!
+    private let selectionToolbar = SelectionToolbarView()
+
     let sortView = SortHeaderView()
     var searchButton: UIBarButtonItem!
-
+    var selectButton: UIBarButtonItem!
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavigationBar()
@@ -52,18 +60,26 @@ class ListDocumentViewController: CustomSearchBarController {
             target: nil,
             action: nil
         )
+        selectButton = UIBarButtonItem(title: "Select", style: .plain, target: self, action: #selector(selectButtonClicked))
         
-
         spacer.width = 12
         
         navigationItem.rightBarButtonItems = [addButton, spacer, searchButton]
+        navigationItem.leftBarButtonItem = selectButton
+    }
+    override func viewWillTransition(to size: CGSize,
+                                     with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
         
+        coordinator.animate(alongsideTransition: { _ in
+            self.collectionView.collectionViewLayout.invalidateLayout()
+            self.collectionView.reloadData()
+        })
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         presenter.viewDidLoad()
     }
-    
     
     func setUpContents() {
         
@@ -76,16 +92,31 @@ class ListDocumentViewController: CustomSearchBarController {
         
         collectionView.register(ListDocumentViewCell.self, forCellWithReuseIdentifier: ListDocumentViewCell.identifier)
         
+        selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+
+        collectionBottomConstraint = collectionView.bottomAnchor.constraint(
+            equalTo: view.bottomAnchor,
+            constant: -PaddingSize.height
+        )
+        view.add(selectionToolbar)
+        selectionToolbar.isHidden = true
+
+        NSLayoutConstraint.activate([
+            selectionToolbar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width * 2),
+            selectionToolbar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width * 2),
+            selectionToolbar.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -PaddingSize.height),
+            selectionToolbar.heightAnchor.constraint(equalToConstant: 72),
+        ])
+
         NSLayoutConstraint.activate([
             sortView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: PaddingSize.height),
             sortView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
             sortView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             
             collectionView.topAnchor.constraint(equalTo: sortView.bottomAnchor,constant: PaddingSize.height),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -PaddingSize.height),
             collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: PaddingSize.width),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -PaddingSize.width),
-            
+            collectionBottomConstraint
         ])
     }
 
@@ -100,11 +131,100 @@ class ListDocumentViewController: CustomSearchBarController {
     
     override func searchDidShow() {
         searchButton.isEnabled = false
+        selectButton.isEnabled = false
     }
     override func searchDidHide() {
         searchButton.isEnabled = true
+        selectButton.isEnabled = true
+
+    }
+    
+    @objc func selectButtonClicked() {
+        presenter.isSelectionMode.toggle()
+        
+        if presenter.isSelectionMode {
+            searchButton.isEnabled = false
+            navigationItem.leftBarButtonItem?.title = "Cancel"
+            collectionView.allowsMultipleSelection = true
+            showBottomToolbar()
+            collectionView.reloadData()
+        } else {
+            clearSelectedRow()
+            navigationItem.leftBarButtonItem?.title = "Select"
+            searchButton.isEnabled = true
+            collectionView.allowsMultipleSelection = false
+            presenter.clearSelection()
+            hideBottomToolbar()
+            collectionView.reloadData()
+        }
+
+    }
+    
+    func showBottomToolbar() {
+        updateToolbar()
+        tabBarController?.tabBar.isHidden = true
+        selectionToolbar.show(in: view, bottomConstraint: collectionBottomConstraint)
     }
 
+    func hideBottomToolbar() {
+        tabBarController?.tabBar.isHidden = false
+        selectionToolbar.hide(in: view, bottomConstraint: collectionBottomConstraint, defaultOffset: -PaddingSize.height)
+    }
+    func updateToolbar() {
+        let state = presenter.selectionState()
+
+        var buttons: [UIButton] = []
+        let share = makeToolbarButton(image: IconName.share, action: #selector(shareSelected))
+        let delete = makeToolbarButton(image: IconName.trash, action: #selector(deleteSelected))
+
+        buttons.append(share)
+
+        switch state {
+        case .allLocked:
+            let unlock = makeToolbarButton(image: IconName.unlock, action: #selector(unlockSelected))
+            buttons.append(unlock)
+
+        case .allUnlocked:
+            let lock = makeToolbarButton(image: IconName.lock, action: #selector(lockSelected))
+            buttons.append(lock)
+
+        case .mixed:
+            let lock = makeToolbarButton(image: IconName.lock, action: #selector(lockSelected))
+            let unlock = makeToolbarButton(image: IconName.unlock, action: #selector(unlockSelected))
+            buttons.append(lock)
+            buttons.append(unlock)
+
+        case .none:
+            break
+        }
+
+        buttons.append(delete)
+        selectionToolbar.setButtons(buttons)
+    }
+
+    @objc func shareSelected() {
+        presenter.shareMultiple()
+    }
+    
+    @objc func deleteSelected() {
+        presenter.deleteMultiple()
+    }
+    
+    @objc func lockSelected() {
+        presenter.updateRestrictionForSelected(lock: true)
+    }
+    
+    @objc func unlockSelected() {
+        presenter.updateRestrictionForSelected(lock: false)
+    }
+    func makeToolbarButton(image: String, action: Selector) -> UIButton {
+        var config = UIButton.Configuration.clearGlass()
+        config.image = UIImage(systemName: image)
+        let button = UIButton(configuration: config)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
 
     
 }
@@ -146,8 +266,8 @@ extension ListDocumentViewController {
             title: DocumentSortField.createdAt.rawValue,
             subtitle: subtitle(
                 field: .createdAt,
-                asc: "Newest to Oldest",
-                desc: "Oldest to Newest"
+                asc: "Oldest to Newest",
+                desc: "Newest to Oldest"
             ),
             state: current.field == .createdAt ? .on : .off
         ) { [weak self] _ in
@@ -158,8 +278,8 @@ extension ListDocumentViewController {
             title: DocumentSortField.updatedAt.rawValue,
             subtitle: subtitle(
                 field: .updatedAt,
-                asc: "Newest to Oldest",
-                desc: "Oldest to Newest"
+                asc: "Oldest to Newest" ,
+                desc: "Newest to Oldest"
             ),
             state: current.field == .updatedAt ? .on : .off
         ) { [weak self] _ in
@@ -170,8 +290,8 @@ extension ListDocumentViewController {
             title: DocumentSortField.expiryDate.rawValue,
             subtitle: subtitle(
                 field: .expiryDate,
-                asc: "Newest to Oldest",
-                desc: "Oldest to Newest"
+                asc: "Oldest to Newest",
+                desc: "Newest to Oldest"
             ),
             state: current.field == .expiryDate ? .on : .off
         ) { [weak self] _ in
@@ -205,7 +325,13 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
                         cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let document = presenter.document(at: indexPath.row)
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ListDocumentViewCell.identifier, for: indexPath) as! ListDocumentViewCell
-        cell.configure(document: document)
+        let isSelected = presenter.selectedIndexes.contains(document.id)
+
+        cell.configure(
+            document: document,
+            isSelected: isSelected,
+            isSelectionMode: presenter.isSelectionMode
+        )
         cell.onShareButtonClicked = { [weak self] in
             self?.presenter.shareButtonClicked(indexPath)
         }
@@ -216,9 +342,13 @@ extension ListDocumentViewController: UICollectionViewDataSource, UICollectionVi
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-        let totalSpacing = PaddingSize.cellSpacing
+        let isLandscape = UIDevice.current.orientation.isLandscape
         
-        let width = (collectionView.frame.width - totalSpacing) / 2
+        let columns: CGFloat = isLandscape ? 4 : 2   // 2 in portrait, 4 in landscape
+        let spacing = PaddingSize.cellSpacing * (columns - 1)
+        
+        let width = (collectionView.frame.width - spacing) / columns
+        
         return CGSize(width: width, height: width)
     }
     
@@ -354,8 +484,28 @@ extension ListDocumentViewController: UITextFieldDelegate {
 
 
 extension ListDocumentViewController: UICollectionViewDelegate {
+    
+    func clearSelectedRow() {
+        for indexPath in collectionView.indexPathsForSelectedItems ?? [] {
+            collectionView.deselectItem(at: indexPath, animated: false)
+        }
+    }
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        presenter.didSelectedRow(at: indexPath.row)
+        if presenter.isSelectionMode {
+            presenter.toggleSelection(at: indexPath.row)
+            collectionView.reloadItems(at: [indexPath])
+            updateToolbar()
+            selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+        } else {
+            presenter.didSelectedRow(at: indexPath.row)
+        }
+    }
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        presenter.toggleSelection(at: indexPath.row)
+        selectionToolbar.configure(total: presenter.total, selected: presenter.selectedIndexes.count)
+        collectionView.reloadItems(at: [indexPath])
+        updateToolbar()
     }
 }
 
@@ -372,9 +522,28 @@ extension ListDocumentViewController: DocumentNavigationDelegate {
     }
 }
 extension ListDocumentViewController: ListDocumentViewDelegate {
+    func reloadField(at index: Int) {
+        UIView.performWithoutAnimation {
+            collectionView.reloadItems(at: [IndexPath(item: index, section: 0)])
+        }
+
+    }
     
-    func reloadData() {
+    func exitSelectionMode() {
+        presenter.isSelectionMode = false
+        navigationItem.leftBarButtonItem?.title = "Select"
+        searchButton.isEnabled = true
+        collectionView.allowsMultipleSelection = false
+        hideBottomToolbar()
+        clearSelectedRow()
         collectionView.reloadData()
+        presenter.clearSelection()
+    }
+
+    func reloadData() {
+        UIView.performWithoutAnimation {
+            collectionView.reloadData()
+        }
         let isSearching = presenter.isSearching
         let isEmpty = presenter.isEmpty
         sortView.isHidden = isSearching && isEmpty
@@ -383,7 +552,7 @@ extension ListDocumentViewController: ListDocumentViewDelegate {
                 collectionView.setEmptyView(image: "document.badge.ellipsis", title: "No Documents", subtitle: "Tap + on top to create your first document.")
 
             } else {
-                collectionView.setEmptyHeaderView(image: "text.page.badge.magnifyingglass", title: "No Matching Documents Found", subtitle: "Search with document name and number")
+                collectionView.setEmptyHeaderView(image: "text.page.badge.magnifyingglass", title: "No Matching Documents Found", subtitle: "Search with document name or number")
             }
         } else {
             collectionView.restoreView()
@@ -406,6 +575,24 @@ extension ListDocumentViewController: ListDocumentViewDelegate {
         
         alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
             self?.presenter.deleteDocument(at: index )
+        })
+        present(alert, animated: true)
+    }
+    func showAlertOnDelete(_ documents: [Document]) {
+        let alert = UIAlertController(
+            title: "Delete?",
+            message: "Are you sure you want to delete \(documents.count) items?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Yes", style: .destructive) { [weak self] _ in
+            for document in documents {
+            self?.presenter.deleteDocument(document)
+            }
+            self?.presenter.loadDocuments(reset: true, )
+            self?.exitSelectionMode()
         })
         present(alert, animated: true)
     }

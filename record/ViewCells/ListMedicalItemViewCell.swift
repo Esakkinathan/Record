@@ -124,21 +124,21 @@ class ListMedicalItemViewCell: UITableViewCell {
         let label = ImageTextView()
         label.label.font = AppFont.heading3
         label.label.textColor = .label
-        label.configure(image: IconName.medicalName, .systemBlue)
+        label.configure(image: IconName.medicalName, AppColor.primaryColor)
         return label
     }()
     let label2: ImageTextView = {
         let label = ImageTextView()
         label.label.font = AppFont.body
         label.label.textColor = .secondaryLabel
-        label.configure(image: IconName.instruction, .systemOrange)
+        label.configure(image: IconName.instruction, AppColor.primaryColor)
         return label
     }()
     let label3: ImageTextView = {
         let label = ImageTextView()
         label.label.font = AppFont.small
         label.label.textColor = .secondaryLabel
-        label.configure(image: IconName.dosage, .systemGreen)
+        label.configure(image: IconName.dosage, AppColor.primaryColor)
         return label
     }()
     
@@ -187,41 +187,82 @@ class AllListMedicalItemViewCell: ListMedicalItemViewCell {
     let scheduleGridView = ScheduleGridView()
     static let identifier = "AllListMedicalItemViewCell"
 
+    var onStateChanged: ((LogStatus) -> Void)?
+    
+    private let gridContainerWidth: CGFloat = 110
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpContentView()
     }
     
-    private let gridContainerWidth: CGFloat = 110
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
     override func setUpContentView() {
         super.setUpContentView()
+
+        // Remove old layout
+        stack.removeFromSuperview()
+        stack.constraints.forEach { $0.isActive = false }
+        selectionStyle = .none
+        let stackView = UIStackView(arrangedSubviews: [stack, scheduleGridView])
+        stackView.axis = .horizontal
+        stackView.spacing = PaddingSize.content
+        stackView.translatesAutoresizingMaskIntoConstraints = false
         
-        contentView.add(scheduleGridView)
-        stack.constraints.forEach { c in
-            if c.firstAttribute == .trailing { c.isActive = false }
-        }
+        // Background & corner radius
+        stackView.backgroundColor = .secondarySystemBackground
+        stackView.layer.cornerRadius = PaddingSize.cornerRadius
+        stackView.layer.masksToBounds = true
+        
+//        stackView.layoutMargins = UIEdgeInsets(
+//            top: PaddingSize.content,
+//            left: PaddingSize.content,
+//            bottom: PaddingSize.content,
+//            right: PaddingSize.content
+//        )
+        stackView.isLayoutMarginsRelativeArrangement = true
+        
+        scheduleGridView.translatesAutoresizingMaskIntoConstraints = false
+        stack.backgroundColor = .clear
+        scheduleGridView.backgroundColor = .clear
+
+        contentView.addSubview(stackView)
 
         NSLayoutConstraint.activate([
-            scheduleGridView.widthAnchor.constraint(equalToConstant: 110),
-            scheduleGridView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 2),
-            scheduleGridView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            scheduleGridView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: PaddingSize.content),
-            scheduleGridView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -PaddingSize.content),
-            
-            stack.trailingAnchor.constraint(equalTo: scheduleGridView.leadingAnchor, constant: -PaddingSize.width),
+            scheduleGridView.widthAnchor.constraint(equalToConstant: gridContainerWidth),
+
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width * 2),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width * 2)
         ])
     }
-    func configure(text1: String, text2: String, text3: String, schedules: [MedicalSchedule], taken: Set<MedicalSchedule>) {
-        super.configure(text1: text1, text2: text2, text3: text3)
-        scheduleGridView.configure(schedules: schedules, takenSchedules: taken)
 
+    func configure(text1: String, text2: String, text3: String,
+                   schedules: [MedicalSchedule],
+                   taken: Set<MedicalSchedule>, enabled: Set<MedicalSchedule>) {
+        
+        super.configure(text1: text1, text2: text2, text3: text3)
+        
+        scheduleGridView.configure(
+            schedules: schedules,
+            takenSchedules: taken,
+            enabledSchedules: enabled
+        )
+
+        scheduleGridView.onStateChanged = { [weak self] logStatus in
+            self?.stateChanged(logStatus: logStatus)
+        }
+    }
+
+    func stateChanged(logStatus: LogStatus) {
+        print("allcell")
+        onStateChanged?(logStatus)
     }
 }
-
 
 class ScheduleListMedicalItemViewCell: ListMedicalItemViewCell {
     static let identifier = "ScheduleListMedicalItemViewCell"
@@ -256,16 +297,17 @@ class ScheduleListMedicalItemViewCell: ListMedicalItemViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        toggleContainer.isHidden = true
+        //toggleContainer.isHidden = true
     }
     
     func configure(text1: String, text2: String, text3: String, canShow: Bool, state: Bool, onToggle: ((Bool) -> Void)?) {
         super.configure(text1: text1, text2: text2, text3: text3)
-        toggleContainer.isHidden = !canShow
+        toggleContainer.toggle.isEnabled = canShow
         toggleContainer.text = state ? "Taken" : "Mark as taken"
         toggleContainer.isOn = state
         toggleContainer.onToggleChanged = onToggle
     }
+    
 }
 
 class ScheduleGridView: UIView {
@@ -288,22 +330,24 @@ class ScheduleGridView: UIView {
         label.textAlignment = .center
         return label
     }()
+    
+    var onStateChanged: ((LogStatus) -> Void)?
+    
     private func setupView() {
         layer.cornerRadius = PaddingSize.cornerRadius
         backgroundColor = .secondarySystemBackground
         
         // Create 4 slot views for each schedule
-        let images = MedicalSchedule.getImage()
         
-        for image in images {
+        for schedule in MedicalSchedule.allCases {
             let slot = ScheduleSlotView()
-            slot.configure(
-                imageName: image
-            )
+            slot.configure(schedule: schedule)
             slot.isHidden = true // hidden by default
+            slot.stateChanged = { [weak self] logStatus in
+                self?.stateChanged(logStatus: logStatus)
+            }
             slotViews.append(slot)
             add(slot)
-
         }
         
         let row1 = UIStackView(arrangedSubviews: [slotViews[0], slotViews[1]])
@@ -328,7 +372,12 @@ class ScheduleGridView: UIView {
         ])
     }
     
-    func configure(schedules: [MedicalSchedule], takenSchedules: Set<MedicalSchedule>) {
+    func stateChanged(logStatus: LogStatus) {
+        print("grid")
+        onStateChanged?(logStatus)
+    }
+    
+    func configure(schedules: [MedicalSchedule], takenSchedules: Set<MedicalSchedule>, enabledSchedules: Set<MedicalSchedule>) {
         let allCases = Array(MedicalSchedule.allCases)
         
         for (index, slot) in slotViews.enumerated() {
@@ -337,6 +386,7 @@ class ScheduleGridView: UIView {
             slot.isHidden = !isIncluded
             if isIncluded {
                 slot.setTaken(takenSchedules.contains(schedule))
+                slot.setEnabled(enabledSchedules.contains(schedule))
             }
         }
         setNeedsLayout()
@@ -344,17 +394,106 @@ class ScheduleGridView: UIView {
     }
 }
 
+class ScheduleSlotDetailView: UIButton {
 
-class ScheduleSlotView: UIView {
-    
+    var isTaken: Bool = false
+    var schedule: MedicalSchedule = .morning
+
+    var stateChanged: ((LogStatus) -> Void)?
+
     private let iconView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFit
         iv.translatesAutoresizingMaskIntoConstraints = false
         return iv
     }()
+
+    private let label: UILabel = {
+        let label = UILabel()
+        label.font = AppFont.caption
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private let stack = UIStackView()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+        layer.cornerRadius = PaddingSize.cornerRadius + 5
+
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        stack.addArrangedSubview(iconView)
+        stack.addArrangedSubview(label)
+        stack.isUserInteractionEnabled = false
+        addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 20),
+            iconView.heightAnchor.constraint(equalToConstant: 20),
+
+            stack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+        ])
+        isUserInteractionEnabled = true
+        isExclusiveTouch = true
+        iconView.isUserInteractionEnabled = false
+        label.isUserInteractionEnabled = false
+        addTarget(self, action: #selector(toggleState), for: .touchUpInside)
+    }
     
-    
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    func configure(schedule: MedicalSchedule) {
+        self.schedule = schedule
+        iconView.image = UIImage(systemName: schedule.image)
+        label.text = schedule.rawValue
+    }
+
+    func setTaken(_ taken: Bool) {
+        isTaken = taken
+
+        if taken {
+            backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
+            iconView.tintColor = .systemGreen
+        } else {
+            backgroundColor = UIColor.systemRed.withAlphaComponent(0.15)
+            iconView.tintColor = .systemRed
+        }
+    }
+    func setEnabled(_ enabled: Bool) {
+        isUserInteractionEnabled = enabled
+        alpha = enabled ? 1.0 : 0.3
+    }
+
+    @objc private func toggleState() {
+        print("button")
+        setTaken(!isTaken)
+        stateChanged?(.init(schedule: schedule, taken: isTaken))
+    }
+}
+class ScheduleSlotView: UIButton {
+    var isTaken: Bool = false
+    var schedule: MedicalSchedule = .morning
+    private let iconView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleAspectFit
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        return iv
+    }()
+    func setEnabled(_ enabled: Bool) {
+        isUserInteractionEnabled = enabled
+        alpha = enabled ? 1.0 : 0.3
+    }
+    var stateChanged: ((LogStatus) -> Void)?
     override init(frame: CGRect) {
         super.init(frame: frame)
         layer.cornerRadius = PaddingSize.cornerRadius
@@ -367,21 +506,112 @@ class ScheduleSlotView: UIView {
             iconView.heightAnchor.constraint(equalToConstant: 20),
             iconView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
         ])
+        addTarget(self, action: #selector(toggleState), for: .touchUpInside)
     }
     
     required init?(coder: NSCoder) { fatalError() }
     
-    func configure(imageName: String) {
-        iconView.image = UIImage(systemName: imageName)
+    func configure(schedule: MedicalSchedule) {
+        self.schedule = schedule
+        iconView.image = UIImage(systemName: schedule.image)
     }
     
     func setTaken(_ taken: Bool) {
+        isTaken = taken
+        
         if taken {
             backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
             iconView.tintColor = .systemGreen
         } else {
             backgroundColor = UIColor.systemRed.withAlphaComponent(0.15)
             iconView.tintColor = .systemRed
+        }
+    }
+
+    @objc private func toggleState() {
+        print("button")
+        
+        setTaken(!isTaken)
+        stateChanged?(.init(schedule: schedule, taken: isTaken))
+
+    }
+
+}
+class ScheduleTableViewCell: UITableViewCell {
+
+    static let identifier = "ScheduleTableViewCell"
+
+    private var slotViews: [ScheduleSlotDetailView] = []
+
+    var onStateChanged: ((LogStatus) -> Void)?
+
+
+    private let stackView = UIStackView()
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+
+        setupView()
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func setupView() {
+
+        stackView.axis = .horizontal
+        stackView.spacing = PaddingSize.content
+        stackView.distribution = .fillEqually
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        selectionStyle = .none
+        contentView.addSubview(stackView)
+        //stackView.isUserInteractionEnabled = false
+        for schedule in MedicalSchedule.allCases {
+            let slot = ScheduleSlotDetailView()
+            slot.configure(schedule: schedule)
+
+            slotViews.append(slot)
+            stackView.addArrangedSubview(slot)
+        }
+
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: PaddingSize.height),
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -PaddingSize.height),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: PaddingSize.width),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -PaddingSize.width),
+        ])
+    }
+    func canEdit(schedule: MedicalSchedule, for date: Date) -> Bool {
+        let calendar = Calendar.current
+        
+        let selectedDay = calendar.startOfDay(for: date)
+        let today       = calendar.startOfDay(for: Date())
+        
+        if selectedDay != today {
+            return true
+        }
+        
+        let currentHour = calendar.component(.hour, from: Date())
+        let currentMin = calendar.component(.minute, from: Date())
+
+        return currentHour >= SettingsManager.shared.scheduleTime(for: schedule).hour && currentMin >= SettingsManager.shared.scheduleTime(for: schedule).minute
+    }
+
+    func configure(logStatus:[LogStatus], date: Date) {
+
+        for slot in slotViews {
+
+            let schedule = slot.schedule
+            let logstate = logStatus.first {
+                $0.schedule == schedule
+            }
+            slot.isHidden = logstate == nil
+            slot.setTaken(logstate?.taken ?? false)
+            slot.setEnabled(canEdit(schedule: schedule,for: date))
+            slot.stateChanged = { [weak self] logStatus in
+                print("cell")
+                self?.onStateChanged?(logStatus)
+            }
+
         }
     }
 }

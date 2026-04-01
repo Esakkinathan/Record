@@ -21,7 +21,7 @@ class AddDocumentRouter: AddDocumentRouterProtocol {
     func openGallery() {
         var config = PHPickerConfiguration()
         config.filter = .images
-        config.selectionLimit = 10
+        config.selectionLimit = AppConstantData.maxImageFiles
         
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = viewController as? PHPickerViewControllerDelegate
@@ -45,7 +45,7 @@ class AddDocumentRouter: AddDocumentRouterProtocol {
         picker.allowsMultipleSelection = true
         picker.delegate = viewController as? UIDocumentPickerDelegate
         viewController?.presentVC(picker)
-        picker.showToast(message: "Max 10 files are allowed", type: .info)
+        picker.showToast(message: "Max \(AppConstantData.maxImageFiles) files are allowed", type: .info)
     }
     
     func openDocumentViewer(filePath: String) {
@@ -88,7 +88,4 @@ class AddDocumentRouter: AddDocumentRouterProtocol {
         picker.allowsEditing = true
         viewController?.presentVC(picker)
     }
-
-    
-
 }

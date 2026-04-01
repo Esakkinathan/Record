@@ -18,6 +18,7 @@ enum SettingsItem {
     case systemSettings
     case resetPin
     case compression
+    case medicalShedule
 }
 
 struct SettingsSectionView {
@@ -60,7 +61,7 @@ final class SettingsPresenter: SettingsPresenterProtocol {
     
     var sections: [SettingsSectionView] = [
         .init(section: .appearance, rows: [.theme, .accent]),
-        .init(section: .system, rows: [.appLock, .systemSettings, .compression])
+        .init(section: .system, rows: [.appLock, .systemSettings, .compression, .medicalShedule])
     ]
     
     func selectTheme(_ theme: AppTheme) {
@@ -68,6 +69,7 @@ final class SettingsPresenter: SettingsPresenterProtocol {
         if let sceneDelegate = UIApplication.shared.connectedScenes
             .first?.delegate as? SceneDelegate {
             sceneDelegate.applyTheme(animated: false)
+            view?.reload()
         }
 
         //view?.reload()
@@ -141,13 +143,17 @@ final class SettingsPresenter: SettingsPresenterProtocol {
     func handleAppLockError(error: AuthenticationError) {
         switch error {
         case .permissionDenied:
-            view?.showToastVC(message: "Enable Face ID in Settings", type: .error)
+            view?.showToastVC(message: "Enable face ID in settings", type: .error)
         case .notAvailable:
             view?.showToastVC(message: "No lock screen set up on this device", type: .error)
         default:
             view?.showToastVC(message: "Authentication failed", type: .error)
         }
 
+    }
+    
+    func didClickedRemainderPage() {
+        router.openRemainderScreen()
     }
     
     func updateCompresseion(level: PDFCompressionLevel) {

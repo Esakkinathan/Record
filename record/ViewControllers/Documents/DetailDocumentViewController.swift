@@ -8,6 +8,8 @@
 import UIKit
 import QuickLook
 import VTDB
+import VisionKit
+import PhotosUI
 
 
 class DetailDocumentViewController: KeyboardNotificationViewController {
@@ -18,6 +20,8 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         tableView.keyboardDismissMode = .onDrag
         return tableView
     }()
+    private var loadingOverlay: LoadingOverlayView?
+
     var previewUrl: URL?
     
     var presenter: DetailDocumentPresenterProtocol!
@@ -41,7 +45,29 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         hideKeyboardWhenTappedAround()
     }
     
+    func showLoading() {
+        
+        let overlay = LoadingOverlayView()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        loadingOverlay = overlay
+
+    }
     
+    func stopLoading() {
+        loadingOverlay?.removeFromSuperview()
+        loadingOverlay = nil
+
+    }
+
     func setUpNavigationBar() {
         title = presenter.title
         navigationItem.largeTitleDisplayMode = .never
@@ -75,6 +101,94 @@ class DetailDocumentViewController: KeyboardNotificationViewController {
         presenter.editButtonClicked()
     }
 }
+extension DetailDocumentViewController: VNDocumentCameraViewControllerDelegate {
+
+    func documentCameraViewController(
+        _ controller: VNDocumentCameraViewController,
+        didFinishWith scan: VNDocumentCameraScan
+    ) {
+        controller.dismiss(animated: true)
+        restoreNavigationAppearance()
+        var images: [UIImage] = []
+
+        for i in 0..<min(scan.pageCount, AppConstantData.maxImageFiles) {
+            images.append(scan.imageOfPage(at: i))
+        }
+        presenter.processImages(from: images)
+    }
+
+    func documentCameraViewControllerDidCancel(
+        _ controller: VNDocumentCameraViewController
+    ) {
+        
+        controller.dismiss(animated: true)
+        restoreNavigationAppearance()
+    }
+    private func restoreNavigationAppearance() {
+        let accent = SettingsManager.shared.accent
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = accent.color
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+    }
+
+}
+
+extension DetailDocumentViewController: UIDocumentPickerDelegate {
+    
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard !urls.isEmpty else {
+            return
+        }
+        guard urls.count <= AppConstantData.maxFiles else {
+            showToast(message: "Maximum of \(AppConstantData.maxFiles) allowed", type: .error)
+            return
+        }
+        presenter.processFile(urls: urls)
+    }
+}
+
+extension DetailDocumentViewController: PHPickerViewControllerDelegate {
+    
+    func picker(_ picker: PHPickerViewController,
+                didFinishPicking results: [PHPickerResult]) {
+        
+        picker.dismiss(animated: true)
+        
+        guard !results.isEmpty else { return }
+        
+        var images: [UIImage] = []
+        let dispatchGroup = DispatchGroup()
+        
+        for result in results {
+            let provider = result.itemProvider
+            
+            if provider.canLoadObject(ofClass: UIImage.self) {
+                
+                dispatchGroup.enter()
+                
+                provider.loadObject(ofClass: UIImage.self) { image, error in
+                    
+                    if let img = image as? UIImage {
+                        images.append(img)
+                    }
+                    
+                    dispatchGroup.leave()
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            self.presenter?.processImages(from: images)
+        }
+    }
+}
+
+
+
 
 extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelegate {
     
@@ -95,6 +209,11 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
         switch field {
         case .info, .remainder:
             return UITableView.automaticDimension
+        case .image(let path):
+            if path != nil {
+                return 300
+            } 
+            return 150
         default:
             return 300
         }
@@ -140,6 +259,15 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
         case .image(let filePath):
             let newCell = tableView.dequeueReusableCell(withIdentifier: ImagePreviewTableViewCell.identifier, for: indexPath) as! ImagePreviewTableViewCell
             newCell.configure(with: filePath)
+            
+            newCell.onUploadDocument = { [weak self] type in
+                self?.presenter.uploadDocument(at: indexPath.row, type: type)
+            }
+            newCell.onOpenCamera = { [weak self] in
+                self?.presenter.openCameraClicked()
+            }
+
+            
             newCell.onUploadButtonClicked = { [weak self] in
                 self?.presenter.uploadDocument()
             }
@@ -201,16 +329,16 @@ extension DetailDocumentViewController: UITableViewDataSource, UITableViewDelega
     }
 
 }
-extension DetailDocumentViewController: UIDocumentPickerDelegate {
-
-    func documentPicker(
-        _ controller: UIDocumentPickerViewController,
-        didPickDocumentsAt urls: [URL]
-    ) {
-        //guard let url = urls.first else { return }
-        //presenter.didPickDocument(url: url)
-    }
-}
+//extension DetailDocumentViewController: UIDocumentPickerDelegate {
+//
+//    func documentPicker(
+//        _ controller: UIDocumentPickerViewController,
+//        didPickDocumentsAt urls: [URL]
+//    ) {
+//        //guard let url = urls.first else { return }
+//        //presenter.didPickDocument(url: url)
+//    }
+//}
 
 extension DetailDocumentViewController: QLPreviewControllerDataSource {
     
@@ -232,7 +360,33 @@ extension DetailDocumentViewController: DetailDocumentViewDelegate {
     func showToastVC(message: String, type: ToastType) {
         showToast(message: message, type: type)
     }
-    
+    func askPDFPassword(fileName: String) async -> String? {
+        await withCheckedContinuation { continuation in
+
+            let alert = UIAlertController(
+                title: "PDF Locked",
+                message: "Enter password for \(fileName)",
+                preferredStyle: .alert
+            )
+
+            alert.addTextField {
+                $0.placeholder = "Password"
+                $0.isSecureTextEntry = true
+            }
+
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+                continuation.resume(returning: nil)
+            })
+
+            alert.addAction(UIAlertAction(title: "Unlock", style: .default) { _ in
+                let password = alert.textFields?.first?.text
+                continuation.resume(returning: password)
+            })
+
+            self.present(alert, animated: true)
+        }
+    }
+
     func showAlertOnAddRemainder() {
                 
         let picker = UIDatePicker()

@@ -36,6 +36,7 @@ class Remainder: Persistable {
     static let idC = "id"
     static let documentIdC = "documentId"
     static let dateC = "date"
+    
     var id: Int
     let documentId: Int
     let date: Date

@@ -7,16 +7,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "50C5E10C-676E-4CA1-97F1-6E568A2E08C9"
+            uuid = "8ABA436A-B4EC-4715-A105-71C6C2F150C8"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "record/Presenters/MedicalItem/DetailMedicalItemPresenter.swift"
+            filePath = "record/Helpers/PdfService/DocumentOCRService.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "93"
-            endingLineNumber = "93"
-            landmarkName = "updateMedicine(updated:)"
+            startingLineNumber = "372"
+            endingLineNumber = "372"
+            landmarkName = "extractNumber(from:type:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

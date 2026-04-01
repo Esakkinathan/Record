@@ -21,6 +21,7 @@ protocol SettingsPresenterProtocol {
     func numberOfRows(section: Int) -> Int
     func sectionRowAt(_ indexPath: IndexPath) -> SettingsItem
     func titleForSection(at section: Int) -> String
+    func didClickedRemainderPage()
 
 }
 
@@ -31,5 +32,6 @@ protocol SettingsViewDelegate: AnyObject {
 
 protocol SettingsRouterProtocol {
     func openResetPasswordScreen()
+    func openRemainderScreen()
 }
 

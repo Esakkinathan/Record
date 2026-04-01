@@ -110,10 +110,10 @@ class ActiveMedicineUseCase {
     var itemRepository  = MedicineRepository()
     var logRepository   = MedicalIntakeLogRepository()
     var medicalRepository = MedicalRepository()
-    func execute() -> DashboardViewModel {
+    func execute(date: Date) -> DashboardViewModel {
         let medicals: [Medical] = medicalRepository.fetchAll()
-        let today        = Date().start
-        let medicines    = itemRepository.fetchActiveMedicines()
+        let today        = date.start
+        let medicines    = itemRepository.fetchActiveMedicines(date: date)
         let logs         = medicines.flatMap { logRepository.fetch(medicalId: $0.id, date: today) }
 
         let medicalMap   = Dictionary(uniqueKeysWithValues: medicals.map { ($0.id, $0) })
